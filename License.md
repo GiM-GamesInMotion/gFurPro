@@ -1,8 +1,8 @@
-GFUR - TERMS AND CONDITIONS
+gFur Pro - TERMS AND CONDITIONS
 
 License
 
-1. Preamble: This Agreement is effective from the moment of download of the gFur source code and governs the relationship between Licensee (user of gFur source code) and GiM s.r.o., a duly registered company whose principal place of business is Slowackeho 42, Bratislava 821 04, Slovakia (hereinafter: Licensor). This Agreement sets the terms, rights, restrictions and obligations on using gFur (hereinafter: The Software) created and owned by Licensor, as detailed herein
+1. Preamble: This Agreement is effective from the moment of download of the gFur Pro source code and governs the relationship between Licensee (user of gFur source code) and GiM s.r.o., a duly registered company whose principal place of business is Slowackeho 42, Bratislava 821 04, Slovakia (hereinafter: Licensor). This Agreement sets the terms, rights, restrictions and obligations on using gFur (hereinafter: The Software) created and owned by Licensor, as detailed herein
 
 2. License Grant: Licensor hereby grants Licensee a Personal, Non-assignable & non-transferable, Perpetual, Commercial, Royalty free, Including the rights to create but not distribute derivative works, Non-exclusive license, all with accordance with the terms set forth and other legal restrictions set forth in 3rd party software used while running Software.
 
@@ -80,5 +80,5 @@ LICENSE SUMMARY
 - Can be distributed in binary or object form only
 - Commercial use allowed
 - Can modify source-code but cannot distribute modifications (derivative works)
-- Source code modifications, additions and fixes shared with GiM s.r.o. become owned by GiM s.r.o to any necessary extend which doesn’t affect or limit the ability to distribute or sell gFur by GiM s.r.o. in any way.
+- Source code modifications, additions and fixes shared with GiM s.r.o. become owned by GiM s.r.o to any necessary extend which doesn’t affect or limit the ability to distribute or sell gFur Pro by GiM s.r.o. in any way.
 - Attribution to software creator must be made as specified: credit GiM s.r.o.

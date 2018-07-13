@@ -1,0 +1,8 @@
+{
+	"BuildId": "3944462",
+	"Modules": 
+	{
+		"GFur": "UE4Editor-GFur.dll",
+		"GFurEditor": "UE4Editor-GFurEditor.dll"
+	}
+}

@@ -42,7 +42,10 @@ public:
 	* It's necessary for the mesh to be skinned exactly like the main mesh, otherwise different artifacts could show up.
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
-	class USkeletalMesh* GrowMesh;
+	class USkeletalMesh* SkinGrowMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
+	class UStaticMesh* StaticGrowMesh;
 
 	/**
 	* Splines from 3D apps that give basic shape and length to the fur. Does not have to be used.
@@ -51,7 +54,10 @@ public:
 	class UFurSplines* FurSplines;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
-	TArray<class USkeletalMesh*> GuideMeshes;
+	TArray<class USkeletalMesh*> SkinGuideMeshes;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
+	TArray<class UStaticMesh*> StaticGuideMeshes;
 
 	/**
 	* Sets the number of shells. Less = better performance
@@ -146,8 +152,6 @@ public:
 	float NoiseStrength;
 
 public:
-	static void reloadFurSplines(class UFurSplines* FurSplines);
-
 	// Begin UPrimitiveComponent interface.
 	virtual UMaterialInterface* GetMaterial(int32 ElementIndex) const override;
 	virtual int32 GetMaterialIndex(FName MaterialSlotName) const override;
@@ -185,6 +189,13 @@ private:
 	TArray< class UMaterialInstanceDynamic* > FurMaterials;
 	TArray< struct FFurData* > FurData;
 
+	FVector StaticLinearOffset;
+	FVector StaticAngularOffset;
+	FVector StaticLinearVelocity;
+	FVector StaticAngularVelocity;
+	FMatrix StaticTransformation;
+	bool StaticOldPositionValid = false;//TODO
+
 	float LastDeltaTime;
 
 	// Begin USceneComponent interface.
@@ -194,5 +205,4 @@ private:
 	void updateFur();
 	void UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, uint32 FrameNumberToPrepare);
 	void UpdateMasterBoneMap();
-	FFurData* GetOrCreateFurData(int InFurLayerCount, int InLod);
 };

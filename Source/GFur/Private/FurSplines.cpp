@@ -2,7 +2,8 @@
 
 #include "FurSplines.h"
 #include "GFur.h"
-#include "FurComponent.h"
+#include "FurSkinData.h"
+#include "FurStaticData.h"
 
 UFurSplines::UFurSplines(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -11,5 +12,6 @@ UFurSplines::UFurSplines(const FObjectInitializer& ObjectInitializer)
 
 void UFurSplines::Refresh()
 {
-	UGFurComponent::reloadFurSplines(this);
+	FFurSkinData::ReloadFurSplines(this);
+	FFurStaticData::ReloadFurSplines(this);
 }

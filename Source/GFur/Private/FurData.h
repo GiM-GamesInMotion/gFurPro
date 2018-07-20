@@ -33,6 +33,7 @@ struct FFurData
 {
 	struct FSection
 	{
+		uint32 MaterialIndex;
 		uint32 BaseIndex;
 		uint32 NumTriangles;
 		uint32 MinVertexIndex;

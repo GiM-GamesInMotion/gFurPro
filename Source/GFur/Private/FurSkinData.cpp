@@ -773,6 +773,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 		const auto& ModelSection = LodModel.RenderSections[SectionIndex];
 		FSection& FurSection = Sections[Sections.AddUninitialized()];
 		new (&FurSection) FSection();
+		FurSection.MaterialIndex = ModelSection.MaterialIndex;
 		FurSection.MinVertexIndex = VertexBuffer->Vertices.Num();
 		FurSection.BaseIndex = IndexBuffer.Indices.Num();
 
@@ -962,7 +963,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 				for (uint32 i = 0; i < ModelSection.NumTriangles * 3; ++i)
 					IndexBuffer.Indices.Add(Indices[ModelSection.BaseIndex + i] + IndexOffset);
 			}
-			IndexOffset = VertexBuffer->Vertices.Num();
+			IndexOffset = VertexBuffer->Vertices.Num() - ModelSection.BaseVertexIndex;
 		}
 		FurSection.MaxVertexIndex = VertexBuffer->Vertices.Num() - 1;
 		FurSection.NumTriangles = (IndexBuffer.Indices.Num() - FurSection.BaseIndex) / 3;
@@ -1125,8 +1126,8 @@ FFurData* FFurSkinData::CreateFurData(int InFurLayerCount, int InLod, UGFurCompo
 	for (int32 i = 0; i < StaticFurSkinData.Num(); i++)
 	{
 		FFurSkinData* d = StaticFurSkinData[i];
-		if (d->SkeletalMesh == FurComponent->SkinGrowMesh && d->Lod == InLod && d->FurLayerCount == InFurLayerCount && d->FurSplines == FurComponent->FurSplines
-			&& d->GuideMeshes == FurComponent->SkinGuideMeshes
+		if (d->SkeletalMesh == FurComponent->SkeletalGrowMesh && d->Lod == InLod && d->FurLayerCount == InFurLayerCount && d->FurSplines == FurComponent->FurSplines
+			&& d->GuideMeshes == FurComponent->SkeletalGuideMeshes
 			&& d->FurLength == FurLengthClamped && d->MinFurLength == FurComponent->MinFurLength
 			&& d->ShellBias == FurComponent->ShellBias && d->HairLengthForceUniformity == FurComponent->HairLengthForceUniformity
 			&& d->NoiseStrength == FurComponent->NoiseStrength)
@@ -1141,7 +1142,7 @@ FFurData* FFurSkinData::CreateFurData(int InFurLayerCount, int InLod, UGFurCompo
 	}
 	else
 	{
-		Data = new FFurSkinData(FurComponent->SkinGrowMesh, InLod, FurComponent->FurSplines, FurComponent->SkinGuideMeshes, InFurLayerCount, FurLengthClamped,
+		Data = new FFurSkinData(FurComponent->SkeletalGrowMesh, InLod, FurComponent->FurSplines, FurComponent->SkeletalGuideMeshes, InFurLayerCount, FurLengthClamped,
 			FurComponent->MinFurLength, FurComponent->ShellBias, FurComponent->HairLengthForceUniformity, FurComponent->NoiseStrength);
 		Data->RefCount = 1;
 		StaticFurSkinData.Add(Data);

@@ -124,7 +124,7 @@ public:
 						}
 						else
 						{
-							UMaterialInstanceDynamic* material = FurMaterials[sectionIdx];
+							UMaterialInstanceDynamic* material = FurMaterials[section.MaterialIndex];
 							MaterialProxy = material->GetRenderProxy(IsSelected());
 						}
 
@@ -261,9 +261,9 @@ UMaterialInterface* UGFurComponent::GetMaterial(int32 MaterialIndex) const
 	{
 		return OverrideMaterials[MaterialIndex];
 	}
-	else if (SkinGrowMesh && MaterialIndex < SkinGrowMesh->Materials.Num() && SkinGrowMesh->Materials[MaterialIndex].MaterialInterface)
+	else if (SkeletalGrowMesh && MaterialIndex < SkeletalGrowMesh->Materials.Num() && SkeletalGrowMesh->Materials[MaterialIndex].MaterialInterface)
 	{
-		return SkinGrowMesh->Materials[MaterialIndex].MaterialInterface;
+		return SkeletalGrowMesh->Materials[MaterialIndex].MaterialInterface;
 	}
 	else if (StaticGrowMesh && MaterialIndex < StaticGrowMesh->StaticMaterials.Num() && StaticGrowMesh->StaticMaterials[MaterialIndex].MaterialInterface)
 	{
@@ -275,11 +275,11 @@ UMaterialInterface* UGFurComponent::GetMaterial(int32 MaterialIndex) const
 
 int32 UGFurComponent::GetMaterialIndex(FName MaterialSlotName) const
 {
-	if (SkinGrowMesh)
+	if (SkeletalGrowMesh)
 	{
-		for (int32 MaterialIndex = 0; MaterialIndex < SkinGrowMesh->Materials.Num(); ++MaterialIndex)
+		for (int32 MaterialIndex = 0; MaterialIndex < SkeletalGrowMesh->Materials.Num(); ++MaterialIndex)
 		{
-			const auto& SkeletalMaterial = SkinGrowMesh->Materials[MaterialIndex];
+			const auto& SkeletalMaterial = SkeletalGrowMesh->Materials[MaterialIndex];
 			if (SkeletalMaterial.MaterialSlotName == MaterialSlotName)
 			{
 				return MaterialIndex;
@@ -303,11 +303,11 @@ int32 UGFurComponent::GetMaterialIndex(FName MaterialSlotName) const
 TArray<FName> UGFurComponent::GetMaterialSlotNames() const
 {
 	TArray<FName> MaterialNames;
-	if (SkinGrowMesh)
+	if (SkeletalGrowMesh)
 	{
-		for (int32 MaterialIndex = 0; MaterialIndex < SkinGrowMesh->Materials.Num(); ++MaterialIndex)
+		for (int32 MaterialIndex = 0; MaterialIndex < SkeletalGrowMesh->Materials.Num(); ++MaterialIndex)
 		{
-			const auto& SkeletalMaterial = SkinGrowMesh->Materials[MaterialIndex];
+			const auto& SkeletalMaterial = SkeletalGrowMesh->Materials[MaterialIndex];
 			MaterialNames.Add(SkeletalMaterial.MaterialSlotName);
 		}
 	}
@@ -329,10 +329,10 @@ bool UGFurComponent::IsMaterialSlotNameValid(FName MaterialSlotName) const
 
 void UGFurComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const
 {
-	if (SkinGrowMesh)
+	if (SkeletalGrowMesh)
 	{
 		// The max number of materials used is the max of the materials on the skeletal mesh and the materials on the mesh component
-		const int32 NumMaterials = FMath::Max(SkinGrowMesh->Materials.Num(), OverrideMaterials.Num());
+		const int32 NumMaterials = FMath::Max(SkeletalGrowMesh->Materials.Num(), OverrideMaterials.Num());
 		for (int32 MatIdx = 0; MatIdx < NumMaterials; ++MatIdx)
 		{
 			// GetMaterial will determine the correct material to use for this index.  
@@ -361,10 +361,10 @@ void UGFurComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials,
 
 bool UGFurComponent::GetMaterialStreamingData(int32 MaterialIndex, FPrimitiveMaterialInfo& MaterialData) const
 {
-	if (SkinGrowMesh)
+	if (SkeletalGrowMesh)
 	{
 		MaterialData.Material = GetMaterial(MaterialIndex);
-		MaterialData.UVChannelData = SkinGrowMesh->GetUVChannelData(MaterialIndex);
+		MaterialData.UVChannelData = SkeletalGrowMesh->GetUVChannelData(MaterialIndex);
 		MaterialData.PackedRelativeBox = PackedRelativeBox_Identity;
 	}
 	else if (StaticGrowMesh)
@@ -383,9 +383,9 @@ void UGFurComponent::GetStreamingTextureInfo(FStreamingTextureLevelContext& Leve
 
 int32 UGFurComponent::GetNumMaterials() const
 {
-	if (SkinGrowMesh)
+	if (SkeletalGrowMesh)
 	{
-		return SkinGrowMesh->Materials.Num();
+		return SkeletalGrowMesh->Materials.Num();
 	}
 	else if (StaticGrowMesh)
 	{
@@ -412,13 +412,13 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			}
 		}
 
-		if (SkinGrowMesh && SkinGrowMesh->GetResourceForRendering())
+		if (SkeletalGrowMesh && SkeletalGrowMesh->GetResourceForRendering())
 		{
 			UpdateMasterBoneMap();
 			TArray<FFurData*> Array;
 			Array.Add(FFurSkinData::CreateFurData(LayerCount, 0, this));
 			for (FFurLod& lod : LODs)
-				Array.Add(FFurSkinData::CreateFurData(lod.LayerCount, FMath::Min(SkinGrowMesh->GetResourceForRendering()->LODRenderData.Num() - 1, lod.Lod), this));
+				Array.Add(FFurSkinData::CreateFurData(lod.LayerCount, FMath::Min(SkeletalGrowMesh->GetResourceForRendering()->LODRenderData.Num() - 1, lod.Lod), this));
 
 			FurData = Array;
 			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, CastShadow, GetWorld()->FeatureLevel);
@@ -482,7 +482,7 @@ void UGFurComponent::DestroyRenderState_Concurrent()
 			mat->RemoveFromRoot();
 		FurMaterials.Reset();
 
-		if (SkinGrowMesh)
+		if (SkeletalGrowMesh)
 			FFurSkinData::DestroyFurData(FurData);
 		else if (StaticGrowMesh)
 			FFurStaticData::DestroyFurData(FurData);
@@ -501,7 +501,7 @@ void UGFurComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FA
 
 FBoxSphereBounds UGFurComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	if (SkinGrowMesh)
+	if (SkeletalGrowMesh)
 	{
 		if (MasterPoseComponent.IsValid())
 		{
@@ -509,7 +509,7 @@ FBoxSphereBounds UGFurComponent::CalcBounds(const FTransform& LocalToWorld) cons
 			MasterBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 			return MasterBounds;
 		}
-		FBoxSphereBounds DummyBounds = SkinGrowMesh->GetBounds();
+		FBoxSphereBounds DummyBounds = SkeletalGrowMesh->GetBounds();
 		DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 		return DummyBounds.TransformBy(LocalToWorld);
 	}
@@ -517,7 +517,7 @@ FBoxSphereBounds UGFurComponent::CalcBounds(const FTransform& LocalToWorld) cons
 	{
 		FBoxSphereBounds Bounds = StaticGrowMesh->GetBounds();
 		Bounds.ExpandBy(FMath::Max(FurLength, 0.001f));
-		return Bounds.TransformBy(GetComponentTransform().ToMatrixWithScale());
+		return Bounds.TransformBy(LocalToWorld);
 	}
 	FBoxSphereBounds DummyBounds = FBoxSphereBounds(FVector(0, 0, 0), FVector(0, 0, 0), 0);
 	DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
@@ -533,16 +533,70 @@ UBodySetup* UGFurComponent::GetBodySetup()
 
 void UGFurComponent::updateFur()
 {
-	if (!SceneProxy || (!SkinGrowMesh && !StaticGrowMesh))
+	if (!SceneProxy || (!SkeletalGrowMesh && !StaticGrowMesh))
 		return;
+
 	FFurSceneProxy* Scene = (FFurSceneProxy*)SceneProxy;
 
-	if (SkinGrowMesh)
+	float DeltaTime = fminf(LastDeltaTime, 1.0f);
+	float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData()->CurrentMaxFurLength * ReferenceHairBias + Scene->GetFurData()->CurrentMinFurLength * (1.0f - ReferenceHairBias));
+//	float ForceFactor = 1.0f / (powf(ReferenceFurLength, FurForcePower) * fmaxf(FurStiffness, 0.000001f));
+	float ForceFactor = 1.0f / powf(ReferenceFurLength, ForceDistribution);
+	float DampingClamped = fmaxf(Damping, 0.000001f);
+	float DampingFactor = powf(1.0f - (DampingClamped / (DampingClamped + 1.0f)), DeltaTime);
+	float MaxForceFinal = (MaxForce * ReferenceFurLength) / powf(ReferenceFurLength, ForceDistribution);
+	float MaxTorque = MaxForceTorqueFactor * MaxForceFinal / Scene->GetFurData()->MaxVertexBoneDistance;
+//	FVector FurForceFinal = FurForce * (fmaxf(FurWeight, 0.000001f) * ForceFactor);//TODO
+	FVector FurForceFinal = ConstantForce * ReferenceFurLength * ForceFactor / Stiffness;//TODO
+
+	float x = DeltaTime * Stiffness;
+
+	FMatrix ToWorld = GetComponentTransform().ToMatrixNoScale();
+
+	auto Physics = [&](const FMatrix& NewTransformation, FMatrix& Transformations, FVector& LinearOffset, FVector& LinearVelocity
+		, FVector& AngularOffset, FVector& AngularVelocity) {
+		FVector d = (NewTransformation.GetOrigin() - Transformations.GetOrigin());
+		d *= ForceFactor;
+		LinearOffset -= d;
+
+		FVector force;
+		FVector newOffset = (LinearVelocity * sinf(x) + (LinearOffset - FurForceFinal) * cosf(x)) * DampingFactor + FurForceFinal;
+		FVector newVelocity = (LinearVelocity * cosf(x) - (LinearOffset - FurForceFinal) * sinf(x)) * DampingFactor;
+		check(newOffset.X == newOffset.X && newOffset.Y == newOffset.Y && newOffset.Z == newOffset.Z);
+		check(newVelocity.X == newVelocity.X && newVelocity.Y == newVelocity.Y && newVelocity.Z == newVelocity.Z);
+		LinearOffset = newOffset;
+		LinearVelocity = newVelocity;
+		if (LinearOffset.Size() > MaxForceFinal)
+		{
+			LinearOffset *= MaxForceFinal / LinearOffset.Size();
+			float k = FVector::DotProduct(LinearOffset, LinearVelocity) / FVector::DotProduct(LinearOffset, LinearOffset);
+			if (k > 0.0f)
+				LinearVelocity -= LinearOffset * k;
+		}
+
+		FQuat rdiff = NewTransformation.ToQuat() * Transformations.ToQuat().Inverse();
+		float angle;
+		rdiff.ToAxisAndAngle(d, angle);
+		if (angle > PI)
+			angle -= 2 * PI;
+		d *= -angle * ForceFactor;
+		AngularOffset -= d;
+		newOffset = (AngularVelocity * sinf(x) + AngularOffset * cosf(x)) * DampingFactor;
+		newVelocity = (AngularVelocity * cosf(x) - AngularOffset * sinf(x)) * DampingFactor;
+		AngularOffset = newOffset;
+		AngularVelocity = newVelocity;
+		if (AngularOffset.Size() > MaxTorque)
+			AngularOffset *= MaxTorque / AngularOffset.Size();
+
+		Transformations = NewTransformation;
+	};
+
+	if (SkeletalGrowMesh)
 	{
-		const USkeletalMesh* const ThisMesh = SkinGrowMesh;
+		const USkeletalMesh* const ThisMesh = SkeletalGrowMesh;
 		const USkinnedMeshComponent* const MasterComp = MasterPoseComponent.Get();
 		const USkeletalMesh* const MasterCompMesh = MasterComp ? MasterComp->SkeletalMesh : nullptr;
-		const auto& LOD = SkinGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentLodLevel()];
+		const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentLodLevel()];
 
 		FMatrix TempMatrices[256];
 		bool ValidTempMatrices[256];
@@ -565,8 +619,6 @@ void UGFurComponent::updateFur()
 			AngularOffsets.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
 			OldPositionValid = false;
 		}
-
-		FMatrix toWorld = GetComponentTransform().ToMatrixNoScale();
 
 		const bool bIsMasterCompValid = MasterComp && MasterBoneMap.Num() == ThisMesh->RefSkeleton.GetNum();
 
@@ -622,79 +674,22 @@ void UGFurComponent::updateFur()
 
 		if (OldPositionValid)
 		{
-			float DeltaTime = fminf(LastDeltaTime, 1.0f);
-			float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData()->CurrentMaxFurLength * ReferenceHairBias + Scene->GetFurData()->CurrentMinFurLength * (1.0f - ReferenceHairBias));
-			//		float ForceFactor = 1.0f / (powf(ReferenceFurLength, FurForcePower) * fmaxf(FurStiffness, 0.000001f));
-			float ForceFactor = 1.0f / powf(ReferenceFurLength, ForceDistribution);
-			float DampingClamped = fmaxf(Damping, 0.000001f);
-			float DampingFactor = powf(1.0f - (DampingClamped / (DampingClamped + 1.0f)), DeltaTime);
-			float MaxForceFinal = (MaxForce * ReferenceFurLength) / powf(ReferenceFurLength, ForceDistribution);
-			float MaxTorque = MaxForceTorqueFactor * MaxForceFinal / Scene->GetFurData()->MaxVertexBoneDistance;
-			//		FVector FurForceFinal = FurForce * (fmaxf(FurWeight, 0.000001f) * ForceFactor);//TODO
-			FVector FurForceFinal = ConstantForce * ReferenceFurLength * ForceFactor / Stiffness;//TODO
-
-			float x = DeltaTime * Stiffness;
-
 			for (int32 ThisBoneIndex = 0; ThisBoneIndex < ReferenceToLocal.Num(); ++ThisBoneIndex)
 			{
-				FMatrix mat;
+				FMatrix NewTransformation;
 				if (ValidTempMatrices[ThisBoneIndex])
 				{
 					ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
-					mat = TempMatrices[ThisBoneIndex] * toWorld;
+					NewTransformation = TempMatrices[ThisBoneIndex] * ToWorld;
 				}
 				else
 				{
 					ReferenceToLocal[ThisBoneIndex] = FMatrix::Identity;
-					mat = FMatrix::Identity;
+					NewTransformation = FMatrix::Identity;
 				}
 
-				FVector d = (mat.GetOrigin() - Transformations[ThisBoneIndex].GetOrigin());
-				d *= ForceFactor;
-				LinearOffsets[ThisBoneIndex] -= d;
-
-				//			FVector force = -FurOffset[ThisBoneIndex] - LastLinearVelocities[ThisBoneIndex] * DragFactor + FurForceFinal;
-				//			FVector delta_velocity = force * deltaTime * RcpWeight;
-				//			FurOffset[ThisBoneIndex] += LastLinearVelocities[ThisBoneIndex] * deltaTime + delta_velocity * 0.5f * deltaTime;
-				//			LastLinearVelocities[ThisBoneIndex] += delta_velocity;
-				//			LastLinearVelocities[ThisBoneIndex] = LastLinearVelocities[ThisBoneIndex] * DampingFactor;
-				FVector force;
-				FVector newOffset = (LinearVelocities[ThisBoneIndex] * sinf(x) + (LinearOffsets[ThisBoneIndex] - FurForceFinal) * cosf(x)) * DampingFactor + FurForceFinal;
-				FVector newVelocity = (LinearVelocities[ThisBoneIndex] * cosf(x) - (LinearOffsets[ThisBoneIndex] - FurForceFinal) * sinf(x)) * DampingFactor;
-				check(newOffset.X == newOffset.X && newOffset.Y == newOffset.Y && newOffset.Z == newOffset.Z);
-				check(newVelocity.X == newVelocity.X && newVelocity.Y == newVelocity.Y && newVelocity.Z == newVelocity.Z);
-				LinearOffsets[ThisBoneIndex] = newOffset;
-				LinearVelocities[ThisBoneIndex] = newVelocity;
-				if (LinearOffsets[ThisBoneIndex].Size() > MaxForceFinal)
-				{
-					LinearOffsets[ThisBoneIndex] *= MaxForceFinal / LinearOffsets[ThisBoneIndex].Size();
-					float k = FVector::DotProduct(LinearOffsets[ThisBoneIndex], LinearVelocities[ThisBoneIndex]) / FVector::DotProduct(LinearOffsets[ThisBoneIndex], LinearOffsets[ThisBoneIndex]);
-					if (k > 0.0f)
-						LinearVelocities[ThisBoneIndex] -= LinearOffsets[ThisBoneIndex] * k;
-				}
-
-				FQuat rdiff = mat.ToQuat() * Transformations[ThisBoneIndex].ToQuat().Inverse();
-				float angle;
-				rdiff.ToAxisAndAngle(d, angle);
-				if (angle > PI)
-					angle -= 2 * PI;
-				d *= -angle * ForceFactor;
-				AngularOffsets[ThisBoneIndex] -= d;
-				/*			force = -LastTorques[ThisBoneIndex] - LastAngularVelocities[ThisBoneIndex] * DragFactor;
-				FVector delta_angular_velocity = force * deltaTime * RcpWeight;
-				LastTorques[ThisBoneIndex] += LastAngularVelocities[ThisBoneIndex] * deltaTime + delta_angular_velocity * 0.5f * deltaTime;
-				if (LastTorques[ThisBoneIndex].Size() > MaxTorque)
-				LastTorques[ThisBoneIndex] *= MaxTorque / LastTorques[ThisBoneIndex].Size();
-				LastAngularVelocities[ThisBoneIndex] += delta_angular_velocity;
-				LastAngularVelocities[ThisBoneIndex] = LastAngularVelocities[ThisBoneIndex] * DampingFactor;*/
-				newOffset = (AngularVelocities[ThisBoneIndex] * sinf(x) + AngularOffsets[ThisBoneIndex] * cosf(x)) * DampingFactor;
-				newVelocity = (AngularVelocities[ThisBoneIndex] * cosf(x) - AngularOffsets[ThisBoneIndex] * sinf(x)) * DampingFactor;
-				AngularOffsets[ThisBoneIndex] = newOffset;
-				AngularVelocities[ThisBoneIndex] = newVelocity;
-				if (AngularOffsets[ThisBoneIndex].Size() > MaxTorque)
-					AngularOffsets[ThisBoneIndex] *= MaxTorque / AngularOffsets[ThisBoneIndex].Size();
-
-				Transformations[ThisBoneIndex] = mat;
+				Physics(NewTransformation, Transformations[ThisBoneIndex], LinearOffsets[ThisBoneIndex], LinearVelocities[ThisBoneIndex]
+					, AngularOffsets[ThisBoneIndex], AngularVelocities[ThisBoneIndex]);
 			}
 		}
 		else
@@ -704,7 +699,7 @@ void UGFurComponent::updateFur()
 				if (ValidTempMatrices[ThisBoneIndex])
 				{
 					ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
-					Transformations[ThisBoneIndex] = TempMatrices[ThisBoneIndex] * toWorld;
+					Transformations[ThisBoneIndex] = TempMatrices[ThisBoneIndex] * ToWorld;
 				}
 				else
 				{
@@ -723,79 +718,13 @@ void UGFurComponent::updateFur()
 	else
 	{
 		check(StaticGrowMesh);
-
-		FMatrix toWorld = GetComponentTransform().ToMatrixNoScale();
-
 		if (StaticOldPositionValid)
 		{
-			float DeltaTime = fminf(LastDeltaTime, 1.0f);
-			float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData()->CurrentMaxFurLength * ReferenceHairBias + Scene->GetFurData()->CurrentMinFurLength * (1.0f - ReferenceHairBias));
-			//		float ForceFactor = 1.0f / (powf(ReferenceFurLength, FurForcePower) * fmaxf(FurStiffness, 0.000001f));
-			float ForceFactor = 1.0f / powf(ReferenceFurLength, ForceDistribution);
-			float DampingClamped = fmaxf(Damping, 0.000001f);
-			float DampingFactor = powf(1.0f - (DampingClamped / (DampingClamped + 1.0f)), DeltaTime);
-			float MaxForceFinal = (MaxForce * ReferenceFurLength) / powf(ReferenceFurLength, ForceDistribution);
-			float MaxTorque = MaxForceTorqueFactor * MaxForceFinal / Scene->GetFurData()->MaxVertexBoneDistance;
-			//		FVector FurForceFinal = FurForce * (fmaxf(FurWeight, 0.000001f) * ForceFactor);//TODO
-			FVector FurForceFinal = ConstantForce * ReferenceFurLength * ForceFactor / Stiffness;//TODO
-
-			float x = DeltaTime * Stiffness;
-
-			// TODO
-			{
-				FMatrix mat = toWorld;
-
-				FVector d = (mat.GetOrigin() - StaticTransformation.GetOrigin());
-				d *= ForceFactor;
-				StaticLinearOffset -= d;
-
-				//			FVector force = -FurOffset[ThisBoneIndex] - LastLinearVelocities[ThisBoneIndex] * DragFactor + FurForceFinal;
-				//			FVector delta_velocity = force * deltaTime * RcpWeight;
-				//			FurOffset[ThisBoneIndex] += LastLinearVelocities[ThisBoneIndex] * deltaTime + delta_velocity * 0.5f * deltaTime;
-				//			LastLinearVelocities[ThisBoneIndex] += delta_velocity;
-				//			LastLinearVelocities[ThisBoneIndex] = LastLinearVelocities[ThisBoneIndex] * DampingFactor;
-				FVector force;
-				FVector newOffset = (StaticLinearVelocity * sinf(x) + (StaticLinearOffset - FurForceFinal) * cosf(x)) * DampingFactor + FurForceFinal;
-				FVector newVelocity = (StaticLinearVelocity * cosf(x) - (StaticLinearOffset - FurForceFinal) * sinf(x)) * DampingFactor;
-				check(newOffset.X == newOffset.X && newOffset.Y == newOffset.Y && newOffset.Z == newOffset.Z);
-				check(newVelocity.X == newVelocity.X && newVelocity.Y == newVelocity.Y && newVelocity.Z == newVelocity.Z);
-				StaticLinearOffset = newOffset;
-				StaticLinearVelocity = newVelocity;
-				if (StaticLinearOffset.Size() > MaxForceFinal)
-				{
-					StaticLinearOffset *= MaxForceFinal / StaticLinearOffset.Size();
-					float k = FVector::DotProduct(StaticLinearOffset, StaticLinearVelocity) / FVector::DotProduct(StaticLinearOffset, StaticLinearOffset);
-					if (k > 0.0f)
-						StaticLinearVelocity -= StaticLinearOffset * k;
-	}
-
-				FQuat rdiff = mat.ToQuat() * StaticTransformation.ToQuat().Inverse();
-				float angle;
-				rdiff.ToAxisAndAngle(d, angle);
-				if (angle > PI)
-					angle -= 2 * PI;
-				d *= -angle * ForceFactor;
-				StaticAngularOffset -= d;
-				/*			force = -LastTorques[ThisBoneIndex] - LastAngularVelocities[ThisBoneIndex] * DragFactor;
-				FVector delta_angular_velocity = force * deltaTime * RcpWeight;
-				LastTorques[ThisBoneIndex] += LastAngularVelocities[ThisBoneIndex] * deltaTime + delta_angular_velocity * 0.5f * deltaTime;
-				if (LastTorques[ThisBoneIndex].Size() > MaxTorque)
-				LastTorques[ThisBoneIndex] *= MaxTorque / LastTorques[ThisBoneIndex].Size();
-				LastAngularVelocities[ThisBoneIndex] += delta_angular_velocity;
-				LastAngularVelocities[ThisBoneIndex] = LastAngularVelocities[ThisBoneIndex] * DampingFactor;*/
-				newOffset = (StaticAngularVelocity * sinf(x) + StaticAngularOffset * cosf(x)) * DampingFactor;
-				newVelocity = (StaticAngularVelocity * cosf(x) - StaticAngularOffset * sinf(x)) * DampingFactor;
-				StaticAngularOffset = newOffset;
-				StaticAngularVelocity = newVelocity;
-				if (StaticAngularOffset.Size() > MaxTorque)
-					StaticAngularOffset *= MaxTorque / StaticAngularOffset.Size();
-
-				StaticTransformation = mat;
-			}
+			Physics(ToWorld, StaticTransformation, StaticLinearOffset, StaticLinearVelocity, StaticAngularOffset, StaticAngularVelocity);
 		}
 		else
 		{
-			StaticTransformation = toWorld;
+			StaticTransformation = ToWorld;
 
 			StaticLinearOffset.Set(0.0f, 0.0f, 0.0f);
 			StaticAngularOffset.Set(0.0f, 0.0f, 0.0f);
@@ -827,9 +756,9 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 	{
 		ERHIFeatureLevel::Type SceneFeatureLevel = GetWorld()->FeatureLevel;
 
-		if (SkinGrowMesh)
+		if (SkeletalGrowMesh)
 		{
-			const auto& LOD = SkinGrowMesh->GetResourceForRendering()->LODRenderData[FurProxy->GetCurrentLodLevel()];
+			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[FurProxy->GetCurrentLodLevel()];
 			const auto& Sections = LOD.RenderSections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
@@ -855,13 +784,13 @@ void UGFurComponent::UpdateMasterBoneMap()
 {
 	MasterBoneMap.Empty();
 
-	if (SkinGrowMesh && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh)
+	if (SkeletalGrowMesh && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh)
 	{
 		USkeletalMesh* ParentMesh = MasterPoseComponent->SkeletalMesh;
 
-		MasterBoneMap.Empty(SkinGrowMesh->RefSkeleton.GetNum());
-		MasterBoneMap.AddUninitialized(SkinGrowMesh->RefSkeleton.GetNum());
-		if (SkinGrowMesh == ParentMesh)
+		MasterBoneMap.Empty(SkeletalGrowMesh->RefSkeleton.GetNum());
+		MasterBoneMap.AddUninitialized(SkeletalGrowMesh->RefSkeleton.GetNum());
+		if (SkeletalGrowMesh == ParentMesh)
 		{
 			// if the meshes are the same, the indices must match exactly so we don't need to look them up
 			for (int32 i = 0; i < MasterBoneMap.Num(); i++)
@@ -873,7 +802,7 @@ void UGFurComponent::UpdateMasterBoneMap()
 		{
 			for (int32 i = 0; i<MasterBoneMap.Num(); i++)
 			{
-				FName BoneName = SkinGrowMesh->RefSkeleton.GetBoneName(i);
+				FName BoneName = SkeletalGrowMesh->RefSkeleton.GetBoneName(i);
 				MasterBoneMap[i] = ParentMesh->RefSkeleton.FindBoneIndex(BoneName);
 			}
 		}

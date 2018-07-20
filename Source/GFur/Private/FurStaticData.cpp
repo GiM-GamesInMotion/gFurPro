@@ -349,8 +349,8 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 
 	VertexBuffer = new FFurStaticVertexBuffer();
 
-//	if (InFurSplines == nullptr && InGuideMeshes.Num() > 0)TODO
-//		InFurSplines = GenerateSplines(InStaticMesh, InLod, InGuideMeshes);
+	if (InFurSplines == nullptr && InGuideMeshes.Num() > 0)
+		InFurSplines = GenerateSplines(InStaticMesh, InLod, InGuideMeshes);
 
 	auto* SkeletalMeshResource = StaticMesh->RenderData.Get();
 	check(SkeletalMeshResource);
@@ -434,15 +434,6 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 			CurrentMinFurLength = MinFurLength;
 		CurrentMaxFurLength = MaxLen * InFurLength;
 	}
-
-
-
-
-
-
-
-
-
 
 	const uint32 NumVertices = SourcePositions.GetNumVertices();
 	if (InFurSplines)
@@ -593,6 +584,7 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 		const auto& ModelSection = LodModel.Sections[SectionIndex];
 		FSection& FurSection = Sections[Sections.AddUninitialized()];
 		new (&FurSection) FSection();
+		FurSection.MaterialIndex = ModelSection.MaterialIndex;
 		FurSection.MinVertexIndex = 0;
 		FurSection.MaxVertexIndex = VertexBuffer->Vertices.Num() - 1;
 		FurSection.BaseIndex = IndexBuffer.Indices.Num();
@@ -644,12 +636,12 @@ UFurSplines* FFurStaticData::GenerateSplines(UStaticMesh* InStaticMesh, int InLo
 {
 	UFurSplines* Splines = NewObject<UFurSplines>();
 
-	auto* SkeletalMeshResource = InStaticMesh->RenderData.Get();
-	check(SkeletalMeshResource);
+	auto* StaticMeshResource = InStaticMesh->RenderData.Get();
+	check(StaticMeshResource);
 
-	if (InLod >= SkeletalMeshResource->LODResources.Num())
-		InLod = SkeletalMeshResource->LODResources.Num() - 1;
-	const auto& LodModel = SkeletalMeshResource->LODResources[InLod];
+	if (InLod >= StaticMeshResource->LODResources.Num())
+		InLod = StaticMeshResource->LODResources.Num() - 1;
+	const auto& LodModel = StaticMeshResource->LODResources[InLod];
 
 	const auto& SourcePositions = LodModel.VertexBuffers.PositionVertexBuffer;
 
@@ -671,9 +663,9 @@ UFurSplines* FFurStaticData::GenerateSplines(UStaticMesh* InStaticMesh, int InLo
 	{
 		if (GuideMesh)
 		{
-			auto* SkeletalMeshResource2 = GuideMesh->RenderData.Get();
-			check(SkeletalMeshResource2);
-			const auto& LodModel2 = SkeletalMeshResource2->LODResources[InLod];
+			auto* StaticMeshResource2 = GuideMesh->RenderData.Get();
+			check(StaticMeshResource2);
+			const auto& LodModel2 = StaticMeshResource2->LODResources[InLod];
 			const auto& SourcePositions2 = LodModel2.VertexBuffers.PositionVertexBuffer;
 			int c = FMath::Min(SourcePositions2.GetNumVertices(), VertexCount);
 			for (int i = 0; i < c; i++)

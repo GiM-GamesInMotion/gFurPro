@@ -41,10 +41,10 @@ public:
 	* Mesh used to generate shells. Usually this mesh will have the polys of eyes removed, interior of the mouth or claws.
 	* It's necessary for the mesh to be skinned exactly like the main mesh, otherwise different artifacts could show up.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
-	class USkeletalMesh* SkinGrowMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Skeletal Mesh")
+	class USkeletalMesh* SkeletalGrowMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Static Mesh")
 	class UStaticMesh* StaticGrowMesh;
 
 	/**
@@ -53,10 +53,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
 	class UFurSplines* FurSplines;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
-	TArray<class USkeletalMesh*> SkinGuideMeshes;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Skeletal Mesh")
+	TArray<class USkeletalMesh*> SkeletalGuideMeshes;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Static Mesh")
 	TArray<class UStaticMesh*> StaticGuideMeshes;
 
 	/**
@@ -194,7 +194,7 @@ private:
 	FVector StaticLinearVelocity;
 	FVector StaticAngularVelocity;
 	FMatrix StaticTransformation;
-	bool StaticOldPositionValid = false;//TODO
+	bool StaticOldPositionValid = false;
 
 	float LastDeltaTime;
 

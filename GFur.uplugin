@@ -10,7 +10,7 @@
 	"DocsURL": "www.gim.studio/gfur",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/297af0966aaa4c379df88b4f1563e3c5",
 	"SupportURL": "gfur@gim-gamesinmotion.com",
-	"EngineVersion": "4.19.0",
+	"EngineVersion": "4.20.0",
 	"CanContainContent": true,
 	"Installed": true,
 	"Modules": [

@@ -495,7 +495,7 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 
 					FVector Spline = InFurSplines->Vertices[Beginning + Count - 1] - InFurSplines->Vertices[Beginning];
 					float SplineLength = Spline.Size() * InFurLength;
-					FVector TangentZ = Vert.TangentZ;
+					FVector TangentZ = Vert.TangentZ.ToFVector();
 					FVector Normal = TangentZ;
 					Normal.Y = -Normal.Y;
 					if (FVector::DotProduct(Normal, Spline) <= 0.0f)
@@ -556,7 +556,7 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 				Vert.UVs[1].Y = NonLinearFactor;
 				Vert.UVs[2].X = LinearFactor;
 				Vert.UVs[2].Y = 1.0f;
-				FVector TangentZ = Vert.TangentZ;
+				FVector TangentZ = Vert.TangentZ.ToFVector();
 				Vert.FurOffset = TangentZ * (NonLinearFactor * InFurLength + FMath::RandRange(-InNoiseStrength * Derivative, InNoiseStrength * Derivative));
 
 				if (HairLengthForceUniformity > 0)

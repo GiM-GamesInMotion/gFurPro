@@ -13,7 +13,7 @@ public class GFurEditor : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
-        PublicIncludePaths.AddRange(new string[] { "GFurEditor/Public" });
+        PublicIncludePaths.Add(ModuleDirectory + "/Public");
 
         PrivateIncludePaths.Add(Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Fbxsdk/include")));
         if (Target.Platform == UnrealTargetPlatform.Win32)
@@ -27,7 +27,7 @@ public class GFurEditor : ModuleRules
             PublicDelayLoadDLLs.Add(Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Fbxsdk/lib/x64/libfbxsdk.dll")));
         }
 
-        PrivateIncludePaths.AddRange(new string[] { "GFurEditor/Private" });
+        PrivateIncludePaths.Add(ModuleDirectory + "/Private");
 
         PublicDependencyModuleNames.Add("GFur");
         PublicDependencyModuleNames.Add("AssetTools");

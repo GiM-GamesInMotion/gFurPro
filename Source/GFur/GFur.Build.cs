@@ -8,20 +8,10 @@ public class GFur : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicIncludePaths.AddRange(
-			new string[] {
-				"GFur/Public"
-				// ... add public include paths required here ...
-			}
-			);
-				
-		
-		PrivateIncludePaths.AddRange(
-			new string[] {
-				"GFur/Private",
-				// ... add other private include paths required here ...
-			}
-			);
+        PublicIncludePaths.Add(ModuleDirectory + "/Public");
+
+
+        PrivateIncludePaths.Add(ModuleDirectory + "/Private");
 			
 		
 		PublicDependencyModuleNames.AddRange(

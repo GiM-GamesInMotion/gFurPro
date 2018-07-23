@@ -2,8 +2,7 @@
 
 #pragma once
 
-#include "Engine.h"
-#include "ModuleManager.h"
+#include "Modules/ModuleManager.h"
 
 class FGFurModule : public IModuleInterface
 {

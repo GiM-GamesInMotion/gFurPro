@@ -2,6 +2,8 @@
 #pragma once
 
 #include "Runtime/RenderCore/Public/RenderResource.h"
+#include "VertexFactory.h"
+#include "BoneIndices.h"
 #include "FurSplines.h"
 
 /** Index Buffer */

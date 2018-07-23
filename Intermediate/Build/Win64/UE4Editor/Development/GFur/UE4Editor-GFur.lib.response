@@ -1,0 +1,13 @@
+/NOLOGO
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/DEF
+/NAME:"UE4Editor-GFur.dll"
+/IGNORE:4221
+/NODEFAULTLIB
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Intermediate\Build\Win64\MyProjectEditor\Development\Engine\SharedPCH.Engine.h.obj"
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Intermediate\Build\Win64\UE4Editor\Development\GFur\Module.GFur.cpp.obj"
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Intermediate\Build\Win64\UE4Editor\Development\GFur\Module.GFur.gen.cpp.obj"
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Intermediate\Build\Win64\UE4Editor\Development\GFur\PCLaunch.rc.res"
+/OUT:"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Intermediate\Build\Win64\UE4Editor\Development\GFur\UE4Editor-GFur.lib"

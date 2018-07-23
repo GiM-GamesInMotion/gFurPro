@@ -1,0 +1,76 @@
+/MANIFEST:NO
+/NOLOGO
+/DEBUG
+/errorReport:prompt
+/MACHINE:x64
+/SUBSYSTEM:WINDOWS
+/FIXED:No
+/NXCOMPAT
+/STACK:5000000
+/DELAY:UNLOAD
+/DLL
+/PDBALTPATH:%_PDB%
+/OPT:NOREF
+/OPT:NOICF
+/INCREMENTAL:NO
+/ignore:4199
+/ignore:4099
+/DELAYLOAD:"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Fbxsdk\lib\x64\libfbxsdk.dll"
+/DELAYLOAD:"d3d12.dll"
+/LIBPATH:"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.14.26428\lib\x64"
+/LIBPATH:"C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\lib\um\x64"
+/LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.16299.0\ucrt\x64"
+/LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.16299.0\um\x64"
+/NODEFAULTLIB:"LIBCMT"
+/NODEFAULTLIB:"LIBCPMT"
+/NODEFAULTLIB:"LIBCMTD"
+/NODEFAULTLIB:"LIBCPMTD"
+/NODEFAULTLIB:"MSVCRTD"
+/NODEFAULTLIB:"MSVCPRTD"
+/NODEFAULTLIB:"LIBC"
+/NODEFAULTLIB:"LIBCP"
+/NODEFAULTLIB:"LIBCD"
+/NODEFAULTLIB:"LIBCPD"
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Intermediate\Build\Win64\MyProjectEditor\Development\UnrealEd\SharedPCH.UnrealEd.h.obj"
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Intermediate\Build\Win64\UE4Editor\Development\GFurEditor\Module.GFurEditor.cpp.obj"
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Intermediate\Build\Win64\UE4Editor\Development\GFurEditor\Module.GFurEditor.gen.cpp.obj"
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Intermediate\Build\Win64\UE4Editor\Development\GFurEditor\PCLaunch.rc.res"
+"delayimp.lib"
+"wininet.lib"
+"rpcrt4.lib"
+"ws2_32.lib"
+"dbghelp.lib"
+"comctl32.lib"
+"Winmm.lib"
+"kernel32.lib"
+"user32.lib"
+"gdi32.lib"
+"winspool.lib"
+"comdlg32.lib"
+"advapi32.lib"
+"shell32.lib"
+"ole32.lib"
+"oleaut32.lib"
+"uuid.lib"
+"odbc32.lib"
+"odbccp32.lib"
+"netapi32.lib"
+"iphlpapi.lib"
+"setupapi.lib"
+"dwmapi.lib"
+"imm32.lib"
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Fbxsdk\lib\x64\libfbxsdk-md.lib"
+"D:\Epic\UE_4.20\Engine\Intermediate\Build\Win64\UE4Editor\Development\Core\UE4Editor-Core.lib"
+"D:\Epic\UE_4.20\Engine\Intermediate\Build\Win64\UE4Editor\Development\CoreUObject\UE4Editor-CoreUObject.lib"
+"D:\Epic\UE_4.20\Engine\Intermediate\Build\Win64\UE4Editor\Development\Engine\UE4Editor-Engine.lib"
+"D:\Epic\UE_4.20\Engine\Intermediate\Build\Win64\UE4Editor\Development\InputCore\UE4Editor-InputCore.lib"
+"D:\Epic\UE_4.20\Engine\Intermediate\Build\Win64\UE4Editor\Development\RHI\UE4Editor-RHI.lib"
+"D:\Epic\UE_4.20\Engine\Intermediate\Build\Win64\UE4Editor\Development\RenderCore\UE4Editor-RenderCore.lib"
+"D:\Epic\UE_4.20\Engine\Intermediate\Build\Win64\UE4Editor\Development\ShaderCore\UE4Editor-ShaderCore.lib"
+"D:\Epic\UE_4.20\Engine\Intermediate\Build\Win64\UE4Editor\Development\UnrealEd\UE4Editor-UnrealEd.lib"
+"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Intermediate\Build\Win64\UE4Editor\Development\GFur\UE4Editor-GFur.lib"
+"D:\Epic\UE_4.20\Engine\Intermediate\Build\Win64\UE4Editor\Development\AssetTools\UE4Editor-AssetTools.lib"
+/OUT:"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Binaries\Win64\UE4Editor-GFurEditor.dll"
+/IMPLIB:"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Intermediate\Build\Win64\UE4Editor\Development\GFurEditor\UE4Editor-GFurEditor.suppressed.lib"
+/PDB:"C:\Work\furgim\GFurDevProject 4.20\MyProject\Plugins\gFur\Binaries\Win64\UE4Editor-GFurEditor.pdb"
+/ignore:4078

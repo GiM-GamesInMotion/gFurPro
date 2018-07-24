@@ -566,8 +566,8 @@ void UGFurComponent::updateFur()
 		LinearOffset -= d;
 
 		FVector force;
-		FVector newOffset = (LinearVelocity * sinf(x) + (LinearOffset - FurForceFinal) * cosf(x)) * DampingFactor + FurForceFinal;
-		FVector newVelocity = (LinearVelocity * cosf(x) - (LinearOffset - FurForceFinal) * sinf(x)) * DampingFactor;
+		FVector newOffset = (LinearVelocity * FMath::Sin(x) + (LinearOffset - FurForceFinal) * FMath::Cos(x)) * DampingFactor + FurForceFinal;
+		FVector newVelocity = (LinearVelocity * FMath::Cos(x) - (LinearOffset - FurForceFinal) * FMath::Sin(x)) * DampingFactor;
 		check(newOffset.X == newOffset.X && newOffset.Y == newOffset.Y && newOffset.Z == newOffset.Z);
 		check(newVelocity.X == newVelocity.X && newVelocity.Y == newVelocity.Y && newVelocity.Z == newVelocity.Z);
 		LinearOffset = newOffset;
@@ -587,8 +587,8 @@ void UGFurComponent::updateFur()
 			angle -= 2 * PI;
 		d *= -angle * ForceFactor;
 		AngularOffset -= d;
-		newOffset = (AngularVelocity * sinf(x) + AngularOffset * cosf(x)) * DampingFactor;
-		newVelocity = (AngularVelocity * cosf(x) - AngularOffset * sinf(x)) * DampingFactor;
+		newOffset = (AngularVelocity * FMath::Sin(x) + AngularOffset * FMath::Cos(x)) * DampingFactor;
+		newVelocity = (AngularVelocity * FMath::Cos(x) - AngularOffset * FMath::Sin(x)) * DampingFactor;
 		AngularOffset = newOffset;
 		AngularVelocity = newVelocity;
 		if (AngularOffset.Size() > MaxTorque)

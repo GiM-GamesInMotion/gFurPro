@@ -409,11 +409,11 @@ public:
 		ShaderData.ReleaseBoneData();
 	}
 
-	void UpdateSkeletonShaderData(float FurOffsetPower, const TArray<FMatrix>& ReferenceToLocal, const TArray<FVector>& LinearOffsets, const TArray<FVector>& AngularOffsets,
-		const TArray<FMatrix>& Transformations, const TArray<FBoneIndexType>& BoneMap, uint32 FrameNumber, ERHIFeatureLevel::Type FeatureLevel) override
+	void UpdateSkeletonShaderData(float InFurOffsetPower, const TArray<FMatrix>& InReferenceToLocal, const TArray<FVector>& InLinearOffsets, const TArray<FVector>& InAngularOffsets,
+		const TArray<FMatrix>& InTransformations, const TArray<FBoneIndexType>& InBoneMap, uint32 InFrameNumber, ERHIFeatureLevel::Type InFeatureLevel) override
 	{
-		ShaderData.FurOffsetPower = FurOffsetPower;
-		ShaderData.UpdateBoneData(ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations, BoneMap, FrameNumber, FeatureLevel);
+		ShaderData.FurOffsetPower = InFurOffsetPower;
+		ShaderData.UpdateBoneData(InReferenceToLocal, InLinearOffsets, InAngularOffsets, InTransformations, InBoneMap, InFrameNumber, InFeatureLevel);
 	}
 
 	FDataType Data;
@@ -859,7 +859,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 
 						FVector Spline = InFurSplines->Vertices[Beginning + Count - 1] - InFurSplines->Vertices[Beginning];
 						float SplineLength = Spline.Size() * InFurLength;
-						FVector TangentZ = Vert.TangentZ.ToFVector();
+						FVector TangentZ = Vert.TangentZ;
 						FVector Normal = TangentZ;
 						Normal.Y = -Normal.Y;
 						if (FVector::DotProduct(Normal, Spline) <= 0.0f)
@@ -920,7 +920,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 					Vert.UVs[1].Y = NonLinearFactor;
 					Vert.UVs[2].X = LinearFactor;
 					Vert.UVs[2].Y = 1.0f;
-					FVector TangentZ = Vert.TangentZ.ToFVector();
+					FVector TangentZ = Vert.TangentZ;
 					Vert.FurOffset = TangentZ * (NonLinearFactor * InFurLength + FMath::RandRange(-InNoiseStrength * Derivative, InNoiseStrength * Derivative));
 
 					if (HairLengthForceUniformity > 0)

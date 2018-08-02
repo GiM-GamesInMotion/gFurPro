@@ -521,9 +521,9 @@ FBoxSphereBounds UGFurComponent::CalcBounds(const FTransform& LocalToWorld) cons
 	}
 	else if (StaticGrowMesh)
 	{
-		FBoxSphereBounds Bounds = StaticGrowMesh->GetBounds();
-		Bounds.ExpandBy(FMath::Max(FurLength, 0.001f));
-		return Bounds.TransformBy(LocalToWorld);
+		FBoxSphereBounds MeshBounds = StaticGrowMesh->GetBounds();
+		MeshBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
+		return MeshBounds.TransformBy(LocalToWorld);
 	}
 	FBoxSphereBounds DummyBounds = FBoxSphereBounds(FVector(0, 0, 0), FVector(0, 0, 0), 0);
 	DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));

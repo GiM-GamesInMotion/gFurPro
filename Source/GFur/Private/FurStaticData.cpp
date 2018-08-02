@@ -265,20 +265,20 @@ public:
 		InitDeclaration(Elements);
 	}
 
-	virtual void UpdateStaticShaderData(float FurOffsetPower, const FVector& LinearOffset, const FVector& AngularOffset,
-		const FVector& Position, uint32 FrameNumber, ERHIFeatureLevel::Type FeatureLevel) override
+	virtual void UpdateStaticShaderData(float InFurOffsetPower, const FVector& InLinearOffset, const FVector& InAngularOffset,
+		const FVector& InPosition, uint32 InFrameNumber, ERHIFeatureLevel::Type InFeatureLevel) override
 	{
-		ShaderData.GoToNextFrame(FrameNumber);
+		ShaderData.GoToNextFrame(InFrameNumber);
 
-		ShaderData.FurOffsetPower = FurOffsetPower;
+		ShaderData.FurOffsetPower = InFurOffsetPower;
 
 		ShaderData.PreviousFurLinearOffset = ShaderData.FurLinearOffset;
 		ShaderData.PreviousFurAngularOffset = ShaderData.FurAngularOffset;
 		ShaderData.PreviousFurPosition = ShaderData.FurPosition;
 		
-		ShaderData.FurLinearOffset = LinearOffset;
-		ShaderData.FurAngularOffset = AngularOffset;
-		ShaderData.FurPosition = Position;
+		ShaderData.FurLinearOffset = InLinearOffset;
+		ShaderData.FurAngularOffset = InAngularOffset;
+		ShaderData.FurPosition = InPosition;
 	}
 
 	FDataType Data;
@@ -495,7 +495,7 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 
 					FVector Spline = InFurSplines->Vertices[Beginning + Count - 1] - InFurSplines->Vertices[Beginning];
 					float SplineLength = Spline.Size() * InFurLength;
-					FVector TangentZ = Vert.TangentZ.ToFVector();
+					FVector TangentZ = Vert.TangentZ;
 					FVector Normal = TangentZ;
 					Normal.Y = -Normal.Y;
 					if (FVector::DotProduct(Normal, Spline) <= 0.0f)
@@ -556,7 +556,7 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 				Vert.UVs[1].Y = NonLinearFactor;
 				Vert.UVs[2].X = LinearFactor;
 				Vert.UVs[2].Y = 1.0f;
-				FVector TangentZ = Vert.TangentZ.ToFVector();
+				FVector TangentZ = Vert.TangentZ;
 				Vert.FurOffset = TangentZ * (NonLinearFactor * InFurLength + FMath::RandRange(-InNoiseStrength * Derivative, InNoiseStrength * Derivative));
 
 				if (HairLengthForceUniformity > 0)

@@ -4,7 +4,7 @@
 	DO NOT modify this manually! Edit the corresponding .h files instead!
 ===========================================================================*/
 
-#include "UObject/GeneratedCppIncludes.h"
+#include "GeneratedCppIncludes.h"
 #ifdef _MSC_VER
 #pragma warning (push)
 #pragma warning (disable : 4883)
@@ -19,7 +19,7 @@ void EmptyLinkFunctionForGeneratedCodeGFurEditor_init() {}
 			static const UE4CodeGen_Private::FPackageParams PackageParams = {
 				"/Script/GFurEditor",
 				PKG_CompiledIn | 0x00000040,
-				0xA7F78B19,
+				0x8729ECDD,
 				0xD49D1E6C,
 				nullptr, 0,
 				METADATA_PARAMS(nullptr, 0)

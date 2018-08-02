@@ -24,10 +24,11 @@ public:
 	{
 	}
 
-	virtual void UpdateSkeletonShaderData(float FurOffsetPower, const TArray<FMatrix>& ReferenceToLocal, const TArray<FVector>& LinearOffsets, const TArray<FVector>& AngularOffsets,
-		const TArray<FMatrix>& Transformations, const TArray<FBoneIndexType>& BoneMap, uint32 FrameNumber, ERHIFeatureLevel::Type FeatureLevel) {}
-	virtual void UpdateStaticShaderData(float FurOffsetPower, const FVector& LinearOffset, const FVector& AngularOffset,
-		const FVector& Position, uint32 FrameNumber, ERHIFeatureLevel::Type FeatureLevel) {}
+	virtual void UpdateSkeletonShaderData(float InFurOffsetPower, const TArray<FMatrix>& InReferenceToLocal, const TArray<FVector>& InLinearOffsets,
+		const TArray<FVector>& InAngularOffsets, const TArray<FMatrix>& InTransformations, const TArray<FBoneIndexType>& InBoneMap, uint32 InFrameNumber,
+		ERHIFeatureLevel::Type InFeatureLevel) {}
+	virtual void UpdateStaticShaderData(float InFurOffsetPower, const FVector& InLinearOffset, const FVector& InAngularOffset,
+		const FVector& InPosition, uint32 InFrameNumber, ERHIFeatureLevel::Type InFeatureLevel) {}
 };
 
 /** Fur Data */

@@ -409,11 +409,11 @@ public:
 		ShaderData.ReleaseBoneData();
 	}
 
-	void UpdateSkeletonShaderData(float FurOffsetPower, const TArray<FMatrix>& ReferenceToLocal, const TArray<FVector>& LinearOffsets, const TArray<FVector>& AngularOffsets,
-		const TArray<FMatrix>& Transformations, const TArray<FBoneIndexType>& BoneMap, uint32 FrameNumber, ERHIFeatureLevel::Type FeatureLevel) override
+	void UpdateSkeletonShaderData(float InFurOffsetPower, const TArray<FMatrix>& InReferenceToLocal, const TArray<FVector>& InLinearOffsets, const TArray<FVector>& InAngularOffsets,
+		const TArray<FMatrix>& InTransformations, const TArray<FBoneIndexType>& InBoneMap, uint32 InFrameNumber, ERHIFeatureLevel::Type InFeatureLevel) override
 	{
-		ShaderData.FurOffsetPower = FurOffsetPower;
-		ShaderData.UpdateBoneData(ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations, BoneMap, FrameNumber, FeatureLevel);
+		ShaderData.FurOffsetPower = InFurOffsetPower;
+		ShaderData.UpdateBoneData(InReferenceToLocal, InLinearOffsets, InAngularOffsets, InTransformations, InBoneMap, InFrameNumber, InFeatureLevel);
 	}
 
 	FDataType Data;

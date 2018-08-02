@@ -265,20 +265,20 @@ public:
 		InitDeclaration(Elements);
 	}
 
-	virtual void UpdateStaticShaderData(float FurOffsetPower, const FVector& LinearOffset, const FVector& AngularOffset,
-		const FVector& Position, uint32 FrameNumber, ERHIFeatureLevel::Type FeatureLevel) override
+	virtual void UpdateStaticShaderData(float InFurOffsetPower, const FVector& InLinearOffset, const FVector& InAngularOffset,
+		const FVector& InPosition, uint32 InFrameNumber, ERHIFeatureLevel::Type InFeatureLevel) override
 	{
-		ShaderData.GoToNextFrame(FrameNumber);
+		ShaderData.GoToNextFrame(InFrameNumber);
 
-		ShaderData.FurOffsetPower = FurOffsetPower;
+		ShaderData.FurOffsetPower = InFurOffsetPower;
 
 		ShaderData.PreviousFurLinearOffset = ShaderData.FurLinearOffset;
 		ShaderData.PreviousFurAngularOffset = ShaderData.FurAngularOffset;
 		ShaderData.PreviousFurPosition = ShaderData.FurPosition;
 		
-		ShaderData.FurLinearOffset = LinearOffset;
-		ShaderData.FurAngularOffset = AngularOffset;
-		ShaderData.FurPosition = Position;
+		ShaderData.FurLinearOffset = InLinearOffset;
+		ShaderData.FurAngularOffset = InAngularOffset;
+		ShaderData.FurPosition = InPosition;
 	}
 
 	FDataType Data;

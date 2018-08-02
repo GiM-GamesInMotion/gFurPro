@@ -1,4 +1,4 @@
-// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2017 Epic Games, Inc. All Rights Reserved.
 /*===========================================================================
 	Generated code exported from UnrealHeaderTool.
 	DO NOT modify this manually! Edit the corresponding .h files instead!
@@ -333,7 +333,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 3788916711);
+	IMPLEMENT_CLASS(UGFurComponent, 3953926435);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UGFurComponent(Z_Construct_UClass_UGFurComponent, &UGFurComponent::StaticClass, TEXT("/Script/GFur"), TEXT("UGFurComponent"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UGFurComponent);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

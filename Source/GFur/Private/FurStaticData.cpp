@@ -352,29 +352,45 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 	if (InFurSplines == nullptr && InGuideMeshes.Num() > 0)
 		InFurSplines = GenerateSplines(InStaticMesh, InLod, InGuideMeshes);
 
-	auto* SkeletalMeshResource = StaticMesh->RenderData.Get();
-	check(SkeletalMeshResource);
+	auto* StaticMeshResource = StaticMesh->RenderData.Get();
+	check(StaticMeshResource);
 
+	TArray<FStaticVertex> Vertices;
 	TArray<uint32> Indices;
 	TArray<int32> SplineMap;
 	TArray<uint32> VertexSub;
 
-	const auto& LodModel = SkeletalMeshResource->LODResources[InLod];
-	const auto& SourcePositions = LodModel.VertexBuffers.PositionVertexBuffer;
-	const auto& SourceVertices = LodModel.VertexBuffers.StaticMeshVertexBuffer;
-	const auto& SourceColors = LodModel.VertexBuffers.ColorVertexBuffer;
+	const auto& LodModel = StaticMeshResource->LODResources[InLod];
+	const uint32 NumVertices = LodModel.PositionVertexBuffer.GetNumVertices();
+	Vertices.AddUninitialized(NumVertices);
+	uint32 NumTexCoords = FMath::Min(LodModel.VertexBuffer.GetNumTexCoords(), (uint32)MAX_TEXCOORDS);
+	for (uint32 i = 0; i < NumVertices; i++)
+	{
+		auto& Vertex = Vertices[i];
+		Vertex.Position = LodModel.PositionVertexBuffer.VertexPosition(i);
+		Vertex.TangentX = LodModel.VertexBuffer.VertexTangentX(i);
+		Vertex.TangentY = LodModel.VertexBuffer.VertexTangentY(i);
+		Vertex.TangentZ = LodModel.VertexBuffer.VertexTangentZ(i);
+		for (uint32 j = 0; j < NumTexCoords; j++)
+			Vertex.UVs[j] = LodModel.VertexBuffer.GetVertexUV(i, j);
+	}
+	for (uint32 j = NumTexCoords; j < MAX_TEXCOORDS; j++)
+	{
+		for (uint32 i = 0; i < NumVertices; i++)
+			Vertices[i].UVs[j] = FVector2D(0, 0);
+	}
+	if (LodModel.ColorVertexBuffer.GetNumVertices() > 0)
+	{
+		for (uint32 i = 0; i < NumVertices; i++)
+			Vertices[i].Color = LodModel.ColorVertexBuffer.VertexColor(i);
+	}
+
 	LodModel.IndexBuffer.GetCopy(Indices);
 
-	check(SourcePositions.GetNumVertices() == SourceVertices.GetNumVertices());
-
-	uint32 NumTexCoords = SourceVertices.GetNumTexCoords();
-	bool hasVertexColor = SourceColors.GetNumVertices() > 0;
-	check(!hasVertexColor || SourcePositions.GetNumVertices() == SourceColors.GetNumVertices());
-
 	float MaxDistSq = 0;
-	for (uint32 i = 0; i < SourcePositions.GetNumVertices(); i++)
+	for (uint32 i = 0; i < NumVertices; i++)
 	{
-		const auto& Position = SourcePositions.VertexPosition(i);
+		const auto& Position = Vertices[i].Position;
 		float d = Position.SizeSquared();
 		if (d > MaxDistSq)
 			MaxDistSq = d;
@@ -386,17 +402,18 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 	{
 		float MinLen = FLT_MAX;
 		float MaxLen = -FLT_MAX;
-		SplineMap.Reserve(SourcePositions.GetNumVertices());
-		for (uint32 i = 0; i < SourcePositions.GetNumVertices(); i++)
+		SplineMap.Reserve(NumVertices);
+		for (uint32 i = 0; i < NumVertices; i++)
 		{
+			const FStaticVertex& Vert = Vertices[i];
+
 			int ClosestSplineIndex = -1;
 			float ClosestDist = FLT_MAX;
 			for (int si = 0; si < InFurSplines->Index.Num(); si++)
 			{
 				FVector p = InFurSplines->Vertices[InFurSplines->Index[si]];
 				p.Y = -p.Y;
-				const auto& Position = SourcePositions.VertexPosition(i);
-				float d = FVector::DistSquared(p, Position);
+				float d = FVector::DistSquared(p, Vert.Position);
 				if (d < ClosestDist)
 				{
 					ClosestDist = d;
@@ -408,7 +425,7 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 				uint32 idx = InFurSplines->Index[ClosestSplineIndex];
 				FVector p1 = InFurSplines->Vertices[idx];
 				FVector p2 = InFurSplines->Vertices[idx + InFurSplines->Count[ClosestSplineIndex] - 1];
-				FVector normal = SourceVertices.VertexTangentZ(i);
+				FVector normal = Vert.TangentZ;
 				normal.Y = -normal.Y;
 				if (FVector::DotProduct(p2 - p1, normal) > 0.0f || MinFurLength > 0.0f)
 				{
@@ -435,7 +452,6 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 		CurrentMaxFurLength = MaxLen * InFurLength;
 	}
 
-	const uint32 NumVertices = SourcePositions.GetNumVertices();
 	if (InFurSplines)
 	{
 		VertexSub.Reset(NumVertices);
@@ -470,15 +486,7 @@ FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines
 		for (uint32 i = 0; i < NumVertices; ++i)
 		{
 			FFurStaticVertex Vert;
-			uint32 SourceVertexIndex = i;
-			Vert.Position = SourcePositions.VertexPosition(SourceVertexIndex);
-			Vert.TangentX = SourceVertices.VertexTangentX(SourceVertexIndex);
-			Vert.TangentY = SourceVertices.VertexTangentY(SourceVertexIndex);
-			Vert.TangentZ = SourceVertices.VertexTangentZ(SourceVertexIndex);
-			for (uint32 tc = 0; tc < NumTexCoords; tc++)
-				Vert.UVs[tc] = SourceVertices.GetVertexUV(SourceVertexIndex, tc);
-			Vert.Color = hasVertexColor ? SourceColors.VertexColor(SourceVertexIndex) : FColor(255, 255, 255, 255);
-			uint32 ib = 0;
+			(FStaticVertex&)Vert = Vertices[i];
 
 			if (InFurSplines)
 			{
@@ -643,7 +651,7 @@ UFurSplines* FFurStaticData::GenerateSplines(UStaticMesh* InStaticMesh, int InLo
 		InLod = StaticMeshResource->LODResources.Num() - 1;
 	const auto& LodModel = StaticMeshResource->LODResources[InLod];
 
-	const auto& SourcePositions = LodModel.VertexBuffers.PositionVertexBuffer;
+	const auto& SourcePositions = LodModel.PositionVertexBuffer;
 
 	uint32 VertexCount = SourcePositions.GetNumVertices();
 	int SegCount = InGuideMeshes.Num() + 1;
@@ -666,7 +674,7 @@ UFurSplines* FFurStaticData::GenerateSplines(UStaticMesh* InStaticMesh, int InLo
 			auto* StaticMeshResource2 = GuideMesh->RenderData.Get();
 			check(StaticMeshResource2);
 			const auto& LodModel2 = StaticMeshResource2->LODResources[InLod];
-			const auto& SourcePositions2 = LodModel2.VertexBuffers.PositionVertexBuffer;
+			const auto& SourcePositions2 = LodModel2.PositionVertexBuffer;
 			int c = FMath::Min(SourcePositions2.GetNumVertices(), VertexCount);
 			for (int i = 0; i < c; i++)
 				Splines->Vertices[i * SegCount + k] = SourcePositions2.VertexPosition(i);

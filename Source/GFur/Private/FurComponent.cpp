@@ -8,7 +8,6 @@
 #include "Runtime/Engine/Classes/PhysicsEngine/BodySetup.h"
 #include "Runtime/Engine/Public/DynamicMeshBuilder.h"
 #include "Runtime/Engine/Public/GPUSkinVertexFactory.h"
-#include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
 #include "Runtime/Engine/Classes/Materials/Material.h"
 #include "Runtime/Engine/Classes/Materials/MaterialInstanceDynamic.h"
 #include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
@@ -216,12 +215,6 @@ public:
 
 	int GetCurrentLodLevel() const { return CurrentLodLevel; }
 
-	SIZE_T GetTypeHash(void) const override
-	{
-		static size_t UniquePointer;
-		return reinterpret_cast<size_t>(&UniquePointer);
-	}
-
 private:
 	UGFurComponent* FurComponent;
 	TArray<FFurData*> FurData;
@@ -424,7 +417,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			TArray<FFurData*> Array;
 			Array.Add(FFurSkinData::CreateFurData(LayerCount, 0, this));
 			for (FFurLod& lod : LODs)
-				Array.Add(FFurSkinData::CreateFurData(lod.LayerCount, FMath::Min(SkeletalGrowMesh->GetResourceForRendering()->LODRenderData.Num() - 1, lod.Lod), this));
+				Array.Add(FFurSkinData::CreateFurData(lod.LayerCount, FMath::Min(SkeletalGrowMesh->GetImportedResource()->LODModels.Num() - 1, lod.Lod), this));
 
 			FurData = Array;
 			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, CastShadow, GetWorld()->FeatureLevel);
@@ -521,9 +514,9 @@ FBoxSphereBounds UGFurComponent::CalcBounds(const FTransform& LocalToWorld) cons
 	}
 	else if (StaticGrowMesh)
 	{
-		FBoxSphereBounds MeshBounds = StaticGrowMesh->GetBounds();
-		MeshBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
-		return MeshBounds.TransformBy(LocalToWorld);
+		FBoxSphereBounds Bounds = StaticGrowMesh->GetBounds();
+		Bounds.ExpandBy(FMath::Max(FurLength, 0.001f));
+		return Bounds.TransformBy(LocalToWorld);
 	}
 	FBoxSphereBounds DummyBounds = FBoxSphereBounds(FVector(0, 0, 0), FVector(0, 0, 0), 0);
 	DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
@@ -602,7 +595,7 @@ void UGFurComponent::updateFur()
 		const USkeletalMesh* const ThisMesh = SkeletalGrowMesh;
 		const USkinnedMeshComponent* const MasterComp = MasterPoseComponent.Get();
 		const USkeletalMesh* const MasterCompMesh = MasterComp ? MasterComp->SkeletalMesh : nullptr;
-		const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentLodLevel()];
+		const auto& LOD = SkeletalGrowMesh->GetImportedResource()->LODModels[Scene->GetCurrentLodLevel()];
 
 		FMatrix TempMatrices[256];
 		bool ValidTempMatrices[256];
@@ -764,8 +757,8 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 
 		if (SkeletalGrowMesh)
 		{
-			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[FurProxy->GetCurrentLodLevel()];
-			const auto& Sections = LOD.RenderSections;
+			const auto& LOD = SkeletalGrowMesh->GetImportedResource()->LODModels[FurProxy->GetCurrentLodLevel()];
+			const auto& Sections = LOD.Sections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
 				FurProxy->GetVertexFactory(SectionIdx)->UpdateSkeletonShaderData(ForceDistribution, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,

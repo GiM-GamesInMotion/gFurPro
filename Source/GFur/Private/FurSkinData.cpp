@@ -1,31 +1,10 @@
 
 #include "FurSkinData.h"
-#include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
 #include "ShaderParameterUtils.h"
 #include "FurComponent.h"
 
 static TArray< struct FFurSkinData* > StaticFurSkinData;
 static FCriticalSection  StaticFurSkinDataCS;
-
-/** Soft Skin Vertex */
-struct FSoftSkinVertex
-{
-	FVector			Position;
-
-	// Tangent, U-direction
-	FPackedNormal	TangentX;
-	// Binormal, V-direction
-	FPackedNormal	TangentY;
-	// Normal
-	FPackedNormal	TangentZ;
-
-	// UVs
-	FVector2D		UVs[MAX_TEXCOORDS];
-	// VertexColor
-	FColor			Color;
-	uint8			InfluenceBones[MAX_TOTAL_INFLUENCES];
-	uint8			InfluenceWeights[MAX_TOTAL_INFLUENCES];
-};
 
 /** Fur Skin Vertex */
 struct FFurSkinVertex : FSoftSkinVertex
@@ -656,22 +635,14 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 	auto* SkeletalMeshResource = SkeletalMesh->GetResourceForRendering();
 	check(SkeletalMeshResource);
 
+	TArray<FSoftSkinVertex> Vertices;
 	TArray<uint32> Indices;
 	TArray<int32> SplineMap;
 	TArray<uint32> VertexSub;
 
-	const auto& LodModel = SkeletalMeshResource->LODRenderData[InLod];
-	const auto& SourcePositions = LodModel.StaticVertexBuffers.PositionVertexBuffer;
-	const auto& SourceSkinWeights = LodModel.SkinWeightVertexBuffer;
-	const auto& SourceVertices = LodModel.StaticVertexBuffers.StaticMeshVertexBuffer;
-	const auto& SourceColors = LodModel.StaticVertexBuffers.ColorVertexBuffer;
+	const auto& LodModel = SkeletalMeshResource->LODModels[InLod];
+	LodModel.GetVertices(Vertices);
 	LodModel.MultiSizeIndexContainer.GetIndexBuffer(Indices);
-
-	check(SourcePositions.GetNumVertices() == SourceSkinWeights.GetNumVertices() && SourcePositions.GetNumVertices() == SourceVertices.GetNumVertices());
-
-	uint32 NumTexCoords = SourceVertices.GetNumTexCoords();
-	bool hasVertexColor = SourceColors.GetNumVertices() > 0;
-	check(!hasVertexColor || SourcePositions.GetNumVertices() == SourceColors.GetNumVertices());
 
 	int BoneCount = InSkeletalMesh->RefBasesInvMatrix.Num();
 	TArray<FMatrix> Bones;
@@ -679,35 +650,16 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 	for (int i = 0; i < BoneCount; i++)
 		Bones[i] = InSkeletalMesh->GetRefPoseMatrix(i);
 	float MaxDistSq = 0.0f;
-	uint32 influencesCount = SourceSkinWeights.GetStride() / 2;
-	if (SourceSkinWeights.HasExtraBoneInfluences())
+	for (int i = 0, c = Vertices.Num(); i < c; i++)
 	{
-		for (int i = 0, c = SourcePositions.GetNumVertices(); i < c; i++)
+		const FSoftSkinVertex& v = Vertices[i];
+		for (int b = 0; b < MAX_TOTAL_INFLUENCES; b++)
 		{
-			const auto& WeightInfo = *SourceSkinWeights.GetSkinWeightPtr<true>(i);
-			for (uint32 b = 0; b < influencesCount; b++)
-			{
-				if (WeightInfo.InfluenceWeights[b] == 0)
-					break;
-				float distSq = FVector::DistSquared(SourcePositions.VertexPosition(i), Bones[WeightInfo.InfluenceBones[b]].GetOrigin());
-				if (distSq > MaxDistSq)
-					MaxDistSq = distSq;
-			}
-		}
-	}
-	else
-	{
-		for (int i = 0, c = SourcePositions.GetNumVertices(); i < c; i++)
-		{
-			const auto& WeightInfo = *SourceSkinWeights.GetSkinWeightPtr<false>(i);
-			for (uint32 b = 0; b < influencesCount; b++)
-			{
-				if (WeightInfo.InfluenceWeights[b] == 0)
-					break;
-				float distSq = FVector::DistSquared(SourcePositions.VertexPosition(i), Bones[WeightInfo.InfluenceBones[b]].GetOrigin());
-				if (distSq > MaxDistSq)
-					MaxDistSq = distSq;
-			}
+			if (v.InfluenceWeights[b] == 0)
+				break;
+			float distSq = FVector::DistSquared(v.Position, Bones[v.InfluenceBones[b]].GetOrigin());
+			if (distSq > MaxDistSq)
+				MaxDistSq = distSq;
 		}
 	}
 	MaxVertexBoneDistance = sqrtf(MaxDistSq);
@@ -717,17 +669,18 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 	{
 		float MinLen = FLT_MAX;
 		float MaxLen = -FLT_MAX;
-		SplineMap.Reserve(SourcePositions.GetNumVertices());
-		for (uint32 i = 0; i < SourcePositions.GetNumVertices(); i++)
+		SplineMap.Reserve(Vertices.Num());
+		for (int32 i = 0; i < Vertices.Num(); i++)
 		{
+			FSoftSkinVertex Vert = Vertices[i];
+
 			int ClosestSplineIndex = -1;
 			float ClosestDist = FLT_MAX;
 			for (int si = 0; si < InFurSplines->Index.Num(); si++)
 			{
 				FVector p = InFurSplines->Vertices[InFurSplines->Index[si]];
 				p.Y = -p.Y;
-				const auto& Position = SourcePositions.VertexPosition(i);
-				float d = FVector::DistSquared(p, Position);
+				float d = FVector::DistSquared(p, Vert.Position);
 				if (d < ClosestDist)
 				{
 					ClosestDist = d;
@@ -739,7 +692,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 				uint32 idx = InFurSplines->Index[ClosestSplineIndex];
 				FVector p1 = InFurSplines->Vertices[idx];
 				FVector p2 = InFurSplines->Vertices[idx + InFurSplines->Count[ClosestSplineIndex] - 1];
-				FVector normal = SourceVertices.VertexTangentZ(i);
+				FVector normal = Vert.TangentZ;
 				normal.Y = -normal.Y;
 				if (FVector::DotProduct(p2 - p1, normal) > 0.0f || MinFurLength > 0.0f)
 				{
@@ -768,9 +721,9 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 
 
 	int IndexOffset = 0;
-	for (int SectionIndex = 0; SectionIndex < LodModel.RenderSections.Num(); SectionIndex++)
+	for (int SectionIndex = 0; SectionIndex < LodModel.Sections.Num(); SectionIndex++)
 	{
-		const auto& ModelSection = LodModel.RenderSections[SectionIndex];
+		const auto& ModelSection = LodModel.Sections[SectionIndex];
 		FSection& FurSection = Sections[Sections.AddUninitialized()];
 		new (&FurSection) FSection();
 		FurSection.MaterialIndex = ModelSection.MaterialIndex;
@@ -783,7 +736,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 			VertexSub.AddUninitialized(ModelSection.NumVertices);
 			uint32* Vert = &VertexSub[0];
 			uint32 Count = 0;
-			for (uint32 i = 0; i < ModelSection.NumVertices; ++i)
+			for (int32 i = 0; i < ModelSection.NumVertices; ++i)
 			{
 				int Index = SplineMap[ModelSection.BaseVertexIndex + i];
 				if (Index < 0)
@@ -808,41 +761,10 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 				NonLinearFactor = LinearFactor;
 				Derivative = 1.0f;
 			}
-			for (uint32 i = 0; i < ModelSection.NumVertices; ++i)
+			for (int32 i = 0; i < ModelSection.NumVertices; ++i)
 			{
 				FFurSkinVertex Vert;
-				uint32 SourceVertexIndex = ModelSection.BaseVertexIndex + i;
-				Vert.Position = SourcePositions.VertexPosition(SourceVertexIndex);
-				Vert.TangentX = SourceVertices.VertexTangentX(SourceVertexIndex);
-				Vert.TangentY = SourceVertices.VertexTangentY(SourceVertexIndex);
-				Vert.TangentZ = SourceVertices.VertexTangentZ(SourceVertexIndex);
-				for (uint32 tc = 0; tc < NumTexCoords; tc++)
-					Vert.UVs[tc] = SourceVertices.GetVertexUV(SourceVertexIndex, tc);
-				Vert.Color = hasVertexColor ? SourceColors.VertexColor(SourceVertexIndex) : FColor(255, 255, 255, 255);
-				uint32 ib = 0;
-				if (SourceSkinWeights.HasExtraBoneInfluences())
-				{
-					const auto& WeightInfo = *SourceSkinWeights.GetSkinWeightPtr<true>(i);
-					for (ib = 0; ib < influencesCount; ib++)
-					{
-						Vert.InfluenceBones[ib] = WeightInfo.InfluenceBones[ib];
-						Vert.InfluenceWeights[ib] = WeightInfo.InfluenceWeights[ib];
-					}
-				}
-				else
-				{
-					const auto& WeightInfo = *SourceSkinWeights.GetSkinWeightPtr<false>(i);
-					for (ib = 0; ib < influencesCount; ib++)
-					{
-						Vert.InfluenceBones[ib] = WeightInfo.InfluenceBones[ib];
-						Vert.InfluenceWeights[ib] = WeightInfo.InfluenceWeights[ib];
-					}
-				}
-				for (; ib < MAX_TOTAL_INFLUENCES; ib++)
-				{
-					Vert.InfluenceBones[ib] = 0;
-					Vert.InfluenceWeights[ib] = 0;
-				}
+				(FSoftSkinVertex&)Vert = Vertices[ModelSection.BaseVertexIndex + i];
 
 				if (InFurSplines)
 				{
@@ -988,21 +910,22 @@ UFurSplines* FFurSkinData::GenerateSplines(USkeletalMesh* InSkeletalMesh, int In
 	auto* SkeletalMeshResource = InSkeletalMesh->GetResourceForRendering();
 	check(SkeletalMeshResource);
 
-	if (InLod >= SkeletalMeshResource->LODRenderData.Num())
-		InLod = SkeletalMeshResource->LODRenderData.Num() - 1;
-	const auto& LodModel = SkeletalMeshResource->LODRenderData[InLod];
+	if (InLod >= SkeletalMeshResource->LODModels.Num())
+		InLod = SkeletalMeshResource->LODModels.Num() - 1;
+	const auto& LodModel = SkeletalMeshResource->LODModels[InLod];
 
-	const auto& SourcePositions = LodModel.StaticVertexBuffers.PositionVertexBuffer;
+	TArray<FSoftSkinVertex> Vertices;
+	LodModel.GetVertices(Vertices);
 
-	uint32 VertexCount = SourcePositions.GetNumVertices();
+	int32 VertexCount = Vertices.Num();
 	int SegCount = InGuideMeshes.Num() + 1;
 	Splines->Vertices.AddUninitialized(VertexCount * SegCount);
 	Splines->Index.AddUninitialized(VertexCount);
 	Splines->Count.AddUninitialized(VertexCount);
-	for (uint32 i = 0; i < VertexCount; i++)
+	for (int32 i = 0; i < VertexCount; i++)
 	{
 		int Index = i * SegCount;
-		Splines->Vertices[Index] = SourcePositions.VertexPosition(i);
+		Splines->Vertices[Index] = Vertices[i].Position;
 		Splines->Index[i] = Index;
 		Splines->Count[i] = SegCount;
 	}
@@ -1014,17 +937,18 @@ UFurSplines* FFurSkinData::GenerateSplines(USkeletalMesh* InSkeletalMesh, int In
 		{
 			auto* SkeletalMeshResource2 = GuideMesh->GetResourceForRendering();
 			check(SkeletalMeshResource2);
-			const auto& LodModel2 = SkeletalMeshResource2->LODRenderData[InLod];
-			const auto& SourcePositions2 = LodModel2.StaticVertexBuffers.PositionVertexBuffer;
-			int c = FMath::Min(SourcePositions2.GetNumVertices(), VertexCount);
+			const auto& LodModel2 = SkeletalMeshResource2->LODModels[InLod];
+			Vertices.Empty();
+			LodModel.GetVertices(Vertices);
+			int c = FMath::Min(Vertices.Num(), VertexCount);
 			for (int i = 0; i < c; i++)
-				Splines->Vertices[i * SegCount + k] = SourcePositions2.VertexPosition(i);
-			for (uint32 i = c; i < VertexCount; i++)
+				Splines->Vertices[i * SegCount + k] = Vertices[i].Position;
+			for (int32 i = c; i < VertexCount; i++)
 				Splines->Vertices[i * SegCount + k] = Splines->Vertices[i * SegCount + (k - 1)];
 		}
 		else
 		{
-			for (uint32 i = 0; i < VertexCount; i++)
+			for (int32 i = 0; i < VertexCount; i++)
 				Splines->Vertices[i * SegCount + k] = Splines->Vertices[i * SegCount + (k - 1)];
 		}
 		k++;

@@ -1,4 +1,4 @@
-// Copyright 2017 GiM s.r.o. All Rights Reserved.
+// Copyright 2018 GiM s.r.o. All Rights Reserved.
 
 using UnrealBuildTool;
 

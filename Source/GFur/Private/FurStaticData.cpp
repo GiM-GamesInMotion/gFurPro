@@ -1,3 +1,4 @@
+// Copyright 2018 GiM s.r.o. All Rights Reserved.
 
 #include "FurStaticData.h"
 #include "ShaderParameterUtils.h"

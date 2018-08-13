@@ -1,3 +1,4 @@
+// Copyright 2018 GiM s.r.o. All Rights Reserved.
 
 #include "FurSkinData.h"
 #include "ShaderParameterUtils.h"

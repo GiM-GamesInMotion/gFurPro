@@ -1,0 +1,189 @@
+// Copyright 2018 GiM s.r.o. All Rights Reserved.
+
+#include "FurMorphObject.h"
+#include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
+#include "Runtime/Engine/Private/SkeletalRenderGPUSkin.h"
+#include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
+#include "Runtime/Engine/Classes/Animation/MorphTarget.h"
+#include "ShaderParameterUtils.h"
+
+/** Fur Morph Vertex Buffer */
+class FFurMorphVertexBuffer : public FVertexBuffer
+{
+public:
+	FFurMorphVertexBuffer(int InNumVertices) : NumVertices(InNumVertices)
+	{
+	}
+
+	/**
+	* Initialize the dynamic RHI for this rendering resource
+	*/
+	virtual void InitDynamicRHI();
+
+	/**
+	* Release the dynamic RHI for this rendering resource
+	*/
+	virtual void ReleaseDynamicRHI();
+
+	/**
+	* Morph target vertex name
+	*/
+	virtual FString GetFriendlyName() const { return TEXT("gFur Morph target mesh vertices"); }
+
+	/**
+	 * Get Resource Size : mostly copied from InitDynamicRHI - how much they allocate when initialize
+	 */
+
+
+private:
+	int NumVertices;
+};
+
+void FFurMorphVertexBuffer::InitDynamicRHI()
+{
+	// Create the buffer rendering resource
+	uint32 Size = NumVertices * sizeof(FMorphGPUSkinVertex);
+	FRHIResourceCreateInfo CreateInfo;
+
+	EBufferUsageFlags Flags = BUF_Dynamic;
+
+	// BUF_ShaderResource is needed for Morph support of the SkinCache
+	Flags = (EBufferUsageFlags)(Flags | BUF_ShaderResource);
+
+	VertexBufferRHI = RHICreateVertexBuffer(Size, Flags, CreateInfo);
+
+	// Lock the buffer.
+	void* BufferData = RHILockVertexBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
+	FMorphGPUSkinVertex* Buffer = (FMorphGPUSkinVertex*)BufferData;
+	FMemory::Memzero(&Buffer[0], Size);
+	for (int i = 0; i < NumVertices; i++)
+		Buffer[i].DeltaPosition.Z = 100.0f;
+	// Unlock the buffer.
+	RHIUnlockVertexBuffer(VertexBufferRHI);
+}
+
+void FFurMorphVertexBuffer::ReleaseDynamicRHI()
+{
+	VertexBufferRHI.SafeRelease();
+}
+
+/** Fur Morph Vertex Buffer */
+FFurMorphObject::FFurMorphObject(int InNumVertices, int InNumLayers, int InLodIndex)
+{
+	NumVertices = InNumVertices;
+	NumLayers = InNumLayers;
+	LODIndex = InLodIndex;
+	VertexBuffer = new FFurMorphVertexBuffer(InNumVertices * InNumLayers);
+	BeginInitResource(VertexBuffer);
+}
+
+FFurMorphObject::~FFurMorphObject()
+{
+	VertexBuffer->ReleaseResource();
+	delete VertexBuffer;
+}
+
+void FFurMorphObject::Update(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTables)
+{
+	if (IsValidRef(VertexBuffer->VertexBufferRHI))
+	{
+		uint32 Size = NumVertices * sizeof(FMorphGPUSkinVertex);
+
+		TArray<float> MorphAccumulatedWeightArray;
+		FMorphGPUSkinVertex* Buffer = (FMorphGPUSkinVertex*)FMemory::Malloc(Size);
+
+		MorphAccumulatedWeightArray.AddUninitialized(NumVertices);
+		FMemory::Memzero(MorphAccumulatedWeightArray.GetData(), sizeof(float) * NumVertices);
+
+		FMemory::Memzero(&Buffer[0], sizeof(FMorphGPUSkinVertex) * NumVertices);
+
+		const auto& MorphRemapTable = InMorphRemapTables[LODIndex];
+
+		// iterate over all active morph targets and accumulate their vertex deltas
+		for (int32 AnimIdx = 0; AnimIdx < ActiveMorphTargets.Num(); AnimIdx++)
+		{
+			const FActiveMorphTarget& MorphTarget = ActiveMorphTargets[AnimIdx];
+			checkSlow(MorphTarget.MorphTarget != NULL);
+			checkSlow(MorphTarget.MorphTarget->HasDataForLOD(LODIndex));
+			const float MorphTargetWeight = MorphTargetWeights[MorphTarget.WeightIndex];
+			const float MorphAbsWeight = FMath::Abs(MorphTargetWeight);
+			checkSlow(MorphAbsWeight >= MinMorphTargetBlendWeight && MorphAbsWeight <= MaxMorphTargetBlendWeight);
+
+
+			// Get deltas
+			int32 NumDeltas;
+			FMorphTargetDelta* Deltas = MorphTarget.MorphTarget->GetMorphTargetDelta(LODIndex, NumDeltas);
+
+			// iterate over the vertices that this lod model has changed
+			for (int32 MorphVertIdx = 0; MorphVertIdx < NumDeltas; MorphVertIdx++)
+			{
+				const FMorphTargetDelta& MorphVertex = Deltas[MorphVertIdx];
+
+				// @TODO FIXMELH : temp hack until we fix importing issue
+				if ((MorphVertex.SourceIdx < (uint32)NumVertices))
+				{
+					int RemappedIndex = MorphRemapTable[MorphVertex.SourceIdx];
+					if (RemappedIndex == -1)
+						continue;
+					FMorphGPUSkinVertex& DestVertex = Buffer[RemappedIndex];
+
+					DestVertex.DeltaPosition += MorphVertex.PositionDelta * MorphTargetWeight;
+
+					// todo: could be moved out of the inner loop to be more efficient
+//						if (bBlendTangentsOnCPU)
+					{
+						DestVertex.DeltaTangentZ += MorphVertex.TangentZDelta * MorphTargetWeight;
+						// accumulate the weight so we can normalized it later
+						MorphAccumulatedWeightArray[RemappedIndex] += MorphAbsWeight;
+					}
+				}
+			} // for all vertices
+		} // for all morph targets
+
+//		if (bBlendTangentsOnCPU)
+		{
+			// copy back all the tangent values (can't use Memcpy, since we have to pack the normals)
+			for (int32 iVertex = 0; iVertex < NumVertices; ++iVertex)
+			{
+				FMorphGPUSkinVertex& DestVertex = Buffer[iVertex];
+				float AccumulatedWeight = MorphAccumulatedWeightArray[iVertex];
+
+				// if accumulated weight is >1.f
+				// previous code was applying the weight again in GPU if less than 1, but it doesn't make sense to do so
+				// so instead, we just divide by AccumulatedWeight if it's more than 1.
+				// now DeltaTangentZ isn't FPackedNormal, so you can apply any value to it. 
+				if (AccumulatedWeight > 1.f)
+				{
+					DestVertex.DeltaTangentZ /= AccumulatedWeight;
+				}
+			}
+		}
+
+		// Lock the real buffer.
+		{
+			FMorphGPUSkinVertex* ActualBuffer = (FMorphGPUSkinVertex*)RHILockVertexBuffer(VertexBuffer->VertexBufferRHI, 0, Size, RLM_WriteOnly);
+			for (int i = 0; i < NumLayers; i++)
+				FMemory::Memcpy(ActualBuffer + NumVertices * i, Buffer, Size);
+			FMemory::Free(Buffer);
+		}
+
+		{
+			// Unlock the buffer.
+			RHIUnlockVertexBuffer(VertexBuffer->VertexBufferRHI);
+			// set update flag
+//			MorphVertexBuffer.bHasBeenUpdated = true;
+		}
+	}
+}
+
+FMorphTargetDelta* UMorphTarget::GetMorphTargetDelta(int32 LODIndex, int32& OutNumDeltas)
+{
+	if (LODIndex < MorphLODModels.Num())
+	{
+		FMorphTargetLODModel& MorphModel = MorphLODModels[LODIndex];
+		OutNumDeltas = MorphModel.Vertices.Num();
+		return MorphModel.Vertices.GetData();
+	}
+
+	return NULL;
+}

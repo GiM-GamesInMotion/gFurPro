@@ -59,7 +59,8 @@ struct FFurData
 	float MaxVertexBoneDistance;
 	float NoiseStrength;
 	int RefCount = 0;
+	bool RemoveFacesWithoutSplines;
 
 	virtual ~FFurData()																	{}
-	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, ERHIFeatureLevel::Type InFeatureLevel) = 0;
+	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel) = 0;
 };

@@ -95,6 +95,19 @@ public:
 	float MinFurLength;
 
 	/**
+	* Removes faces without splines.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
+	bool RemoveFacesWithoutSplines;
+
+	/**
+	* With value = 1.0, the forces affecting fur are distributed linearly from root to tip.
+	* Values above 1.0 push the forces more to the tip, leaving the lower parts of fur strands less affected.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Physics")
+	bool PhysicsEnabled;
+
+	/**
 	* With value = 1.0, the forces affecting fur are distributed linearly from root to tip.
 	* Values above 1.0 push the forces more to the tip, leaving the lower parts of fur strands less affected.
 	*/
@@ -188,6 +201,7 @@ private:
 	TArray<FVector> AngularOffsets;
 	TArray< class UMaterialInstanceDynamic* > FurMaterials;
 	TArray< struct FFurData* > FurData;
+	TArray< TArray< int32 > > MorphRemapTables;
 
 	FVector StaticLinearOffset;
 	FVector StaticAngularOffset;
@@ -205,4 +219,5 @@ private:
 	void updateFur();
 	void UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, uint32 FrameNumberToPrepare);
 	void UpdateMasterBoneMap();
+	void CreateMorphRemapTable(int32 InLod);
 };

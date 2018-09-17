@@ -2,6 +2,7 @@
 
 #include "FurSkinData.h"
 #include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
+#include "Runtime/Engine/Private/SkeletalRenderGPUSkin.h"
 #include "ShaderParameterUtils.h"
 #include "FurComponent.h"
 
@@ -34,7 +35,7 @@ struct FFurSkinVertex : FSoftSkinVertex
 	FVector FurOffset;
 };
 
-/** Vertex Buffer */
+/** Fur Skin Vertex Buffer */
 class FFurSkinVertexBuffer : public FVertexBuffer
 {
 public:
@@ -56,6 +57,7 @@ void FFurSkinVertexBuffer::InitRHI()
 unsigned int MaxGPUSkinBones = 256;
 
 /** Vertex Factory Shader Parameters */
+template <bool Physics>
 class FFurSkinVertexFactoryShaderParameters : public FVertexFactoryShaderParameters
 {
 public:
@@ -101,9 +103,12 @@ private:
 };
 
 /** Vertex Factory */
-class FFurSkinVertexFactory : public FFurVertexFactory
+template<bool MorphTargets, bool Physics>
+class FFurSkinVertexFactoryBase : public FFurVertexFactory
 {
 	DECLARE_VERTEX_FACTORY_TYPE(FFurSkinVertexFactory);
+
+	typedef FFurSkinVertexFactoryBase<MorphTargets, Physics> This;
 
 public:
 	struct FShaderDataType
@@ -269,7 +274,7 @@ public:
 		}
 	};
 
-	FFurSkinVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+	FFurSkinVertexFactoryBase(ERHIFeatureLevel::Type InFeatureLevel)
 		: FFurVertexFactory(InFeatureLevel)
 		, ShaderData(InFeatureLevel)
 	{
@@ -284,51 +289,47 @@ public:
 		FVertexStreamComponent BoneIndices;
 		FVertexStreamComponent BoneWeights;
 		FVertexStreamComponent FurOffset;
+
+		FVertexStreamComponent DeltaPosition;
+		FVertexStreamComponent DeltaTangentZ;
 	};
 
-	void Init(const FFurSkinVertexBuffer* VertexBuffer, uint32 BoneCount)
+	void Init(const FFurSkinVertexBuffer* VertexBuffer, const FVertexBuffer* MorphVertexBuffer, uint32 BoneCount)
 	{
 		ShaderData.Init(BoneCount);
-		ENQUEUE_UNIQUE_RENDER_COMMAND_TWOPARAMETER(InitProceduralMeshVertexFactory,
-			FFurSkinVertexFactory*,
-			VertexFactory,
-			this,
-			const FFurSkinVertexBuffer*,
-			VertexBuffer,
-			VertexBuffer,
+		ENQUEUE_UNIQUE_RENDER_COMMAND_THREEPARAMETER(InitProceduralMeshVertexFactory,
+			This*, VertexFactory, this,
+			const FFurSkinVertexBuffer*, VertexBuffer, VertexBuffer,
+			const FVertexBuffer*, MorphVertexBuffer, MorphVertexBuffer,
 			{
 				// Initialize the vertex factory's stream components.
 				FDataType NewData;
-		NewData.PositionComponent =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, Position, VET_Float3);
-		int c = sizeof(FFurSkinVertex::UVs) / sizeof(FFurSkinVertex::UVs[0]);
-		for (int i = 0; i < c; ++i)
-		{
-			NewData.TextureCoordinates.Add(FVertexStreamComponent(
-				VertexBuffer, STRUCT_OFFSET(FFurSkinVertex, UVs[i]), sizeof(FFurSkinVertex), VET_Float2));
-		}
-		NewData.TangentBasisComponents[0] =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, TangentX, VET_PackedNormal);
-		NewData.TangentBasisComponents[1] =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, TangentZ, VET_PackedNormal);
-		NewData.ColorComponent =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, Color, VET_Color);
-		NewData.BoneIndices = FVertexStreamComponent(
-			VertexBuffer, STRUCT_OFFSET(FFurSkinVertex, InfluenceBones), sizeof(FFurSkinVertex), VET_UByte4);
-		NewData.BoneWeights = FVertexStreamComponent(VertexBuffer,
-			STRUCT_OFFSET(FFurSkinVertex, InfluenceWeights),
-			sizeof(FFurSkinVertex),
-			VET_UByte4N);
-		NewData.FurOffset =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, FurOffset, VET_Float3);
+				NewData.PositionComponent = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, Position, VET_Float3);
+				int c = sizeof(FFurSkinVertex::UVs) / sizeof(FFurSkinVertex::UVs[0]);
+				for (int i = 0; i < c; ++i)
+				{
+					NewData.TextureCoordinates.Add(FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(FFurSkinVertex, UVs[i]), sizeof(FFurSkinVertex), VET_Float2));
+				}
+				NewData.TangentBasisComponents[0] = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, TangentX, VET_PackedNormal);
+				NewData.TangentBasisComponents[1] = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, TangentZ, VET_PackedNormal);
+				NewData.ColorComponent = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, Color, VET_Color);
+				NewData.BoneIndices = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(FFurSkinVertex, InfluenceBones), sizeof(FFurSkinVertex), VET_UByte4);
+				NewData.BoneWeights = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(FFurSkinVertex, InfluenceWeights), sizeof(FFurSkinVertex), VET_UByte4N);
+				NewData.FurOffset = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurSkinVertex, FurOffset, VET_Float3);
 
-		VertexFactory->SetData(NewData);
+				if (MorphTargets)
+				{
+					NewData.DeltaPosition = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(MorphVertexBuffer, FMorphGPUSkinVertex, DeltaPosition, VET_Float3);
+					NewData.DeltaTangentZ = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(MorphVertexBuffer, FMorphGPUSkinVertex, DeltaTangentZ, VET_Float3);
+				}
+
+				VertexFactory->SetData(NewData);
 			});
 	}
 
 	static FVertexFactoryShaderParameters* ConstructShaderParameters(EShaderFrequency ShaderFrequency)
 	{
-		return (ShaderFrequency == SF_Vertex) ? new FFurSkinVertexFactoryShaderParameters() : NULL;
+		return (ShaderFrequency == SF_Vertex) ? new FFurSkinVertexFactoryShaderParameters<Physics>() : NULL;
 	}
 
 
@@ -339,9 +340,18 @@ public:
 		return (Material->IsUsedWithSkeletalMesh() || Material->IsSpecialEngineMaterial());
 	}
 
+	static void ModifyCompilationEnvironment(EShaderPlatform Platform, const FMaterial* Material, FShaderCompilerEnvironment& OutEnvironment)
+	{
+//		Super::ModifyCompilationEnvironment(Platform, Material, OutEnvironment);
+		if (MorphTargets)
+			OutEnvironment.SetDefine(TEXT("GPUSKIN_MORPH_BLEND"), TEXT("1"));
+		if (Physics)
+			OutEnvironment.SetDefine(TEXT("GFUR_PHYSICS"), TEXT("1"));
+	}
+
 	static bool ShouldCompilePermutation(EShaderPlatform Platform, const class FMaterial* Material, const FShaderType* ShaderType)
 	{
-		return (Material->IsUsedWithSkeletalMesh() || Material->IsSpecialEngineMaterial());
+		return (Material->IsUsedWithSkeletalMesh() || Material->IsSpecialEngineMaterial()) || (MorphTargets ? Material->IsUsedWithMorphTargets() : false);
 	}
 
 	void SetData(const FDataType& InData)
@@ -386,6 +396,12 @@ public:
 		OutElements.Add(AccessStreamComponent(InData.BoneIndices, 3));
 		OutElements.Add(AccessStreamComponent(InData.BoneWeights, 4));
 		OutElements.Add(AccessStreamComponent(InData.FurOffset, 12));
+
+		if (MorphTargets)
+		{
+			OutElements.Add(AccessStreamComponent(InData.DeltaPosition, 9));
+			OutElements.Add(AccessStreamComponent(InData.DeltaTangentZ, 10));
+		}
 	}
 
 	void InitRHI() override
@@ -421,21 +437,32 @@ public:
 	FShaderDataType ShaderData;
 };
 
+typedef FFurSkinVertexFactoryBase<true, true> FMorphPhysicsFurSkinVertexFactory;
+typedef FFurSkinVertexFactoryBase<false, true> FPhysicsFurSkinVertexFactory;
+typedef FFurSkinVertexFactoryBase<true, false> FMorphFurSkinVertexFactory;
+typedef FFurSkinVertexFactoryBase<false, false> FFurSkinVertexFactory;
+
+IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphPhysicsFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
 IMPLEMENT_VERTEX_FACTORY_TYPE(FFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
-#if WITH_EDITORONLY_DATA
+
+//#if WITH_EDITORONLY_DATA
 IMPLEMENT_UNIFORM_BUFFER_STRUCT(FBoneMatricesUniformShaderParameters, TEXT("Bones"));
-#endif // WITH_EDITORONLY_DATA
+//#endif // WITH_EDITORONLY_DATA
 
 static FBoneMatricesUniformShaderParameters GBoneUniformStruct;
 
-void FFurSkinVertexFactory::FShaderDataType::GoToNextFrame(uint32 FrameNumber)
+template<bool MorphTargets, bool Physics>
+void FFurSkinVertexFactoryBase<MorphTargets, Physics>::FShaderDataType::GoToNextFrame(uint32 FrameNumber)
 {
 	PreviousFrameNumber = CurrentFrameNumber;
 	CurrentFrameNumber = FrameNumber;
 	CurrentBuffer = 1 - CurrentBuffer;
 }
 
-void FFurSkinVertexFactory::FShaderDataType::UpdateBoneData(const TArray<FMatrix>& ReferenceToLocalMatrices, const TArray<FVector>& LinearOffsets, const TArray<FVector>& AngularOffsets,
+template<bool MorphTargets, bool Physics>
+void FFurSkinVertexFactoryBase<MorphTargets, Physics>::FShaderDataType::UpdateBoneData(const TArray<FMatrix>& ReferenceToLocalMatrices, const TArray<FVector>& LinearOffsets, const TArray<FVector>& AngularOffsets,
 	const TArray<FMatrix>& LastTransformations, const TArray<FBoneIndexType>& BoneMap, uint32 FrameNumber, ERHIFeatureLevel::Type InFeatureLevel)
 {
 	const uint32 NumBones = BoneMap.Num();
@@ -495,6 +522,7 @@ void FFurSkinVertexFactory::FShaderDataType::UpdateBoneData(const TArray<FMatrix
 		}
 	}
 
+	if (InFeatureLevel >= ERHIFeatureLevel::ES3_1)
 	{
 		//FSkinMatrix3x4 is sizeof() == 48
 		// PLATFORM_CACHE_LINE_SIZE (128) / 48 = 2.6
@@ -516,6 +544,20 @@ void FFurSkinVertexFactory::FShaderDataType::UpdateBoneData(const TArray<FMatrix
 			Offsets[BoneIdx * 3 + 2] = LastTransformations[RefToLocalIdx].GetOrigin();
 		}
 	}
+	else
+	{
+		const int32 PreFetchStride = 2; // FPlatformMisc::Prefetch stride
+		for (uint32 BoneIdx = 0; BoneIdx < NumBones; BoneIdx++)
+		{
+			const FBoneIndexType RefToLocalIdx = BoneMap[BoneIdx];
+			FPlatformMisc::Prefetch(ReferenceToLocalMatrices.GetData() + RefToLocalIdx + PreFetchStride);
+			FPlatformMisc::Prefetch(ReferenceToLocalMatrices.GetData() + RefToLocalIdx + PreFetchStride, PLATFORM_CACHE_LINE_SIZE);
+
+			FSkinMatrix3x4& BoneMat = ChunkMatrices[BoneIdx];
+			const FMatrix& RefToLocal = ReferenceToLocalMatrices[RefToLocalIdx];
+			RefToLocal.To3x4MatrixTranspose((float*)BoneMat.M);
+		}
+	}
 	if (InFeatureLevel >= ERHIFeatureLevel::ES3_1)
 	{
 		if (NumBones)
@@ -532,7 +574,8 @@ void FFurSkinVertexFactory::FShaderDataType::UpdateBoneData(const TArray<FMatrix
 	}
 }
 
-void FFurSkinVertexFactory::FShaderDataType::InitDynamicRHI()
+template<bool MorphTargets, bool Physics>
+void FFurSkinVertexFactoryBase<MorphTargets, Physics>::FShaderDataType::InitDynamicRHI()
 {
 	const uint32 NumBones = BoneCount;
 	check(NumBones <= MaxGPUSkinBones);
@@ -578,7 +621,8 @@ void FFurSkinVertexFactory::FShaderDataType::InitDynamicRHI()
 	}
 }
 
-void FFurSkinVertexFactoryShaderParameters::SetMesh(FRHICommandList& RHICmdList, FShader* Shader, const FVertexFactory* VertexFactory, const FSceneView& View, const FMeshBatchElement& BatchElement, uint32 DataFlags) const
+template<bool Physics>
+void FFurSkinVertexFactoryShaderParameters<Physics>::SetMesh(FRHICommandList& RHICmdList, FShader* Shader, const FVertexFactory* VertexFactory, const FSceneView& View, const FMeshBatchElement& BatchElement, uint32 DataFlags) const
 {
 	FRHIVertexShader* ShaderRHI = Shader->GetVertexShader();
 
@@ -593,7 +637,7 @@ void FFurSkinVertexFactoryShaderParameters::SetMesh(FRHICommandList& RHICmdList,
 		const auto FeatureLevel = View.GetFeatureLevel();
 		const auto FrameNumber = View.Family->FrameNumber;
 
-		if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
+		if (Physics)
 		{
 			if (BoneMatrices.IsBound())
 			{
@@ -634,7 +678,7 @@ FFurSkinData::~FFurSkinData()
 }
 
 FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines* InFurSplines, const TArray<USkeletalMesh*>& InGuideMeshes, int InFurLayerCount,
-	float InFurLength, float InMinFurLength, float InShellBias, float InHairLengthForceUniformity, float InNoiseStrength)
+	float InFurLength, float InMinFurLength, float InShellBias, float InHairLengthForceUniformity, float InNoiseStrength, bool InRemoveFacesWithoutSplines)
 {
 	SkeletalMesh = InSkeletalMesh;
 	FurLayerCount = InFurLayerCount;
@@ -648,6 +692,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 	CurrentMinFurLength = InFurLength;
 	CurrentMaxFurLength = InFurLength;
 	NoiseStrength = InNoiseStrength;
+	RemoveFacesWithoutSplines = InRemoveFacesWithoutSplines;
 
 	VertexBuffer = new FFurSkinVertexBuffer();
 
@@ -778,7 +823,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 		FurSection.MinVertexIndex = VertexBuffer->Vertices.Num();
 		FurSection.BaseIndex = IndexBuffer.Indices.Num();
 
-		if (InFurSplines)
+		if (InFurSplines && InRemoveFacesWithoutSplines)
 		{
 			VertexSub.Reset(ModelSection.NumVertices);
 			VertexSub.AddUninitialized(ModelSection.NumVertices);
@@ -914,6 +959,17 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 
 						VertexBuffer->Vertices.Add(Vert);
 					}
+					else if (!InRemoveFacesWithoutSplines)
+					{
+						Vert.UVs[1].X = NonLinearFactor * InMinFurLength;
+						Vert.UVs[1].Y = NonLinearFactor;
+						Vert.UVs[2].X = LinearFactor;
+						Vert.UVs[2].Y = 1.0f;
+						FVector TangentZ = Vert.TangentZ.ToFVector();
+						Vert.FurOffset = TangentZ * (NonLinearFactor * InMinFurLength/* + FMath::RandRange(-InNoiseStrength * Derivative, InNoiseStrength * Derivative)*/);
+
+						VertexBuffer->Vertices.Add(Vert);
+					}
 				}
 				else
 				{
@@ -941,7 +997,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 					VertexBuffer->Vertices.Add(Vert);
 				}
 			}
-			if (InFurSplines)
+			if (InFurSplines && InRemoveFacesWithoutSplines)
 			{
 				for (uint32 t = 0; t < ModelSection.NumTriangles; ++t)
 				{
@@ -1037,14 +1093,49 @@ UFurSplines* FFurSkinData::GenerateSplines(USkeletalMesh* InSkeletalMesh, int In
 	return Splines;
 }
 
-void FFurSkinData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, ERHIFeatureLevel::Type InFeatureLevel)
+int FFurSkinData::NumVertices() const
+{
+	return VertexBuffer->Vertices.Num();
+}
+
+void FFurSkinData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel)
 {
 	for (auto& s : Sections)
 	{
-		FFurSkinVertexFactory* vf = new FFurSkinVertexFactory(InFeatureLevel);
-		vf->Init(VertexBuffer, s.NumBones);
-		BeginInitResource(vf);
-		VertexFactories.Add(vf);
+		if (InPhysics && InFeatureLevel >= ERHIFeatureLevel::ES3_1)
+		{
+			if (InMorphVertexBuffer)
+			{
+				auto* vf = new FMorphPhysicsFurSkinVertexFactory(InFeatureLevel);
+				vf->Init(VertexBuffer, InMorphVertexBuffer, s.NumBones);
+				BeginInitResource(vf);
+				VertexFactories.Add(vf);
+			}
+			else
+			{
+				auto* vf = new FPhysicsFurSkinVertexFactory(InFeatureLevel);
+				vf->Init(VertexBuffer, InMorphVertexBuffer, s.NumBones);
+				BeginInitResource(vf);
+				VertexFactories.Add(vf);
+			}
+		}
+		else
+		{
+			if (InMorphVertexBuffer)
+			{
+				auto* vf = new FMorphFurSkinVertexFactory(InFeatureLevel);
+				vf->Init(VertexBuffer, InMorphVertexBuffer, s.NumBones);
+				BeginInitResource(vf);
+				VertexFactories.Add(vf);
+			}
+			else
+			{
+				auto* vf = new FFurSkinVertexFactory(InFeatureLevel);
+				vf->Init(VertexBuffer, InMorphVertexBuffer, s.NumBones);
+				BeginInitResource(vf);
+				VertexFactories.Add(vf);
+			}
+		}
 	}
 }
 
@@ -1066,12 +1157,13 @@ void FFurSkinData::ReloadFurSplines(UFurSplines* FurSplines)
 			float ShellBias = Data->ShellBias;
 			float HairLengthForceUniformity = Data->HairLengthForceUniformity;
 			float NoiseStrength = Data->NoiseStrength;
+			bool RemoveFacesWithoutSplines = Data->RemoveFacesWithoutSplines;
 
 			volatile bool finished = false;
 			ENQUEUE_RENDER_COMMAND(ReleaseDataCommand)([Data, &finished](FRHICommandListImmediate& RHICmdList) { Data->~FFurSkinData(); finished = true; });
 			while (!finished)
 				;
-			new (Data) FFurSkinData(SkeletalMesh, Lod, FurSplines, TArray<USkeletalMesh*>(), FurLayerCount, FurLength, MinFurLength, ShellBias, HairLengthForceUniformity, NoiseStrength);
+			new (Data) FFurSkinData(SkeletalMesh, Lod, FurSplines, TArray<USkeletalMesh*>(), FurLayerCount, FurLength, MinFurLength, ShellBias, HairLengthForceUniformity, NoiseStrength, RemoveFacesWithoutSplines);
 		}
 	}
 
@@ -1112,7 +1204,7 @@ protected:
 	}
 };
 
-FFurData* FFurSkinData::CreateFurData(int InFurLayerCount, int InLod, UGFurComponent* FurComponent)
+FFurSkinData* FFurSkinData::CreateFurData(int InFurLayerCount, int InLod, UGFurComponent* FurComponent)
 {
 	if (InFurLayerCount < 1)
 		InFurLayerCount = 1;
@@ -1131,7 +1223,8 @@ FFurData* FFurSkinData::CreateFurData(int InFurLayerCount, int InLod, UGFurCompo
 			&& d->GuideMeshes == FurComponent->SkeletalGuideMeshes
 			&& d->FurLength == FurLengthClamped && d->MinFurLength == FurComponent->MinFurLength
 			&& d->ShellBias == FurComponent->ShellBias && d->HairLengthForceUniformity == FurComponent->HairLengthForceUniformity
-			&& d->NoiseStrength == FurComponent->NoiseStrength)
+			&& d->NoiseStrength == FurComponent->NoiseStrength
+			&& d->RemoveFacesWithoutSplines == FurComponent->RemoveFacesWithoutSplines)
 		{
 			Data = d;
 			break;
@@ -1144,7 +1237,7 @@ FFurData* FFurSkinData::CreateFurData(int InFurLayerCount, int InLod, UGFurCompo
 	else
 	{
 		Data = new FFurSkinData(FurComponent->SkeletalGrowMesh, InLod, FurComponent->FurSplines, FurComponent->SkeletalGuideMeshes, InFurLayerCount, FurLengthClamped,
-			FurComponent->MinFurLength, FurComponent->ShellBias, FurComponent->HairLengthForceUniformity, FurComponent->NoiseStrength);
+			FurComponent->MinFurLength, FurComponent->ShellBias, FurComponent->HairLengthForceUniformity, FurComponent->NoiseStrength, FurComponent->RemoveFacesWithoutSplines);
 		Data->RefCount = 1;
 		StaticFurSkinData.Add(Data);
 	}

@@ -161,7 +161,7 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 	
 #else // GFUR_PHYSICS
 
-	Position += FurOffset;
+	Position.xyz += FurOffset;
 
 #endif // GFUR_PHYSICS
 
@@ -311,7 +311,7 @@ float4 VertexFactoryGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexF
 	
 #else // GFUR_PHYSICS
 
-	Position += FurOffset;
+	Position.xyz += FurOffset;
 
 #endif // GFUR_PHYSICS
 

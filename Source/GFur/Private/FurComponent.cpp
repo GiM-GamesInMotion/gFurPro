@@ -437,21 +437,22 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			auto NumLods = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData.Num();
 			MorphRemapTables.SetNum(NumLods);
 
-			// MasterPoseComponent && MasterPoseComponent->MorphTargets.Num() > 0;TODO
-
+			bool UseMorphTargets = MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->MorphTargets.Num() > 0;
 
 			{
 				auto Data = FFurSkinData::CreateFurData(LayerCount, 0, this);
 				Array.Add(Data);
-				MorphObjects.Add(new FFurMorphObject(Data->NumVertices() / Data->FurLayerCount, Data->FurLayerCount, 0));//TODO
-				CreateMorphRemapTable(0);
+				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data->NumVertices() / Data->FurLayerCount, Data->FurLayerCount, 0) : NULL);
+				if (UseMorphTargets)
+					CreateMorphRemapTable(0);
 			}
 			for (FFurLod& lod : LODs)
 			{
 				auto Data = FFurSkinData::CreateFurData(lod.LayerCount, FMath::Min(NumLods - 1, lod.Lod), this);
-				CreateMorphRemapTable(lod.Lod);
+				if (UseMorphTargets)
+					CreateMorphRemapTable(lod.Lod);
 				Array.Add(Data);
-				MorphObjects.Add(new FFurMorphObject(Data->NumVertices() / Data->FurLayerCount, Data->FurLayerCount, lod.Lod));
+				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data->NumVertices() / Data->FurLayerCount, Data->FurLayerCount, lod.Lod) : NULL);
 			}
 
 			FurData = Array;
@@ -811,7 +812,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 				FurProxy->GetVertexFactory(SectionIdx)->UpdateSkeletonShaderData(ForceDistribution, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,
 					Sections[SectionIdx].BoneMap, FrameNumberToPrepare, SceneFeatureLevel);
 			}
-			if (MasterPoseComponent.IsValid())
+			if (MasterPoseComponent.IsValid() && FurProxy->GetMorphObject())
 				FurProxy->GetMorphObject()->Update(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables);
 		}
 		else if (StaticGrowMesh)

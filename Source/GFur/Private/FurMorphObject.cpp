@@ -1,6 +1,7 @@
 // Copyright 2018 GiM s.r.o. All Rights Reserved.
 
 #include "FurMorphObject.h"
+#include "FurSkinData.h"
 #include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
 #include "Runtime/Engine/Private/SkeletalRenderGPUSkin.h"
 #include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
@@ -68,12 +69,10 @@ void FFurMorphVertexBuffer::ReleaseDynamicRHI()
 }
 
 /** Fur Morph Vertex Buffer */
-FFurMorphObject::FFurMorphObject(int InNumVertices, int InNumLayers, int InLodIndex)
+FFurMorphObject::FFurMorphObject(FFurSkinData* InFurData)
 {
-	NumVertices = InNumVertices;
-	NumLayers = InNumLayers;
-	LODIndex = InLodIndex;
-	VertexBuffer = new FFurMorphVertexBuffer(InNumVertices * InNumLayers);
+	FurData = InFurData;
+	VertexBuffer = new FFurMorphVertexBuffer(InFurData->NumVertices());
 	BeginInitResource(VertexBuffer);
 }
 
@@ -87,6 +86,10 @@ void FFurMorphObject::Update(FRHICommandListImmediate& RHICmdList, const TArray<
 {
 	if (IsValidRef(VertexBuffer->VertexBufferRHI))
 	{
+		int32 NumVertices = FurData->NumVertices() / FurData->FurLayerCount;
+		int32 NumLayers = FurData->FurLayerCount;
+		int32 LODIndex = FurData->Lod;
+
 		uint32 Size = NumVertices * sizeof(FMorphGPUSkinVertex);
 
 		TArray<float> MorphAccumulatedWeightArray;
@@ -161,9 +164,21 @@ void FFurMorphObject::Update(FRHICommandListImmediate& RHICmdList, const TArray<
 
 		// Lock the real buffer.
 		{
-			FMorphGPUSkinVertex* ActualBuffer = (FMorphGPUSkinVertex*)RHILockVertexBuffer(VertexBuffer->VertexBufferRHI, 0, Size, RLM_WriteOnly);
-			for (int i = 0; i < NumLayers; i++)
-				FMemory::Memcpy(ActualBuffer + NumVertices * i, Buffer, Size);
+			FMorphGPUSkinVertex* ActualBuffer = (FMorphGPUSkinVertex*)RHILockVertexBuffer(VertexBuffer->VertexBufferRHI, 0, Size * NumLayers, RLM_WriteOnly);
+			for (const auto& Section : FurData->Sections)
+			{
+				uint32 NumSectionVertices = Section.MaxVertexIndex - Section.MinVertexIndex + 1;
+				check(NumSectionVertices % NumLayers == 0);
+				FMorphGPUSkinVertex* SectionBuffer = ActualBuffer + Section.MinVertexIndex;
+				uint32 NumLayerVertices = NumSectionVertices / NumLayers;
+
+				const auto* SourceBuffer = Buffer + (Section.MinVertexIndex / NumLayers);
+
+				uint32 LayerSize = NumLayerVertices * sizeof(FMorphGPUSkinVertex);
+
+				for (int i = 0; i < NumLayers; i++)
+					FMemory::Memcpy(SectionBuffer + NumLayerVertices * i, SourceBuffer, LayerSize);
+			}
 			FMemory::Free(Buffer);
 		}
 

@@ -442,7 +442,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			{
 				auto Data = FFurSkinData::CreateFurData(LayerCount, 0, this);
 				Array.Add(Data);
-				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data->NumVertices() / Data->FurLayerCount, Data->FurLayerCount, 0) : NULL);
+				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data) : NULL);
 				if (UseMorphTargets)
 					CreateMorphRemapTable(0);
 			}
@@ -452,7 +452,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 				if (UseMorphTargets)
 					CreateMorphRemapTable(lod.Lod);
 				Array.Add(Data);
-				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data->NumVertices() / Data->FurLayerCount, Data->FurLayerCount, lod.Lod) : NULL);
+				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data) : NULL);
 			}
 
 			FurData = Array;
@@ -866,24 +866,69 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 
 	auto* MasterMesh = MasterPoseComponent->SkeletalMesh->GetResourceForRendering();
 	check(MasterMesh);
-	auto* Mesh = SkeletalGrowMesh->GetResourceForRendering();
 
-	const auto& MasterPositions = MasterMesh->LODRenderData[InLod].StaticVertexBuffers.PositionVertexBuffer;
-	const auto& Positions = Mesh->LODRenderData[InLod].StaticVertexBuffers.PositionVertexBuffer;
+	const auto& MasterLodModel = MasterMesh->LODRenderData[InLod];
+	const auto& MasterPositions = MasterLodModel.StaticVertexBuffers.PositionVertexBuffer;
+	const auto& MasterSkinWeights = MasterLodModel.SkinWeightVertexBuffer;
+	const auto& MasterVertices = MasterLodModel.StaticVertexBuffers.StaticMeshVertexBuffer;
+
+	auto* Mesh = SkeletalGrowMesh->GetResourceForRendering();
+	const auto& LodModel = Mesh->LODRenderData[InLod];
+	const auto& Positions = LodModel.StaticVertexBuffers.PositionVertexBuffer;
+	const auto& SkinWeights = LodModel.SkinWeightVertexBuffer;
+	const auto& Vertices = LodModel.StaticVertexBuffers.StaticMeshVertexBuffer;
 
 	MorphRemapTable.AddUninitialized(MasterPositions.GetNumVertices());
 
-	for (uint32 i = 0; i < MasterPositions.GetNumVertices(); i++)
+	uint32 SkinWeightSize;
+	if (MasterSkinWeights.HasExtraBoneInfluences() && SkinWeights.HasExtraBoneInfluences())
+		SkinWeightSize = sizeof(TSkinWeightInfo<true>);
+	else
+		SkinWeightSize = sizeof(TSkinWeightInfo<false>);
+
+	uint32 UVCount = FMath::Min(MasterVertices.GetNumTexCoords(), Vertices.GetNumTexCoords());
+
+	for (const auto& MasterSection : MasterLodModel.RenderSections)
 	{
-		MorphRemapTable[i] = -1;
-		const auto& MasterPosition = MasterPositions.VertexPosition(i);
-		for (uint32 j = 0; j < Positions.GetNumVertices(); j++)
+		for (const auto& Section : LodModel.RenderSections)
 		{
-			const auto& Position = Positions.VertexPosition(j);
-			if (MasterPosition == Position)
+			if (MasterSection.MaterialIndex == Section.MaterialIndex)
 			{
-				MorphRemapTable[i] = j;
-				break;
+				for (uint32 i = MasterSection.BaseVertexIndex; i < MasterSection.BaseVertexIndex + MasterSection.NumVertices; i++)
+				{
+					MorphRemapTable[i] = -1;
+					const auto& MasterPosition = MasterPositions.VertexPosition(i);
+					const auto& MasterSkinWeight = MasterSkinWeights.GetSkinWeightPtr<true>(i);
+					const auto& MasterTangentX = MasterVertices.VertexTangentX(i);
+					const auto& MasterTangentY = MasterVertices.VertexTangentY(i);
+					const auto& MasterTangentZ = MasterVertices.VertexTangentZ(i);
+					for (uint32 j = Section.BaseVertexIndex; j < Section.BaseVertexIndex + Section.NumVertices; j++)
+					{
+						const auto& Position = Positions.VertexPosition(j);
+						const auto& SkinWeight = SkinWeights.GetSkinWeightPtr<true>(j);
+						const auto& TangentX = Vertices.VertexTangentX(j);
+						const auto& TangentY = Vertices.VertexTangentY(j);
+						const auto& TangentZ = Vertices.VertexTangentZ(j);
+						if (MasterPosition == Position && memcmp(MasterSkinWeight, SkinWeight, SkinWeightSize) == 0
+							&& MasterTangentX == TangentX && MasterTangentY == TangentY && MasterTangentZ == TangentZ)
+						{
+							bool equals = true;
+							for (uint32 k = 0; k < UVCount; k++)
+							{
+								if (MasterVertices.GetVertexUV(i, k) != Vertices.GetVertexUV(j, k))
+								{
+									equals = false;
+									break;
+								}
+							}
+							if (equals)
+							{
+								MorphRemapTable[i] = j;
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 	}

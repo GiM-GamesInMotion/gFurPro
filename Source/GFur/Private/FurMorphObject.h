@@ -4,10 +4,12 @@
 
 #include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
 
+struct FFurSkinData;
+
 class FFurMorphObject
 {
 public:
-	FFurMorphObject(int InNumVertices, int InNumLayers, int InLodIndex);
+	FFurMorphObject(FFurSkinData* InFurData);
 	~FFurMorphObject();
 
 	void Update(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTable);
@@ -15,8 +17,6 @@ public:
 	FVertexBuffer* GetVertexBuffer() const { return VertexBuffer; }
 
 private:
+	FFurSkinData* FurData;
 	FVertexBuffer* VertexBuffer;
-	int NumVertices;
-	int NumLayers;
-	int LODIndex;
 };

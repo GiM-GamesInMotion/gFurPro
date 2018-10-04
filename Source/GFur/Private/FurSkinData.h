@@ -11,6 +11,7 @@ struct FFurSkinData: public FFurData
 	USkeletalMesh* SkeletalMesh;
 	TArray<USkeletalMesh*> GuideMeshes;
 	class FFurSkinVertexBuffer* VertexBuffer;
+	bool HasExtraBoneInfluences;
 
 	~FFurSkinData();
 

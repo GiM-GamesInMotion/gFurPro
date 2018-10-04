@@ -418,6 +418,13 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 	Offset += Input.BlendWeights.y * CalcPrevBoneFurOffset(Input.BlendIndices.y, Position);
 	Offset += Input.BlendWeights.z * CalcPrevBoneFurOffset(Input.BlendIndices.z, Position);
 	Offset += Input.BlendWeights.w * CalcPrevBoneFurOffset(Input.BlendIndices.w, Position);
+#if GPUSKIN_USE_EXTRA_INFLUENCES
+	Offset += Input.BlendWeightsExtra.x * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.x, Position);
+	Offset += Input.BlendWeightsExtra.y * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.y, Position);
+	Offset += Input.BlendWeightsExtra.z * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.z, Position);
+	Offset += Input.BlendWeightsExtra.w * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.w, Position);
+#endif // GPUSKIN_USE_EXTRA_INFLUENCES
+	
 	Offset -= dot(Offset, NormalVec) * NormalVec;
 	Offset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 
@@ -583,6 +590,13 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 	Offset += Input.BlendWeights.y * CalcBoneFurOffset(Input.BlendIndices.y, Position);
 	Offset += Input.BlendWeights.z * CalcBoneFurOffset(Input.BlendIndices.z, Position);
 	Offset += Input.BlendWeights.w * CalcBoneFurOffset(Input.BlendIndices.w, Position);
+#if GPUSKIN_USE_EXTRA_INFLUENCES
+	Offset += Input.BlendWeightsExtra.x * CalcBoneFurOffset(Input.BlendIndicesExtra.x, Position);
+	Offset += Input.BlendWeightsExtra.y * CalcBoneFurOffset(Input.BlendIndicesExtra.y, Position);
+	Offset += Input.BlendWeightsExtra.z * CalcBoneFurOffset(Input.BlendIndicesExtra.z, Position);
+	Offset += Input.BlendWeightsExtra.w * CalcBoneFurOffset(Input.BlendIndicesExtra.w, Position);
+#endif // GPUSKIN_USE_EXTRA_INFLUENCES
+
 	Offset -= dot(Offset, NormalVec) * NormalVec;
 	Offset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 

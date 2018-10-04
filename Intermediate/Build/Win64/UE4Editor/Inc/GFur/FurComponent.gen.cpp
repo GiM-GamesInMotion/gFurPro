@@ -178,6 +178,16 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #endif
 		static const UE4CodeGen_Private::FFloatPropertyParams NewProp_ForceDistribution;
 #if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_PhysicsEnabled_MetaData[];
+#endif
+		static void NewProp_PhysicsEnabled_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_PhysicsEnabled;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_RemoveFacesWithoutSplines_MetaData[];
+#endif
+		static void NewProp_RemoveFacesWithoutSplines_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_RemoveFacesWithoutSplines;
+#if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_MinFurLength_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FFloatPropertyParams NewProp_MinFurLength;
@@ -316,6 +326,30 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #endif
 	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UGFurComponent_Statics::NewProp_ForceDistribution = { UE4CodeGen_Private::EPropertyClass::Float, "ForceDistribution", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000005, 1, nullptr, STRUCT_OFFSET(UGFurComponent, ForceDistribution), METADATA_PARAMS(Z_Construct_UClass_UGFurComponent_Statics::NewProp_ForceDistribution_MetaData, ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::NewProp_ForceDistribution_MetaData)) };
 #if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_PhysicsEnabled_MetaData[] = {
+		{ "Category", "gFur Physics" },
+		{ "ModuleRelativePath", "Private/FurComponent.h" },
+		{ "ToolTip", "With value = 1.0, the forces affecting fur are distributed linearly from root to tip.\nValues above 1.0 push the forces more to the tip, leaving the lower parts of fur strands less affected." },
+	};
+#endif
+	void Z_Construct_UClass_UGFurComponent_Statics::NewProp_PhysicsEnabled_SetBit(void* Obj)
+	{
+		((UGFurComponent*)Obj)->PhysicsEnabled = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UGFurComponent_Statics::NewProp_PhysicsEnabled = { UE4CodeGen_Private::EPropertyClass::Bool, "PhysicsEnabled", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000005, 1, nullptr, sizeof(bool), UE4CodeGen_Private::ENativeBool::Native, sizeof(UGFurComponent), &Z_Construct_UClass_UGFurComponent_Statics::NewProp_PhysicsEnabled_SetBit, METADATA_PARAMS(Z_Construct_UClass_UGFurComponent_Statics::NewProp_PhysicsEnabled_MetaData, ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::NewProp_PhysicsEnabled_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_RemoveFacesWithoutSplines_MetaData[] = {
+		{ "Category", "gFur Shell settings" },
+		{ "ModuleRelativePath", "Private/FurComponent.h" },
+		{ "ToolTip", "Removes faces without splines." },
+	};
+#endif
+	void Z_Construct_UClass_UGFurComponent_Statics::NewProp_RemoveFacesWithoutSplines_SetBit(void* Obj)
+	{
+		((UGFurComponent*)Obj)->RemoveFacesWithoutSplines = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UGFurComponent_Statics::NewProp_RemoveFacesWithoutSplines = { UE4CodeGen_Private::EPropertyClass::Bool, "RemoveFacesWithoutSplines", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000005, 1, nullptr, sizeof(bool), UE4CodeGen_Private::ENativeBool::Native, sizeof(UGFurComponent), &Z_Construct_UClass_UGFurComponent_Statics::NewProp_RemoveFacesWithoutSplines_SetBit, METADATA_PARAMS(Z_Construct_UClass_UGFurComponent_Statics::NewProp_RemoveFacesWithoutSplines_MetaData, ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::NewProp_RemoveFacesWithoutSplines_MetaData)) };
+#if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_MinFurLength_MetaData[] = {
 		{ "Category", "gFur Shell settings" },
 		{ "ModuleRelativePath", "Private/FurComponent.h" },
@@ -412,6 +446,8 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_Damping,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_Stiffness,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_ForceDistribution,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_PhysicsEnabled,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_RemoveFacesWithoutSplines,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_MinFurLength,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_FurLength,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_ShellBias,
@@ -450,7 +486,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 981138358);
+	IMPLEMENT_CLASS(UGFurComponent, 1002339249);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UGFurComponent(Z_Construct_UClass_UGFurComponent, &UGFurComponent::StaticClass, TEXT("/Script/GFur"), TEXT("UGFurComponent"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UGFurComponent);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

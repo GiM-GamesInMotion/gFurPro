@@ -9,41 +9,7 @@
 static TArray< struct FFurSkinData* > StaticFurSkinData;
 static FCriticalSection  StaticFurSkinDataCS;
 
-/** Soft Skin Vertex */
-struct FSoftSkinVertex
-{
-	FVector			Position;
-
-	// Tangent, U-direction
-	FPackedNormal	TangentX;
-	// Binormal, V-direction
-	FPackedNormal	TangentY;
-	// Normal
-	FPackedNormal	TangentZ;
-
-	// UVs
-	FVector2D		UVs[MAX_TEXCOORDS];
-	// VertexColor
-	FColor			Color;
-	uint8			InfluenceBones[MAX_TOTAL_INFLUENCES];
-	uint8			InfluenceWeights[MAX_TOTAL_INFLUENCES];
-};
-
-/** Fur Skin Vertex */
-struct FFurSkinVertex : FSoftSkinVertex
-{
-	FVector FurOffset;
-};
-
 /** Fur Skin Vertex Buffer */
-class FFurSkinVertexBuffer : public FVertexBuffer
-{
-public:
-	TArray<FFurSkinVertex> Vertices;
-
-	virtual void InitRHI() override;
-};
-
 void FFurSkinVertexBuffer::InitRHI()
 {
 	FRHIResourceCreateInfo CreateInfo;
@@ -115,8 +81,7 @@ public:
 	{
 		FShaderDataType(ERHIFeatureLevel::Type InFeatureLevel)
 			: CurrentBuffer(0)
-			, PreviousFrameNumber(0)
-			, CurrentFrameNumber(0)
+			, Discontinuous(true)
 			, MeshOrigin(0, 0, 0)
 			, MeshExtension(1, 1, 1)
 			, FurOffsetPower(2.0f)
@@ -137,7 +102,7 @@ public:
 
 		// @param FrameTime from GFrameTime
 		void UpdateBoneData(const TArray<FMatrix>& ReferenceToLocalMatrices, const TArray<FVector>& LinearOffsets, const TArray<FVector>& AngularOffsets,
-			const TArray<FMatrix>& LastTransformations, const TArray<FBoneIndexType>& BoneMap, uint32 FrameNumber, ERHIFeatureLevel::Type FeatureLevel);
+			const TArray<FMatrix>& LastTransformations, const TArray<FBoneIndexType>& BoneMap, bool InDiscontinuous, ERHIFeatureLevel::Type FeatureLevel);
 
 		void InitDynamicRHI();
 
@@ -162,9 +127,9 @@ public:
 
 		// @param bPrevious true:previous, false:current
 		// @param FrameNumber usually from View.Family->FrameNumber
-		const FVertexBufferAndSRV& GetBoneBufferForReading(bool bPrevious, uint32 FrameNumber) const
+		const FVertexBufferAndSRV& GetBoneBufferForReading(bool bPrevious) const
 		{
-			const FVertexBufferAndSRV* RetPtr = &GetBoneBufferInternal(bPrevious, FrameNumber);
+			const FVertexBufferAndSRV* RetPtr = &GetBoneBufferInternal(bPrevious);
 
 			if (!RetPtr->VertexBufferRHI.IsValid())
 			{
@@ -172,7 +137,7 @@ public:
 				check(bPrevious);
 
 				// if we don't have any old data we use the current one
-				RetPtr = &GetBoneBufferInternal(false, FrameNumber);
+				RetPtr = &GetBoneBufferInternal(false);
 
 				// at least the current one needs to be valid when reading
 				check(RetPtr->VertexBufferRHI.IsValid());
@@ -184,12 +149,12 @@ public:
 		// @param bPrevious true:previous, false:current
 		// @param FrameNumber usually from View.Family->FrameNumber
 		// @return IsValid() can fail, then you have to create the buffers first (or if the size changes)
-		FVertexBufferAndSRV& GetBoneBufferForWriting(bool bPrevious, uint32 FrameNumber)
+		FVertexBufferAndSRV& GetBoneBufferForWriting()
 		{
 			const FShaderDataType* This = (const FShaderDataType*)this;
 
 			// non const version maps to const version
-			return (FVertexBufferAndSRV&)This->GetBoneBufferInternal(bPrevious, FrameNumber);
+			return (FVertexBufferAndSRV&)This->GetBoneBufferInternal(false);
 		}
 
 		const FVertexBufferAndSRV& GetBoneFurOffsetsBufferForReading(bool bPrevious) const
@@ -211,12 +176,12 @@ public:
 			return *RetPtr;
 		}
 
-		FVertexBufferAndSRV& GetBoneFurOffsetsBufferForWriting(bool bPrevious)
+		FVertexBufferAndSRV& GetBoneFurOffsetsBufferForWriting()
 		{
 			const FShaderDataType* This = (const FShaderDataType*)this;
 
 			// non const version maps to const version
-			return (FVertexBufferAndSRV&)This->GetBoneFurOffsetsBufferInternal(bPrevious);
+			return (FVertexBufferAndSRV&)This->GetBoneFurOffsetsBufferInternal(false);
 		}
 
 	private:
@@ -225,27 +190,23 @@ public:
 		FVertexBufferAndSRV BoneFurOffsetsBuffer[2];
 		// 0 / 1 to index into BoneBuffer
 		uint32 CurrentBuffer;
-		// from GFrameNumber, to detect pause and old data when an object was not rendered for some time
-		uint32 PreviousFrameNumber;
-		uint32 CurrentFrameNumber;
 		// if FeatureLevel < ERHIFeatureLevel::ES3_1
 		FUniformBufferRHIRef UniformBuffer;
 		uint32 BoneCount;
 		ERHIFeatureLevel::Type FeatureLevel;
+		bool Discontinuous;
 
-		void GoToNextFrame(uint32 FrameNumber);
+		void GoToNextFrame(bool InDiscontinuous);
 
 		// to support GetBoneBufferForWriting() and GetBoneBufferForReading()
 		// @param bPrevious true:previous, false:current
 		// @param FrameNumber usually from View.Family->FrameNumber
 		// @return might not pass the IsValid() 
-		const FVertexBufferAndSRV& GetBoneBufferInternal(bool bPrevious, uint32 FrameNumber) const
+		const FVertexBufferAndSRV& GetBoneBufferInternal(bool bPrevious) const
 		{
 			check(IsInParallelRenderingThread());
 
-			// This test prevents skeletal meshes keeping velocity when we pause (e.g. simulate pause)
-			// CurrentFrameNumber <= FrameNumber which means non-sequential frames are also skipped 
-			if ((FrameNumber - PreviousFrameNumber) > 1)
+			if (Discontinuous)
 			{
 				bPrevious = false;
 			}
@@ -260,9 +221,7 @@ public:
 		{
 			check(IsInParallelRenderingThread());
 
-			// This test prevents skeletal meshes keeping velocity when we pause (e.g. simulate pause)
-			// CurrentFrameNumber <= FrameNumber which means non-sequential frames are also skipped 
-			if ((CurrentFrameNumber - PreviousFrameNumber) > 1)
+			if (Discontinuous)
 			{
 				bPrevious = false;
 			}
@@ -441,10 +400,10 @@ public:
 	}
 
 	void UpdateSkeletonShaderData(float InFurOffsetPower, const TArray<FMatrix>& InReferenceToLocal, const TArray<FVector>& InLinearOffsets, const TArray<FVector>& InAngularOffsets,
-		const TArray<FMatrix>& InTransformations, const TArray<FBoneIndexType>& InBoneMap, uint32 InFrameNumber, ERHIFeatureLevel::Type InFeatureLevel) override
+		const TArray<FMatrix>& InTransformations, const TArray<FBoneIndexType>& InBoneMap, bool InDiscontinuous, ERHIFeatureLevel::Type InFeatureLevel) override
 	{
 		ShaderData.FurOffsetPower = InFurOffsetPower;
-		ShaderData.UpdateBoneData(InReferenceToLocal, InLinearOffsets, InAngularOffsets, InTransformations, InBoneMap, InFrameNumber, InFeatureLevel);
+		ShaderData.UpdateBoneData(InReferenceToLocal, InLinearOffsets, InAngularOffsets, InTransformations, InBoneMap, InDiscontinuous, InFeatureLevel);
 	}
 
 	FDataType Data;
@@ -476,16 +435,15 @@ IMPLEMENT_UNIFORM_BUFFER_STRUCT(FBoneMatricesUniformShaderParameters, TEXT("Bone
 static FBoneMatricesUniformShaderParameters GBoneUniformStruct;
 
 template<bool MorphTargets, bool Physics, bool ExtraInfluences>
-void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderDataType::GoToNextFrame(uint32 FrameNumber)
+void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderDataType::GoToNextFrame(bool InDiscontinuous)
 {
-	PreviousFrameNumber = CurrentFrameNumber;
-	CurrentFrameNumber = FrameNumber;
 	CurrentBuffer = 1 - CurrentBuffer;
+	Discontinuous = InDiscontinuous;
 }
 
 template<bool MorphTargets, bool Physics, bool ExtraInfluences>
 void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderDataType::UpdateBoneData(const TArray<FMatrix>& ReferenceToLocalMatrices, const TArray<FVector>& LinearOffsets, const TArray<FVector>& AngularOffsets,
-	const TArray<FMatrix>& LastTransformations, const TArray<FBoneIndexType>& BoneMap, uint32 FrameNumber, ERHIFeatureLevel::Type InFeatureLevel)
+	const TArray<FMatrix>& LastTransformations, const TArray<FBoneIndexType>& BoneMap, bool InDiscontinuous, ERHIFeatureLevel::Type InFeatureLevel)
 {
 	const uint32 NumBones = BoneMap.Num();
 	check(NumBones <= MaxGPUSkinBones);
@@ -498,9 +456,9 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	if (InFeatureLevel >= ERHIFeatureLevel::ES3_1)
 	{
 		check(IsInRenderingThread());
-		GoToNextFrame(FrameNumber);
+		GoToNextFrame(InDiscontinuous);
 
-		CurrentBoneBuffer = &GetBoneBufferForWriting(false, FrameNumber);
+		CurrentBoneBuffer = &GetBoneBufferForWriting();
 
 		uint32 NumVectors = NumBones * 3;
 		check(NumVectors <= (MaxGPUSkinBones * 3));
@@ -518,7 +476,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			check(IsValidRef(*CurrentBoneBuffer));
 		}
 
-		CurrentBoneFurOffsetsBuffer = &GetBoneFurOffsetsBufferForWriting(false);
+		CurrentBoneFurOffsetsBuffer = &GetBoneFurOffsetsBufferForWriting();
 		if (!IsValidRef(*CurrentBoneFurOffsetsBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
@@ -609,7 +567,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	{
 		check(IsInRenderingThread());
 
-		CurrentBoneBuffer = &GetBoneBufferForWriting(false, 0);
+		CurrentBoneBuffer = &GetBoneBufferForWriting();
 
 		uint32 NumVectors = NumBones * 3;
 		check(NumVectors <= (MaxGPUSkinBones * 3));
@@ -656,21 +614,20 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::SetMesh(FRHICommandList& RH
 		SetShaderValue(RHICmdList, ShaderRHI, MeshExtensionParameter, ShaderData.MeshExtension);
 		SetShaderValue(RHICmdList, ShaderRHI, FurOffsetPowerParameter, ShaderData.FurOffsetPower);
 
-		const auto FeatureLevel = View.GetFeatureLevel();
-		const auto FrameNumber = View.Family->FrameNumber;
+//		const auto FeatureLevel = View.GetFeatureLevel();
 
 		if (Physics)
 		{
 			if (BoneMatrices.IsBound())
 			{
-				FShaderResourceViewRHIParamRef CurrentData = ShaderData.GetBoneBufferForReading(false, FrameNumber).VertexBufferSRV;
+				FShaderResourceViewRHIParamRef CurrentData = ShaderData.GetBoneBufferForReading(false).VertexBufferSRV;
 				RHICmdList.SetShaderResourceViewParameter(ShaderRHI, BoneMatrices.GetBaseIndex(), CurrentData);
 			}
 			if (PreviousBoneMatrices.IsBound())
 			{
 				// todo: Maybe a check for PreviousData!=CurrentData would save some performance (when objects don't have velocty yet) but removing the bool also might save performance
 
-				FShaderResourceViewRHIParamRef PreviousData = ShaderData.GetBoneBufferForReading(true, FrameNumber).VertexBufferSRV;
+				FShaderResourceViewRHIParamRef PreviousData = ShaderData.GetBoneBufferForReading(true).VertexBufferSRV;
 				RHICmdList.SetShaderResourceViewParameter(ShaderRHI, PreviousBoneMatrices.GetBaseIndex(), PreviousData);
 			}
 			if (BoneFurOffsets.IsBound())
@@ -694,8 +651,7 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::SetMesh(FRHICommandList& RH
 /** Fur Skin Data */
 FFurSkinData::~FFurSkinData()
 {
-	VertexBuffer->ReleaseResource();
-	delete VertexBuffer;
+	VertexBuffer.ReleaseResource();
 	IndexBuffer.ReleaseResource();
 }
 
@@ -715,8 +671,6 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 	CurrentMaxFurLength = InFurLength;
 	NoiseStrength = InNoiseStrength;
 	RemoveFacesWithoutSplines = InRemoveFacesWithoutSplines;
-
-	VertexBuffer = new FFurSkinVertexBuffer();
 
 	if (InFurSplines == nullptr && InGuideMeshes.Num() > 0)
 		InFurSplines = GenerateSplines(InSkeletalMesh, InLod, InGuideMeshes);
@@ -844,7 +798,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 		FSection& FurSection = Sections[Sections.AddUninitialized()];
 		new (&FurSection) FSection();
 		FurSection.MaterialIndex = ModelSection.MaterialIndex;
-		FurSection.MinVertexIndex = VertexBuffer->Vertices.Num();
+		FurSection.MinVertexIndex = VertexBuffer.Vertices.Num();
 		FurSection.BaseIndex = IndexBuffer.Indices.Num();
 
 		if (InFurSplines && InRemoveFacesWithoutSplines)
@@ -981,7 +935,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 							Vert.UVs[1].X = Relative * Length;
 						}
 
-						VertexBuffer->Vertices.Add(Vert);
+						VertexBuffer.Vertices.Add(Vert);
 					}
 					else if (!InRemoveFacesWithoutSplines)
 					{
@@ -992,7 +946,7 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 						FVector TangentZ = Vert.TangentZ.ToFVector();
 						Vert.FurOffset = TangentZ * (NonLinearFactor * InMinFurLength/* + FMath::RandRange(-InNoiseStrength * Derivative, InNoiseStrength * Derivative)*/);
 
-						VertexBuffer->Vertices.Add(Vert);
+						VertexBuffer.Vertices.Add(Vert);
 					}
 				}
 				else
@@ -1018,9 +972,10 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 						Vert.UVs[1].X = Relative * Length;
 					}
 
-					VertexBuffer->Vertices.Add(Vert);
+					VertexBuffer.Vertices.Add(Vert);
 				}
 			}
+			int IndexOffset2 = IndexOffset - ModelSection.BaseVertexIndex;
 			if (InFurSplines && InRemoveFacesWithoutSplines)
 			{
 				for (uint32 t = 0; t < ModelSection.NumTriangles; ++t)
@@ -1033,32 +988,32 @@ FFurSkinData::FFurSkinData(USkeletalMesh* InSkeletalMesh, int InLod, UFurSplines
 						Idx0 -= VertexSub[Idx0 - ModelSection.BaseVertexIndex];
 						Idx1 -= VertexSub[Idx1 - ModelSection.BaseVertexIndex];
 						Idx2 -= VertexSub[Idx2 - ModelSection.BaseVertexIndex];
-						IndexBuffer.Indices.Add(Idx0 + IndexOffset);
-						IndexBuffer.Indices.Add(Idx1 + IndexOffset);
-						IndexBuffer.Indices.Add(Idx2 + IndexOffset);
+						IndexBuffer.Indices.Add(Idx0 + IndexOffset2);
+						IndexBuffer.Indices.Add(Idx1 + IndexOffset2);
+						IndexBuffer.Indices.Add(Idx2 + IndexOffset2);
 					}
 				}
 			}
 			else
 			{
 				for (uint32 i = 0; i < ModelSection.NumTriangles * 3; ++i)
-					IndexBuffer.Indices.Add(Indices[ModelSection.BaseIndex + i] + IndexOffset);
+					IndexBuffer.Indices.Add(Indices[ModelSection.BaseIndex + i] + IndexOffset2);
 			}
-			IndexOffset = VertexBuffer->Vertices.Num() - ModelSection.BaseVertexIndex;
+			IndexOffset = VertexBuffer.Vertices.Num();
 		}
-		FurSection.MaxVertexIndex = VertexBuffer->Vertices.Num() - 1;
+		FurSection.MaxVertexIndex = VertexBuffer.Vertices.Num() - 1;
 		FurSection.NumTriangles = (IndexBuffer.Indices.Num() - FurSection.BaseIndex) / 3;
 		FurSection.NumBones = ModelSection.BoneMap.Num();
 	}
 
 	// Init vertex factory
-	if (VertexBuffer->Vertices.Num() == 0)
-		VertexBuffer->Vertices.Add(FFurSkinVertex());
+	if (VertexBuffer.Vertices.Num() == 0)
+		VertexBuffer.Vertices.Add(FFurSkinVertex());
 	if (IndexBuffer.Indices.Num() == 0)
 		IndexBuffer.Indices.Add(0);
 
 	// Enqueue initialization of render resource
-	BeginInitResource(VertexBuffer);
+	BeginInitResource(&VertexBuffer);
 	BeginInitResource(&IndexBuffer);
 }
 
@@ -1119,13 +1074,13 @@ UFurSplines* FFurSkinData::GenerateSplines(USkeletalMesh* InSkeletalMesh, int In
 
 int FFurSkinData::NumVertices() const
 {
-	return VertexBuffer->Vertices.Num();
+	return VertexBuffer.Vertices.Num();
 }
 
 void FFurSkinData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel)
 {
 	auto CreateVertexFactory = [&](const FFurData::FSection& s, auto* vf) {
-		vf->Init(VertexBuffer, InMorphVertexBuffer, s.NumBones);
+		vf->Init(&VertexBuffer, InMorphVertexBuffer, s.NumBones);
 		BeginInitResource(vf);
 		VertexFactories.Add(vf);
 	};

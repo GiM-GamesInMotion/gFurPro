@@ -5,12 +5,47 @@
 #include "Runtime/Engine/Classes/Engine/SkeletalMesh.h"
 #include "FurData.h"
 
+/** Soft Skin Vertex */
+struct FSoftSkinVertex
+{
+	FVector			Position;
+
+	// Tangent, U-direction
+	FPackedNormal	TangentX;
+	// Binormal, V-direction
+	FPackedNormal	TangentY;
+	// Normal
+	FPackedNormal	TangentZ;
+
+	// UVs
+	FVector2D		UVs[MAX_TEXCOORDS];
+	// VertexColor
+	FColor			Color;
+	uint8			InfluenceBones[MAX_TOTAL_INFLUENCES];
+	uint8			InfluenceWeights[MAX_TOTAL_INFLUENCES];
+};
+
+/** Fur Skin Vertex */
+struct FFurSkinVertex : FSoftSkinVertex
+{
+	FVector FurOffset;
+};
+
+/** Fur Skin Vertex Buffer */
+class FFurSkinVertexBuffer : public FVertexBuffer
+{
+public:
+	TArray<FFurSkinVertex> Vertices;
+
+	virtual void InitRHI() override;
+};
+
 /** Fur Skin Data */
 struct FFurSkinData: public FFurData
 {
 	USkeletalMesh* SkeletalMesh;
 	TArray<USkeletalMesh*> GuideMeshes;
-	class FFurSkinVertexBuffer* VertexBuffer;
+	FFurSkinVertexBuffer VertexBuffer;
 	bool HasExtraBoneInfluences;
 
 	~FFurSkinData();

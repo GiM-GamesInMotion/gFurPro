@@ -123,8 +123,7 @@ public:
 		FVector PreviousFurAngularOffset;
 
 		FShaderDataType()
-			: PreviousFrameNumber(0)
-			, CurrentFrameNumber(0)
+			: Discontinuous(true)
 			, MeshOrigin(0, 0, 0)
 			, MeshExtension(1, 1, 1)
 			, FurOffsetPower(2.0f)
@@ -137,17 +136,15 @@ public:
 		{
 		}
 
-		void GoToNextFrame(uint32 FrameNumber);
+		void GoToNextFrame(bool InDiscontinuous);
 
 		bool IsPreviousDataValid()
 		{
-			return CurrentFrameNumber == PreviousFrameNumber + 1;
+			return !Discontinuous;
 		}
 
 	private:
-		// from GFrameNumber, to detect pause and old data when an object was not rendered for some time
-		uint32 PreviousFrameNumber;
-		uint32 CurrentFrameNumber;
+		bool Discontinuous;
 	};
 
 	FFurStaticVertexFactoryBase(ERHIFeatureLevel::Type InFeatureLevel)
@@ -275,9 +272,9 @@ public:
 	}
 
 	virtual void UpdateStaticShaderData(float InFurOffsetPower, const FVector& InLinearOffset, const FVector& InAngularOffset,
-		const FVector& InPosition, uint32 InFrameNumber, ERHIFeatureLevel::Type InFeatureLevel) override
+		const FVector& InPosition, bool InDiscontinuous, ERHIFeatureLevel::Type InFeatureLevel) override
 	{
-		ShaderData.GoToNextFrame(InFrameNumber);
+		ShaderData.GoToNextFrame(InDiscontinuous);
 
 		ShaderData.FurOffsetPower = InFurOffsetPower;
 
@@ -301,10 +298,9 @@ IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurStaticVertexFactory, "/Plugin/gFur/Priv
 IMPLEMENT_VERTEX_FACTORY_TYPE(FFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush", true, false, true, true, false);
 
 template<bool Physics>
-void FFurStaticVertexFactoryBase<Physics>::FShaderDataType::GoToNextFrame(uint32 FrameNumber)
+void FFurStaticVertexFactoryBase<Physics>::FShaderDataType::GoToNextFrame(bool InDiscontinuous)
 {
-	PreviousFrameNumber = CurrentFrameNumber;
-	CurrentFrameNumber = FrameNumber;
+	Discontinuous = InDiscontinuous;
 }
 
 void FFurStaticVertexFactoryShaderParameters::SetMesh(FRHICommandList& RHICmdList, FShader* Shader, const FVertexFactory* VertexFactory, const FSceneView& View, const FMeshBatchElement& BatchElement, uint32 DataFlags) const

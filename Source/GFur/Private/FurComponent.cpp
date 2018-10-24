@@ -784,18 +784,20 @@ void UGFurComponent::updateFur()
 	}
 
 	// We prepare the next frame but still have the value from the last one
-	uint32 FrameNumberToPrepare = GFrameNumber + 1;
+	uint32 RevisionNumber = MasterPoseComponent.IsValid() ? MasterPoseComponent->GetBoneTransformRevisionNumber() : 0;
+	bool Discontinuous = RevisionNumber - LastRevisionNumber > 1;
+	LastRevisionNumber = RevisionNumber;
 
 	// queue a call to update this data
 	ENQUEUE_RENDER_COMMAND(SkelMeshObjectUpdateDataCommand)(
-		[this, FrameNumberToPrepare](FRHICommandListImmediate& RHICmdList)
+		[this, Discontinuous](FRHICommandListImmediate& RHICmdList)
 	{
-		UpdateFur_RenderThread(RHICmdList, FrameNumberToPrepare);
+		UpdateFur_RenderThread(RHICmdList, Discontinuous);
 	}
 	);
 }
 
-void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, uint32 FrameNumberToPrepare)
+void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, bool Discontinuous)
 {
 	FFurSceneProxy* FurProxy = (FFurSceneProxy*)SceneProxy;
 
@@ -810,7 +812,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
 				FurProxy->GetVertexFactory(SectionIdx)->UpdateSkeletonShaderData(ForceDistribution, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,
-					Sections[SectionIdx].BoneMap, FrameNumberToPrepare, SceneFeatureLevel);
+					Sections[SectionIdx].BoneMap, Discontinuous, SceneFeatureLevel);
 			}
 			if (MasterPoseComponent.IsValid() && FurProxy->GetMorphObject())
 				FurProxy->GetMorphObject()->Update(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables);
@@ -823,7 +825,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			{
 				TArray<FBoneIndexType> BoneMap;
 				FurProxy->GetVertexFactory(SectionIdx)->UpdateStaticShaderData(ForceDistribution, StaticLinearOffset, StaticAngularOffset,
-					StaticTransformation.GetOrigin(), FrameNumberToPrepare, SceneFeatureLevel);
+					StaticTransformation.GetOrigin(), Discontinuous, SceneFeatureLevel);
 			}
 		}
 	}

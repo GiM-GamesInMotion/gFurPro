@@ -212,12 +212,14 @@ private:
 
 	float LastDeltaTime;
 
+	uint32 LastRevisionNumber = 0;
+
 	// Begin USceneComponent interface.
 	virtual FBoxSphereBounds CalcBounds(const FTransform & LocalToWorld) const override;
 	// Begin USceneComponent interface.
 
 	void updateFur();
-	void UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, uint32 FrameNumberToPrepare);
+	void UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, bool Discontinuous);
 	void UpdateMasterBoneMap();
 	void CreateMorphRemapTable(int32 InLod);
 };

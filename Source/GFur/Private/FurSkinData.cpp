@@ -149,12 +149,12 @@ public:
 		// @param bPrevious true:previous, false:current
 		// @param FrameNumber usually from View.Family->FrameNumber
 		// @return IsValid() can fail, then you have to create the buffers first (or if the size changes)
-		FVertexBufferAndSRV& GetBoneBufferForWriting()
+		FVertexBufferAndSRV& GetBoneBufferForWriting(bool bPrevious)
 		{
 			const FShaderDataType* This = (const FShaderDataType*)this;
 
 			// non const version maps to const version
-			return (FVertexBufferAndSRV&)This->GetBoneBufferInternal(false);
+			return (FVertexBufferAndSRV&)This->GetBoneBufferInternal(bPrevious);
 		}
 
 		const FVertexBufferAndSRV& GetBoneFurOffsetsBufferForReading(bool bPrevious) const
@@ -176,12 +176,12 @@ public:
 			return *RetPtr;
 		}
 
-		FVertexBufferAndSRV& GetBoneFurOffsetsBufferForWriting()
+		FVertexBufferAndSRV& GetBoneFurOffsetsBufferForWriting(bool bPrevious)
 		{
 			const FShaderDataType* This = (const FShaderDataType*)this;
 
 			// non const version maps to const version
-			return (FVertexBufferAndSRV&)This->GetBoneFurOffsetsBufferInternal(false);
+			return (FVertexBufferAndSRV&)This->GetBoneFurOffsetsBufferInternal(bPrevious);
 		}
 
 	private:
@@ -458,7 +458,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 		check(IsInRenderingThread());
 		GoToNextFrame(InDiscontinuous);
 
-		CurrentBoneBuffer = &GetBoneBufferForWriting();
+		CurrentBoneBuffer = &GetBoneBufferForWriting(false);
 
 		uint32 NumVectors = NumBones * 3;
 		check(NumVectors <= (MaxGPUSkinBones * 3));
@@ -476,7 +476,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			check(IsValidRef(*CurrentBoneBuffer));
 		}
 
-		CurrentBoneFurOffsetsBuffer = &GetBoneFurOffsetsBufferForWriting();
+		CurrentBoneFurOffsetsBuffer = &GetBoneFurOffsetsBufferForWriting(false);
 		if (!IsValidRef(*CurrentBoneFurOffsetsBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
@@ -561,18 +561,17 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	check(NumBones <= MaxGPUSkinBones);
 	FSkinMatrix3x4* ChunkMatrices = nullptr;
 
-	FVertexBufferAndSRV* CurrentBoneBuffer = 0;
-
 	if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
 	{
 		check(IsInRenderingThread());
-
-		CurrentBoneBuffer = &GetBoneBufferForWriting();
 
 		uint32 NumVectors = NumBones * 3;
 		check(NumVectors <= (MaxGPUSkinBones * 3));
 		uint32 VectorArraySize = NumVectors * sizeof(FVector4);
 
+		uint32 OffsetArraySize = NumBones * 3 * sizeof(FVector4);
+
+		FVertexBufferAndSRV* CurrentBoneBuffer = &GetBoneBufferForWriting(false);
 		if (!IsValidRef(*CurrentBoneBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
@@ -581,6 +580,39 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
 			*CurrentBoneBuffer = Buffer;
 			check(IsValidRef(*CurrentBoneBuffer));
+		}
+
+		FVertexBufferAndSRV* PreviousBoneBuffer = &GetBoneBufferForWriting(true);
+		if (!IsValidRef(*PreviousBoneBuffer))
+		{
+			FVertexBufferAndSRV Buffer;
+			FRHIResourceCreateInfo CreateInfo;
+			Buffer.VertexBufferRHI = RHICreateVertexBuffer(VectorArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
+			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
+			*PreviousBoneBuffer = Buffer;
+			check(IsValidRef(*PreviousBoneBuffer));
+		}
+
+		FVertexBufferAndSRV* CurrentBoneFurOffsetsBuffer = &GetBoneFurOffsetsBufferForWriting(false);
+		if (!IsValidRef(*CurrentBoneFurOffsetsBuffer))
+		{
+			FVertexBufferAndSRV Buffer;
+			FRHIResourceCreateInfo CreateInfo;
+			Buffer.VertexBufferRHI = RHICreateVertexBuffer(OffsetArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
+			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
+			*CurrentBoneFurOffsetsBuffer = Buffer;
+			check(IsValidRef(*CurrentBoneFurOffsetsBuffer));
+		}
+
+		FVertexBufferAndSRV* PreviousBoneFurOffsetsBuffer = &GetBoneFurOffsetsBufferForWriting(true);
+		if (!IsValidRef(*PreviousBoneFurOffsetsBuffer))
+		{
+			FVertexBufferAndSRV Buffer;
+			FRHIResourceCreateInfo CreateInfo;
+			Buffer.VertexBufferRHI = RHICreateVertexBuffer(OffsetArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
+			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
+			*PreviousBoneFurOffsetsBuffer = Buffer;
+			check(IsValidRef(*PreviousBoneFurOffsetsBuffer));
 		}
 	}
 	else

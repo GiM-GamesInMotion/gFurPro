@@ -106,19 +106,20 @@ public:
 				}
 			}
 		}
-		if (NewLodLevel != CurrentLodLevel)
+		if (NewLodLevel != CurrentFurLodLevel)
 		{
-			CurrentLodLevel = NewLodLevel;
+			CurrentFurLodLevel = NewLodLevel;
+			CurrentMeshLodLevel = FurData[CurrentFurLodLevel]->Lod;
 			SectionOffset = 0;
 			for (int i = 0; i < NewLodLevel; i++)
 				SectionOffset += FurData[i]->Sections.Num();
 		}
 
-		if (CurrentLodLevel < FurData.Num())
+		if (CurrentFurLodLevel < FurData.Num())
 		{
-			for (int sectionIdx = 0; sectionIdx < FurData[CurrentLodLevel]->Sections.Num(); sectionIdx++)
+			for (int sectionIdx = 0; sectionIdx < FurData[CurrentFurLodLevel]->Sections.Num(); sectionIdx++)
 			{
-				const FFurData::FSection& section = FurData[CurrentLodLevel]->Sections[sectionIdx];
+				const FFurData::FSection& section = FurData[CurrentFurLodLevel]->Sections[sectionIdx];
 				if (section.NumTriangles == 0)
 					continue;
 				for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
@@ -140,7 +141,7 @@ public:
 
 						FMeshBatch& Mesh = Collector.AllocateMesh();
 						FMeshBatchElement& BatchElement = Mesh.Elements[0];
-						BatchElement.IndexBuffer = &FurData[CurrentLodLevel]->IndexBuffer;
+						BatchElement.IndexBuffer = &FurData[CurrentFurLodLevel]->IndexBuffer;
 						Mesh.bWireframe = Wireframe;
 						Mesh.VertexFactory = GetVertexFactory(sectionIdx);
 						Mesh.MaterialRenderProxy = MaterialProxy;
@@ -215,11 +216,12 @@ public:
 
 	uint32 GetAllocatedSize(void) const { return (FPrimitiveSceneProxy::GetAllocatedSize()); }
 
-	FFurData* GetFurData() { return FurData[FMath::Min(CurrentLodLevel, FurData.Num() - 1)]; }
+	FFurData* GetFurData() { return FurData[FMath::Min(CurrentFurLodLevel, FurData.Num() - 1)]; }
 	FFurVertexFactory* GetVertexFactory(int sectionIdx) const { return VertexFactories[SectionOffset + sectionIdx]; }
-	FFurMorphObject* GetMorphObject() const { return FurMorphObjects[CurrentLodLevel]; }
+	FFurMorphObject* GetMorphObject() const { return FurMorphObjects[CurrentFurLodLevel]; }
 
-	int GetCurrentLodLevel() const { return CurrentLodLevel; }
+	int GetCurrentFurLodLevel() const { return CurrentFurLodLevel; }
+	int GetCurrentMeshLodLevel() const { return CurrentMeshLodLevel; }
 
 	SIZE_T GetTypeHash(void) const override
 	{
@@ -234,7 +236,8 @@ private:
 	TArray<class UMaterialInstanceDynamic*> FurMaterials;
 	TArray<FFurVertexFactory*> VertexFactories;
 	TArray<FFurMorphObject*> FurMorphObjects;
-	mutable int CurrentLodLevel = 0;
+	mutable int CurrentFurLodLevel = 0;
+	mutable int CurrentMeshLodLevel = 0;
 	mutable int SectionOffset = 0;
 	bool CastShadows;
 };
@@ -637,7 +640,7 @@ void UGFurComponent::updateFur()
 			const USkeletalMesh* const ThisMesh = SkeletalGrowMesh;
 			const USkinnedMeshComponent* const MasterComp = MasterPoseComponent.Get();
 			const USkeletalMesh* const MasterCompMesh = MasterComp ? MasterComp->SkeletalMesh : nullptr;
-			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentLodLevel()];
+			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentMeshLodLevel()];
 
 			FMatrix TempMatrices[256];
 			bool ValidTempMatrices[256];
@@ -807,7 +810,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 
 		if (SkeletalGrowMesh)
 		{
-			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[FurProxy->GetCurrentLodLevel()];
+			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[FurProxy->GetCurrentMeshLodLevel()];
 			const auto& Sections = LOD.RenderSections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
@@ -819,11 +822,10 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 		}
 		else if (StaticGrowMesh)
 		{
-			const auto& LOD = StaticGrowMesh->RenderData->LODResources[FurProxy->GetCurrentLodLevel()];
+			const auto& LOD = StaticGrowMesh->RenderData->LODResources[FurProxy->GetCurrentMeshLodLevel()];
 			const auto& Sections = LOD.Sections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
-				TArray<FBoneIndexType> BoneMap;
 				FurProxy->GetVertexFactory(SectionIdx)->UpdateStaticShaderData(ForceDistribution, StaticLinearOffset, StaticAngularOffset,
 					StaticTransformation.GetOrigin(), Discontinuous, SceneFeatureLevel);
 			}

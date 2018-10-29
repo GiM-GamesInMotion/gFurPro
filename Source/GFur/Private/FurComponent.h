@@ -22,8 +22,17 @@ struct FFurLod
 	UPROPERTY(EditAnywhere, Category = "LOD")
 	int LayerCount;
 
+	/**
+	* Which LOD of the Grow Mesh should be used to generate fur for this LOD.
+	*/
 	UPROPERTY(EditAnywhere, Category = "LOD")
 	int Lod;
+
+	/**
+	* If fur should react to forces and movement while using this LOD.
+	*/
+	UPROPERTY(EditAnywhere, Category = "LOD")
+	bool PhysicsEnabled = true;
 };
 
 /** UFurComponent */
@@ -101,8 +110,7 @@ public:
 	bool RemoveFacesWithoutSplines;
 
 	/**
-	* With value = 1.0, the forces affecting fur are distributed linearly from root to tip.
-	* Values above 1.0 push the forces more to the tip, leaving the lower parts of fur strands less affected.
+	* If fur should react to forces and movement.
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Physics")
 	bool PhysicsEnabled;
@@ -208,7 +216,7 @@ private:
 	FVector StaticLinearVelocity;
 	FVector StaticAngularVelocity;
 	FMatrix StaticTransformation;
-	bool StaticOldPositionValid = false;
+	bool OldPositionValid = false;
 
 	float LastDeltaTime;
 

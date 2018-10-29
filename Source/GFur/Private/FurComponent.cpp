@@ -34,11 +34,13 @@ public:
 		, FurMorphObjects(InMorphObjects)
 		, CastShadows(InCastShadows)
 	{
-
 		bAlwaysHasVelocity = true;
 
 		for (int i = 0; i < InFurData.Num(); i++)
-			InFurData[i]->CreateVertexFactories(VertexFactories, InMorphObjects[i] ? InMorphObjects[i]->GetVertexBuffer() : NULL, InPhysics, InFeatureLevel);
+		{
+			bool LodPhysics = i > 0 ? InFurLods[i - 1].PhysicsEnabled : true;
+			InFurData[i]->CreateVertexFactories(VertexFactories, InMorphObjects[i] ? InMorphObjects[i]->GetVertexBuffer() : NULL, InPhysics && LodPhysics, InFeatureLevel);
+		}
 	}
 
 	virtual ~FFurSceneProxy()
@@ -431,7 +433,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 
 		MorphRemapTables.Reset();
 
-		TArray<FFurData*> Array;
+		TArray<FFurData*> FurArray;
 		TArray<FFurMorphObject*> MorphObjects;
 		if (SkeletalGrowMesh && SkeletalGrowMesh->GetResourceForRendering())
 		{
@@ -444,7 +446,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 
 			{
 				auto Data = FFurSkinData::CreateFurData(LayerCount, 0, this);
-				Array.Add(Data);
+				FurArray.Add(Data);
 				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data) : NULL);
 				if (UseMorphTargets)
 					CreateMorphRemapTable(0);
@@ -454,25 +456,25 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 				auto Data = FFurSkinData::CreateFurData(lod.LayerCount, FMath::Min(NumLods - 1, lod.Lod), this);
 				if (UseMorphTargets)
 					CreateMorphRemapTable(lod.Lod);
-				Array.Add(Data);
+				FurArray.Add(Data);
 				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data) : NULL);
 			}
 
-			FurData = Array;
+			FurData = FurArray;
 
 			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
 		}
 		else if (StaticGrowMesh && StaticGrowMesh->RenderData)
 		{
-			Array.Add(FFurStaticData::CreateFurData(LayerCount, 0, this));
+			FurArray.Add(FFurStaticData::CreateFurData(LayerCount, 0, this));
 			MorphObjects.Add(NULL);
 			for (FFurLod& lod : LODs)
 			{
-				Array.Add(FFurStaticData::CreateFurData(lod.LayerCount, FMath::Min(StaticGrowMesh->RenderData->LODResources.Num() - 1, lod.Lod), this));
+				FurArray.Add(FFurStaticData::CreateFurData(lod.LayerCount, FMath::Min(StaticGrowMesh->RenderData->LODResources.Num() - 1, lod.Lod), this));
 				MorphObjects.Add(NULL);
 			}
 
-			FurData = Array;
+			FurData = FurArray;
 			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
 		}
 	}
@@ -578,10 +580,11 @@ void UGFurComponent::updateFur()
 	if (!SceneProxy || (!SkeletalGrowMesh && !StaticGrowMesh))
 		return;
 
-	if (PhysicsEnabled)
-	{
-		FFurSceneProxy* Scene = (FFurSceneProxy*)SceneProxy;
+	FFurSceneProxy* Scene = (FFurSceneProxy*)SceneProxy;
+	int32 FurLodLevel = Scene->GetCurrentFurLodLevel();
 
+	if (PhysicsEnabled && (FurLodLevel == 0 || LODs[FurLodLevel - 1].PhysicsEnabled))
+	{
 		float DeltaTime = fminf(LastDeltaTime, 1.0f);
 		float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData()->CurrentMaxFurLength * ReferenceHairBias + Scene->GetFurData()->CurrentMinFurLength * (1.0f - ReferenceHairBias));
 		//	float ForceFactor = 1.0f / (powf(ReferenceFurLength, FurForcePower) * fmaxf(FurStiffness, 0.000001f));
@@ -646,7 +649,6 @@ void UGFurComponent::updateFur()
 			bool ValidTempMatrices[256];
 			memset(ValidTempMatrices, 0, sizeof(ValidTempMatrices));
 			check(ThisMesh->RefBasesInvMatrix.Num() != 0);
-			bool OldPositionValid = true;
 			if (ReferenceToLocal.Num() != ThisMesh->RefBasesInvMatrix.Num())
 			{
 				Transformations.Reset();
@@ -757,17 +759,13 @@ void UGFurComponent::updateFur()
 					LinearVelocities[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
 					AngularVelocities[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
 				}
-			}
-
-			for (const auto& ActiveMorphTarget : MasterComp->ActiveMorphTargets)
-			{
-				//			ActiveMorphTarget.
+				OldPositionValid = true;
 			}
 		}
 		else
 		{
 			check(StaticGrowMesh);
-			if (StaticOldPositionValid)
+			if (OldPositionValid)
 			{
 				Physics(ToWorld, StaticTransformation, StaticLinearOffset, StaticLinearVelocity, StaticAngularOffset, StaticAngularVelocity);
 			}
@@ -781,9 +779,13 @@ void UGFurComponent::updateFur()
 				StaticLinearVelocity.Set(0.0f, 0.0f, 0.0f);
 				StaticAngularVelocity.Set(0.0f, 0.0f, 0.0f);
 
-				StaticOldPositionValid = true;
+				OldPositionValid = true;
 			}
 		}
+	}
+	else
+	{
+		OldPositionValid = false;
 	}
 
 	// We prepare the next frame but still have the value from the last one

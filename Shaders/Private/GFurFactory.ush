@@ -1,4 +1,4 @@
-// Copyright 2018 GiM s.r.o. All Rights Reserved.
+// Copyright 2017 GiM s.r.o. All Rights Reserved.
 
 #include "/Engine/Public/Platform.ush"
 #include "/Engine/Private/VertexFactoryCommon.ush"
@@ -6,6 +6,10 @@
 
 #ifndef GPUSKIN_MORPH_BLEND
 #define GPUSKIN_MORPH_BLEND 0
+#endif
+
+#ifndef GFUR_PHYSICS
+#define GFUR_PHYSICS 0
 #endif
 
 float4x4 PreviousLocalToWorld;
@@ -156,8 +160,17 @@ Buffer<float4> BoneMatrices;
 // The previous bone matrix buffer stored as 4x3 (3 float4 behind each other), all chunks of a skeletal mesh in one, each skeletal mesh has it's own buffer
 Buffer<float4> PreviousBoneMatrices;
 
+#if GFUR_PHYSICS
+
 Buffer<float4> BoneFurOffsets;
 Buffer<float4> PreviousBoneFurOffsets;
+
+#endif // GFUR_PHYSICS
+
+#else
+
+#undef GFUR_PHYSICS
+#define GFUR_PHYSICS 0
 
 #endif
 
@@ -269,6 +282,8 @@ float3 UnpackedPosition( FVertexFactoryInput Input )
 /** 
 * Adds the delta position from the combined morph targets to the vertex position 
 */
+
+
 float3 MorphPosition( FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates )
 {
 	return Intermediates.UnpackedPosition + Input.DeltaPosition;
@@ -345,6 +360,8 @@ float3 SkinPosition( FVertexFactoryInput Input, FVertexFactoryIntermediates Inte
 	return mul( Intermediates.BlendMatrix, Position );
 }
 
+#if GFUR_PHYSICS
+
 float3 CalcPrevBoneFurOffset(int Index, float3 Position)
 {
 	return PreviousBoneFurOffsets[Index * 3].xyz + cross(Position - PreviousBoneFurOffsets[Index * 3 + 2].xyz, PreviousBoneFurOffsets[Index * 3 + 1].xyz);
@@ -354,6 +371,8 @@ float3 CalcBoneFurOffset(int Index, float3 Position)
 {
 	return BoneFurOffsets[Index * 3].xyz + cross(Position - BoneFurOffsets[Index * 3 + 2].xyz, BoneFurOffsets[Index * 3 + 1].xyz);
 }
+
+#endif // GFUR_PHYSICS
 
 /** transform position by weighted sum of skinning matrices */
 float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates )
@@ -390,18 +409,34 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 	float3 FurOffset = Input.FurOffset;
 	FurOffset = mul(BlendMatrix, float4(FurOffset.xyz, 0)).xyz;
 	FurOffset = mul(FurOffset, LocalToWorld);
+
+#if GFUR_PHYSICS
+
 	float FurLength = length(FurOffset);
 
 	float3 Offset = Input.BlendWeights.x * CalcPrevBoneFurOffset(Input.BlendIndices.x, Position);
 	Offset += Input.BlendWeights.y * CalcPrevBoneFurOffset(Input.BlendIndices.y, Position);
 	Offset += Input.BlendWeights.z * CalcPrevBoneFurOffset(Input.BlendIndices.z, Position);
 	Offset += Input.BlendWeights.w * CalcPrevBoneFurOffset(Input.BlendIndices.w, Position);
+#if GPUSKIN_USE_EXTRA_INFLUENCES
+	Offset += Input.BlendWeightsExtra.x * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.x, Position);
+	Offset += Input.BlendWeightsExtra.y * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.y, Position);
+	Offset += Input.BlendWeightsExtra.z * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.z, Position);
+	Offset += Input.BlendWeightsExtra.w * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.w, Position);
+#endif // GPUSKIN_USE_EXTRA_INFLUENCES
+	
 	Offset -= dot(Offset, NormalVec) * NormalVec;
 	Offset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 
 	Offset = normalize(FurOffset + Offset) * FurLength;
-
 	Position += Offset;
+
+#else // GFUR_PHYSICS
+
+	Position += FurOffset;
+
+#endif // GFUR_PHYSICS
+
 
 #endif
 	return Position + ResolvedView.PrevPreViewTranslation;
@@ -546,18 +581,34 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 	float3 FurOffset = Input.FurOffset;
 	FurOffset = mul(Intermediates.BlendMatrix, float4(FurOffset.xyz, 0)).xyz;
 	FurOffset = mul(FurOffset, LocalToWorld);
+
+#if GFUR_PHYSICS
+
 	float FurLength = length(FurOffset);
 
 	float3 Offset = Input.BlendWeights.x * CalcBoneFurOffset(Input.BlendIndices.x, Position);
 	Offset += Input.BlendWeights.y * CalcBoneFurOffset(Input.BlendIndices.y, Position);
 	Offset += Input.BlendWeights.z * CalcBoneFurOffset(Input.BlendIndices.z, Position);
 	Offset += Input.BlendWeights.w * CalcBoneFurOffset(Input.BlendIndices.w, Position);
+#if GPUSKIN_USE_EXTRA_INFLUENCES
+	Offset += Input.BlendWeightsExtra.x * CalcBoneFurOffset(Input.BlendIndicesExtra.x, Position);
+	Offset += Input.BlendWeightsExtra.y * CalcBoneFurOffset(Input.BlendIndicesExtra.y, Position);
+	Offset += Input.BlendWeightsExtra.z * CalcBoneFurOffset(Input.BlendIndicesExtra.z, Position);
+	Offset += Input.BlendWeightsExtra.w * CalcBoneFurOffset(Input.BlendIndicesExtra.w, Position);
+#endif // GPUSKIN_USE_EXTRA_INFLUENCES
+
 	Offset -= dot(Offset, NormalVec) * NormalVec;
 	Offset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 
 	Offset = normalize(FurOffset + Offset) * FurLength;
 
 	Position += Offset;
+	
+#else // GFUR_PHYSICS
+
+	Position += FurOffset;
+	
+#endif // GFUR_PHYSICS
 
 #endif
 

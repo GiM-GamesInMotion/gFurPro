@@ -18,9 +18,9 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 	GFUR_API static class UScriptStruct* StaticStruct();
 
 
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_RPC_WRAPPERS
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_RPC_WRAPPERS_NO_PURE_DECLS
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_INCLASS_NO_PURE_DECLS \
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_RPC_WRAPPERS
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_RPC_WRAPPERS_NO_PURE_DECLS
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesUGFurComponent(); \
 	friend GFUR_API class UClass* Z_Construct_UClass_UGFurComponent(); \
@@ -30,7 +30,7 @@ public: \
 	enum {IsIntrinsic=COMPILED_IN_INTRINSIC};
 
 
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_INCLASS \
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_INCLASS \
 private: \
 	static void StaticRegisterNativesUGFurComponent(); \
 	friend GFUR_API class UClass* Z_Construct_UClass_UGFurComponent(); \
@@ -40,7 +40,7 @@ public: \
 	enum {IsIntrinsic=COMPILED_IN_INTRINSIC};
 
 
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_STANDARD_CONSTRUCTORS \
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_STANDARD_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API UGFurComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UGFurComponent) \
@@ -53,7 +53,7 @@ private: \
 public:
 
 
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_ENHANCED_CONSTRUCTORS \
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_ENHANCED_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API UGFurComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()) : Super(ObjectInitializer) { }; \
 private: \
@@ -66,26 +66,26 @@ DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UGFurComponent); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UGFurComponent)
 
 
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_PRIVATE_PROPERTY_OFFSET
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_34_PROLOG
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_GENERATED_BODY_LEGACY \
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_PRIVATE_PROPERTY_OFFSET
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_43_PROLOG
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_GENERATED_BODY_LEGACY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_PRIVATE_PROPERTY_OFFSET \
-	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_RPC_WRAPPERS \
-	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_INCLASS \
-	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_STANDARD_CONSTRUCTORS \
+	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_PRIVATE_PROPERTY_OFFSET \
+	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_RPC_WRAPPERS \
+	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_INCLASS \
+	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_STANDARD_CONSTRUCTORS \
 public: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 
-#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_GENERATED_BODY \
+#define HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_PRIVATE_PROPERTY_OFFSET \
-	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_RPC_WRAPPERS_NO_PURE_DECLS \
-	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_INCLASS_NO_PURE_DECLS \
-	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_37_ENHANCED_CONSTRUCTORS \
+	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_PRIVATE_PROPERTY_OFFSET \
+	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_RPC_WRAPPERS_NO_PURE_DECLS \
+	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_INCLASS_NO_PURE_DECLS \
+	HostProject_Plugins_GFur_Source_GFur_Private_FurComponent_h_46_ENHANCED_CONSTRUCTORS \
 static_assert(false, "Unknown access specifier for GENERATED_BODY() macro in class GFurComponent."); \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 

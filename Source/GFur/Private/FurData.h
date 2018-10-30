@@ -26,10 +26,10 @@ public:
 	}
 
 	virtual void UpdateSkeletonShaderData(float InFurOffsetPower, const TArray<FMatrix>& InReferenceToLocal, const TArray<FVector>& InLinearOffsets,
-		const TArray<FVector>& InAngularOffsets, const TArray<FMatrix>& InTransformations, const TArray<FBoneIndexType>& InBoneMap, uint32 InFrameNumber,
+		const TArray<FVector>& InAngularOffsets, const TArray<FMatrix>& InTransformations, const TArray<FBoneIndexType>& InBoneMap, bool InDiscontinuous,
 		ERHIFeatureLevel::Type InFeatureLevel) {}
 	virtual void UpdateStaticShaderData(float InFurOffsetPower, const FVector& InLinearOffset, const FVector& InAngularOffset,
-		const FVector& InPosition, uint32 InFrameNumber, ERHIFeatureLevel::Type InFeatureLevel) {}
+		const FVector& InPosition, bool InDiscontinuous, ERHIFeatureLevel::Type InFeatureLevel) {}
 };
 
 /** Fur Data */
@@ -59,7 +59,8 @@ struct FFurData
 	float MaxVertexBoneDistance;
 	float NoiseStrength;
 	int RefCount = 0;
+	bool RemoveFacesWithoutSplines;
 
 	virtual ~FFurData()																	{}
-	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, ERHIFeatureLevel::Type InFeatureLevel) = 0;
+	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel) = 0;
 };

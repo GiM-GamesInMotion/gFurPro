@@ -4,6 +4,7 @@
 #include "GFur.h"
 #include "FurSplines.h"
 #include "FurData.h"
+#include "FurMorphObject.h"
 #include "Engine/Engine.h"
 #include "Runtime/Engine/Classes/PhysicsEngine/BodySetup.h"
 #include "Runtime/Engine/Public/DynamicMeshBuilder.h"
@@ -24,19 +25,22 @@
 class FFurSceneProxy : public FPrimitiveSceneProxy
 {
 public:
-	FFurSceneProxy(UGFurComponent* InComponent, const TArray<FFurData*>& InFurData, const TArray<FFurLod>& InFurLods, const TArray<UMaterialInstanceDynamic*>& InFurMaterials, bool InCastShadows, ERHIFeatureLevel::Type InFeatureLevel)
+	FFurSceneProxy(UGFurComponent* InComponent, const TArray<FFurData*>& InFurData, const TArray<FFurLod>& InFurLods, const TArray<UMaterialInstanceDynamic*>& InFurMaterials, const TArray<FFurMorphObject*>& InMorphObjects, bool InCastShadows, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel)
 		: FPrimitiveSceneProxy(InComponent)
 		, FurComponent(InComponent)
 		, FurData(InFurData)
 		, FurLods(InFurLods)
 		, FurMaterials(InFurMaterials)
+		, FurMorphObjects(InMorphObjects)
 		, CastShadows(InCastShadows)
 	{
-
 		bAlwaysHasVelocity = true;
 
-		for (auto* d : InFurData)
-			d->CreateVertexFactories(VertexFactories, InFeatureLevel);
+		for (int i = 0; i < InFurData.Num(); i++)
+		{
+			bool LodPhysics = i > 0 ? InFurLods[i - 1].PhysicsEnabled : true;
+			InFurData[i]->CreateVertexFactories(VertexFactories, InMorphObjects[i] ? InMorphObjects[i]->GetVertexBuffer() : NULL, InPhysics && LodPhysics, InFeatureLevel);
+		}
 	}
 
 	virtual ~FFurSceneProxy()
@@ -46,6 +50,8 @@ public:
 			VertexFactory->ReleaseResource();
 			delete VertexFactory;
 		}
+		for (auto* MorphObject : FurMorphObjects)
+			delete MorphObject;
 	}
 
 	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views,
@@ -102,19 +108,20 @@ public:
 				}
 			}
 		}
-		if (NewLodLevel != CurrentLodLevel)
+		if (NewLodLevel != CurrentFurLodLevel)
 		{
-			CurrentLodLevel = NewLodLevel;
+			CurrentFurLodLevel = NewLodLevel;
+			CurrentMeshLodLevel = FurData[CurrentFurLodLevel]->Lod;
 			SectionOffset = 0;
 			for (int i = 0; i < NewLodLevel; i++)
 				SectionOffset += FurData[i]->Sections.Num();
 		}
 
-		if (CurrentLodLevel < FurData.Num())
+		if (CurrentFurLodLevel < FurData.Num())
 		{
-			for (int sectionIdx = 0; sectionIdx < FurData[CurrentLodLevel]->Sections.Num(); sectionIdx++)
+			for (int sectionIdx = 0; sectionIdx < FurData[CurrentFurLodLevel]->Sections.Num(); sectionIdx++)
 			{
-				const FFurData::FSection& section = FurData[CurrentLodLevel]->Sections[sectionIdx];
+				const FFurData::FSection& section = FurData[CurrentFurLodLevel]->Sections[sectionIdx];
 				if (section.NumTriangles == 0)
 					continue;
 				for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
@@ -136,7 +143,7 @@ public:
 
 						FMeshBatch& Mesh = Collector.AllocateMesh();
 						FMeshBatchElement& BatchElement = Mesh.Elements[0];
-						BatchElement.IndexBuffer = &FurData[CurrentLodLevel]->IndexBuffer;
+						BatchElement.IndexBuffer = &FurData[CurrentFurLodLevel]->IndexBuffer;
 						Mesh.bWireframe = Wireframe;
 						Mesh.VertexFactory = GetVertexFactory(sectionIdx);
 						Mesh.MaterialRenderProxy = MaterialProxy;
@@ -211,10 +218,12 @@ public:
 
 	uint32 GetAllocatedSize(void) const { return (FPrimitiveSceneProxy::GetAllocatedSize()); }
 
-	FFurData* GetFurData() { return FurData[FMath::Min(CurrentLodLevel, FurData.Num() - 1)]; }
+	FFurData* GetFurData() { return FurData[FMath::Min(CurrentFurLodLevel, FurData.Num() - 1)]; }
 	FFurVertexFactory* GetVertexFactory(int sectionIdx) const { return VertexFactories[SectionOffset + sectionIdx]; }
+	FFurMorphObject* GetMorphObject() const { return FurMorphObjects[CurrentFurLodLevel]; }
 
-	int GetCurrentLodLevel() const { return CurrentLodLevel; }
+	int GetCurrentFurLodLevel() const { return CurrentFurLodLevel; }
+	int GetCurrentMeshLodLevel() const { return CurrentMeshLodLevel; }
 
 	SIZE_T GetTypeHash(void) const override
 	{
@@ -228,7 +237,9 @@ private:
 	TArray<FFurLod> FurLods;
 	TArray<class UMaterialInstanceDynamic*> FurMaterials;
 	TArray<FFurVertexFactory*> VertexFactories;
-	mutable int CurrentLodLevel = 0;
+	TArray<FFurMorphObject*> FurMorphObjects;
+	mutable int CurrentFurLodLevel = 0;
+	mutable int CurrentMeshLodLevel = 0;
 	mutable int SectionOffset = 0;
 	bool CastShadows;
 };
@@ -244,6 +255,8 @@ UGFurComponent::UGFurComponent(const FObjectInitializer& ObjectInitializer)
 	ShellBias = 1.0f;
 	FurLength = 1.0f;
 	MinFurLength = 0.0f;
+	RemoveFacesWithoutSplines = false;
+	PhysicsEnabled = true;
 	ForceDistribution = 2.0f;
 	Stiffness = 5.0f;
 	Damping = 5.0f;
@@ -404,8 +417,8 @@ int32 UGFurComponent::GetNumMaterials() const
 
 FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 {
-	ERHIFeatureLevel::Type FeatureLevel = GetWorld()->FeatureLevel;
-	if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
+//	ERHIFeatureLevel::Type FeatureLevel = GetWorld()->FeatureLevel;
+//	if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
 	{
 		TArray<USceneComponent*> parents;
 		GetParentComponents(parents);
@@ -418,26 +431,51 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			}
 		}
 
+		MorphRemapTables.Reset();
+
+		TArray<FFurData*> FurArray;
+		TArray<FFurMorphObject*> MorphObjects;
 		if (SkeletalGrowMesh && SkeletalGrowMesh->GetResourceForRendering())
 		{
 			UpdateMasterBoneMap();
-			TArray<FFurData*> Array;
-			Array.Add(FFurSkinData::CreateFurData(LayerCount, 0, this));
-			for (FFurLod& lod : LODs)
-				Array.Add(FFurSkinData::CreateFurData(lod.LayerCount, FMath::Min(SkeletalGrowMesh->GetResourceForRendering()->LODRenderData.Num() - 1, lod.Lod), this));
 
-			FurData = Array;
-			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, CastShadow, GetWorld()->FeatureLevel);
+			auto NumLods = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData.Num();
+			MorphRemapTables.SetNum(NumLods);
+
+			bool UseMorphTargets = MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->MorphTargets.Num() > 0;
+
+			{
+				auto Data = FFurSkinData::CreateFurData(LayerCount, 0, this);
+				FurArray.Add(Data);
+				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data) : NULL);
+				if (UseMorphTargets)
+					CreateMorphRemapTable(0);
+			}
+			for (FFurLod& lod : LODs)
+			{
+				auto Data = FFurSkinData::CreateFurData(lod.LayerCount, FMath::Min(NumLods - 1, lod.Lod), this);
+				if (UseMorphTargets)
+					CreateMorphRemapTable(lod.Lod);
+				FurArray.Add(Data);
+				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data) : NULL);
+			}
+
+			FurData = FurArray;
+
+			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
 		}
 		else if (StaticGrowMesh && StaticGrowMesh->RenderData)
 		{
-			TArray<FFurData*> Array;
-			Array.Add(FFurStaticData::CreateFurData(LayerCount, 0, this));
+			FurArray.Add(FFurStaticData::CreateFurData(LayerCount, 0, this));
+			MorphObjects.Add(NULL);
 			for (FFurLod& lod : LODs)
-				Array.Add(FFurStaticData::CreateFurData(lod.LayerCount, FMath::Min(StaticGrowMesh->RenderData->LODResources.Num() - 1, lod.Lod), this));
+			{
+				FurArray.Add(FFurStaticData::CreateFurData(lod.LayerCount, FMath::Min(StaticGrowMesh->RenderData->LODResources.Num() - 1, lod.Lod), this));
+				MorphObjects.Add(NULL);
+			}
 
-			FurData = Array;
-			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, CastShadow, GetWorld()->FeatureLevel);
+			FurData = FurArray;
+			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
 		}
 	}
 	return nullptr;
@@ -446,8 +484,8 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 
 void UGFurComponent::CreateRenderState_Concurrent()
 {
-	ERHIFeatureLevel::Type FeatureLevel = GetWorld()->FeatureLevel;
-	if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
+//	ERHIFeatureLevel::Type FeatureLevel = GetWorld()->FeatureLevel;
+//	if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
 	{
 		for (int i = 0, c = GetNumMaterials(); i < c; i++)
 		{
@@ -481,8 +519,8 @@ void UGFurComponent::DestroyRenderState_Concurrent()
 {
 	Super::DestroyRenderState_Concurrent();
 
-	ERHIFeatureLevel::Type FeatureLevel = GetWorld()->FeatureLevel;
-	if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
+//	ERHIFeatureLevel::Type FeatureLevel = GetWorld()->FeatureLevel;
+//	if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
 	{
 		for (auto& mat : FurMaterials)
 			mat->RemoveFromRoot();
@@ -543,16 +581,19 @@ void UGFurComponent::updateFur()
 		return;
 
 	FFurSceneProxy* Scene = (FFurSceneProxy*)SceneProxy;
+	int32 FurLodLevel = Scene->GetCurrentFurLodLevel();
+
+	bool LodPhysicsEnabled = PhysicsEnabled && (FurLodLevel == 0 || LODs[FurLodLevel - 1].PhysicsEnabled);
 
 	float DeltaTime = fminf(LastDeltaTime, 1.0f);
 	float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData()->CurrentMaxFurLength * ReferenceHairBias + Scene->GetFurData()->CurrentMinFurLength * (1.0f - ReferenceHairBias));
-//	float ForceFactor = 1.0f / (powf(ReferenceFurLength, FurForcePower) * fmaxf(FurStiffness, 0.000001f));
+	//	float ForceFactor = 1.0f / (powf(ReferenceFurLength, FurForcePower) * fmaxf(FurStiffness, 0.000001f));
 	float ForceFactor = 1.0f / powf(ReferenceFurLength, ForceDistribution);
 	float DampingClamped = fmaxf(Damping, 0.000001f);
 	float DampingFactor = powf(1.0f - (DampingClamped / (DampingClamped + 1.0f)), DeltaTime);
 	float MaxForceFinal = (MaxForce * ReferenceFurLength) / powf(ReferenceFurLength, ForceDistribution);
 	float MaxTorque = MaxForceTorqueFactor * MaxForceFinal / Scene->GetFurData()->MaxVertexBoneDistance;
-//	FVector FurForceFinal = FurForce * (fmaxf(FurWeight, 0.000001f) * ForceFactor);//TODO
+	//	FVector FurForceFinal = FurForce * (fmaxf(FurWeight, 0.000001f) * ForceFactor);//TODO
 	FVector FurForceFinal = ConstantForce * ReferenceFurLength * ForceFactor / Stiffness;//TODO
 
 	float x = DeltaTime * Stiffness;
@@ -602,13 +643,12 @@ void UGFurComponent::updateFur()
 		const USkeletalMesh* const ThisMesh = SkeletalGrowMesh;
 		const USkinnedMeshComponent* const MasterComp = MasterPoseComponent.Get();
 		const USkeletalMesh* const MasterCompMesh = MasterComp ? MasterComp->SkeletalMesh : nullptr;
-		const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentLodLevel()];
+		const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentMeshLodLevel()];
 
 		FMatrix TempMatrices[256];
 		bool ValidTempMatrices[256];
 		memset(ValidTempMatrices, 0, sizeof(ValidTempMatrices));
 		check(ThisMesh->RefBasesInvMatrix.Num() != 0);
-		bool OldPositionValid = true;
 		if (ReferenceToLocal.Num() != ThisMesh->RefBasesInvMatrix.Num())
 		{
 			Transformations.Reset();
@@ -678,7 +718,7 @@ void UGFurComponent::updateFur()
 			}
 		}
 
-		if (OldPositionValid)
+		if (OldPositionValid && LodPhysicsEnabled)
 		{
 			for (int32 ThisBoneIndex = 0; ThisBoneIndex < ReferenceToLocal.Num(); ++ThisBoneIndex)
 			{
@@ -719,12 +759,13 @@ void UGFurComponent::updateFur()
 				LinearVelocities[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
 				AngularVelocities[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
 			}
+			OldPositionValid = true;
 		}
 	}
 	else
 	{
 		check(StaticGrowMesh);
-		if (StaticOldPositionValid)
+		if (OldPositionValid && LodPhysicsEnabled)
 		{
 			Physics(ToWorld, StaticTransformation, StaticLinearOffset, StaticLinearVelocity, StaticAngularOffset, StaticAngularVelocity);
 		}
@@ -738,23 +779,25 @@ void UGFurComponent::updateFur()
 			StaticLinearVelocity.Set(0.0f, 0.0f, 0.0f);
 			StaticAngularVelocity.Set(0.0f, 0.0f, 0.0f);
 
-			StaticOldPositionValid = true;
+			OldPositionValid = true;
 		}
 	}
 
 	// We prepare the next frame but still have the value from the last one
-	uint32 FrameNumberToPrepare = GFrameNumber + 1;
+	uint32 RevisionNumber = MasterPoseComponent.IsValid() ? MasterPoseComponent->GetBoneTransformRevisionNumber() : 0;
+	bool Discontinuous = RevisionNumber - LastRevisionNumber > 1;
+	LastRevisionNumber = RevisionNumber;
 
 	// queue a call to update this data
 	ENQUEUE_RENDER_COMMAND(SkelMeshObjectUpdateDataCommand)(
-		[this, FrameNumberToPrepare](FRHICommandListImmediate& RHICmdList)
+		[this, Discontinuous](FRHICommandListImmediate& RHICmdList)
 	{
-		UpdateFur_RenderThread(RHICmdList, FrameNumberToPrepare);
+		UpdateFur_RenderThread(RHICmdList, Discontinuous);
 	}
 	);
 }
 
-void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, uint32 FrameNumberToPrepare)
+void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, bool Discontinuous)
 {
 	FFurSceneProxy* FurProxy = (FFurSceneProxy*)SceneProxy;
 
@@ -764,23 +807,24 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 
 		if (SkeletalGrowMesh)
 		{
-			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[FurProxy->GetCurrentLodLevel()];
+			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[FurProxy->GetCurrentMeshLodLevel()];
 			const auto& Sections = LOD.RenderSections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
 				FurProxy->GetVertexFactory(SectionIdx)->UpdateSkeletonShaderData(ForceDistribution, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,
-					Sections[SectionIdx].BoneMap, FrameNumberToPrepare, SceneFeatureLevel);
+					Sections[SectionIdx].BoneMap, Discontinuous, SceneFeatureLevel);
 			}
+			if (MasterPoseComponent.IsValid() && FurProxy->GetMorphObject())
+				FurProxy->GetMorphObject()->Update(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables);
 		}
 		else if (StaticGrowMesh)
 		{
-			const auto& LOD = StaticGrowMesh->RenderData->LODResources[FurProxy->GetCurrentLodLevel()];
+			const auto& LOD = StaticGrowMesh->RenderData->LODResources[FurProxy->GetCurrentMeshLodLevel()];
 			const auto& Sections = LOD.Sections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
-				TArray<FBoneIndexType> BoneMap;
 				FurProxy->GetVertexFactory(SectionIdx)->UpdateStaticShaderData(ForceDistribution, StaticLinearOffset, StaticAngularOffset,
-					StaticTransformation.GetOrigin(), FrameNumberToPrepare, SceneFeatureLevel);
+					StaticTransformation.GetOrigin(), Discontinuous, SceneFeatureLevel);
 			}
 		}
 	}
@@ -810,6 +854,82 @@ void UGFurComponent::UpdateMasterBoneMap()
 			{
 				FName BoneName = SkeletalGrowMesh->RefSkeleton.GetBoneName(i);
 				MasterBoneMap[i] = ParentMesh->RefSkeleton.FindBoneIndex(BoneName);
+			}
+		}
+	}
+}
+
+void UGFurComponent::CreateMorphRemapTable(int32 InLod)
+{
+	auto& MorphRemapTable = MorphRemapTables[InLod];
+	if (MorphRemapTable.Num() > 0)
+		return;
+
+	auto* MasterMesh = MasterPoseComponent->SkeletalMesh->GetResourceForRendering();
+	check(MasterMesh);
+
+	const auto& MasterLodModel = MasterMesh->LODRenderData[InLod];
+	const auto& MasterPositions = MasterLodModel.StaticVertexBuffers.PositionVertexBuffer;
+	const auto& MasterSkinWeights = MasterLodModel.SkinWeightVertexBuffer;
+	const auto& MasterVertices = MasterLodModel.StaticVertexBuffers.StaticMeshVertexBuffer;
+
+	auto* Mesh = SkeletalGrowMesh->GetResourceForRendering();
+	const auto& LodModel = Mesh->LODRenderData[InLod];
+	const auto& Positions = LodModel.StaticVertexBuffers.PositionVertexBuffer;
+	const auto& SkinWeights = LodModel.SkinWeightVertexBuffer;
+	const auto& Vertices = LodModel.StaticVertexBuffers.StaticMeshVertexBuffer;
+
+	MorphRemapTable.AddUninitialized(MasterPositions.GetNumVertices());
+
+	uint32 SkinWeightSize;
+	if (MasterSkinWeights.HasExtraBoneInfluences() && SkinWeights.HasExtraBoneInfluences())
+		SkinWeightSize = sizeof(TSkinWeightInfo<true>);
+	else
+		SkinWeightSize = sizeof(TSkinWeightInfo<false>);
+
+	uint32 UVCount = FMath::Min(MasterVertices.GetNumTexCoords(), Vertices.GetNumTexCoords());
+
+	for (const auto& MasterSection : MasterLodModel.RenderSections)
+	{
+		for (const auto& Section : LodModel.RenderSections)
+		{
+			if (MasterSection.MaterialIndex == Section.MaterialIndex)
+			{
+				for (uint32 i = MasterSection.BaseVertexIndex; i < MasterSection.BaseVertexIndex + MasterSection.NumVertices; i++)
+				{
+					MorphRemapTable[i] = -1;
+					const auto& MasterPosition = MasterPositions.VertexPosition(i);
+					const auto& MasterSkinWeight = MasterSkinWeights.GetSkinWeightPtr<true>(i);
+					const auto& MasterTangentX = MasterVertices.VertexTangentX(i);
+					const auto& MasterTangentY = MasterVertices.VertexTangentY(i);
+					const auto& MasterTangentZ = MasterVertices.VertexTangentZ(i);
+					for (uint32 j = Section.BaseVertexIndex; j < Section.BaseVertexIndex + Section.NumVertices; j++)
+					{
+						const auto& Position = Positions.VertexPosition(j);
+						const auto& SkinWeight = SkinWeights.GetSkinWeightPtr<true>(j);
+						const auto& TangentX = Vertices.VertexTangentX(j);
+						const auto& TangentY = Vertices.VertexTangentY(j);
+						const auto& TangentZ = Vertices.VertexTangentZ(j);
+						if (MasterPosition == Position && memcmp(MasterSkinWeight, SkinWeight, SkinWeightSize) == 0
+							&& MasterTangentX == TangentX && MasterTangentY == TangentY && MasterTangentZ == TangentZ)
+						{
+							bool equals = true;
+							for (uint32 k = 0; k < UVCount; k++)
+							{
+								if (MasterVertices.GetVertexUV(i, k) != Vertices.GetVertexUV(j, k))
+								{
+									equals = false;
+									break;
+								}
+							}
+							if (equals)
+							{
+								MorphRemapTable[i] = j;
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 	}

@@ -15,10 +15,10 @@ struct FFurStaticData: public FFurData
 	~FFurStaticData();
 
 	FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines* InFurSplines, const TArray<UStaticMesh*>& InGuideMeshes, int InFurLayerCount,
-		float InFurLength, float InMinFurLength, float InShellBias, float InHairLengthForceUniformity, float InNoiseStrength);
+		float InFurLength, float InMinFurLength, float InShellBias, float InHairLengthForceUniformity, float InNoiseStrength, bool InRemoveFacesWithoutSplines);
 	static UFurSplines* GenerateSplines(UStaticMesh* InStaticMesh, int InLod, const TArray<UStaticMesh*>& InGuideMeshes);
 
-	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, ERHIFeatureLevel::Type InFeatureLevel) override;
+	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel) override;
 
 	static void ReloadFurSplines(UFurSplines* FurSplines);
 	static FFurData* CreateFurData(int InFurLayerCount, int InLod, class UGFurComponent* FurComponent);

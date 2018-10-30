@@ -22,8 +22,17 @@ struct FFurLod
 	UPROPERTY(EditAnywhere, Category = "LOD")
 	int LayerCount;
 
+	/**
+	* Which LOD of the Grow Mesh should be used to generate fur for this LOD.
+	*/
 	UPROPERTY(EditAnywhere, Category = "LOD")
 	int Lod;
+
+	/**
+	* If fur should react to forces and movement while using this LOD.
+	*/
+	UPROPERTY(EditAnywhere, Category = "LOD")
+	bool PhysicsEnabled = true;
 };
 
 /** UFurComponent */
@@ -93,6 +102,18 @@ public:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
 	float MinFurLength;
+
+	/**
+	* Removes faces without splines.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
+	bool RemoveFacesWithoutSplines;
+
+	/**
+	* If fur should react to forces and movement.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Physics")
+	bool PhysicsEnabled;
 
 	/**
 	* With value = 1.0, the forces affecting fur are distributed linearly from root to tip.
@@ -188,21 +209,25 @@ private:
 	TArray<FVector> AngularOffsets;
 	TArray< class UMaterialInstanceDynamic* > FurMaterials;
 	TArray< struct FFurData* > FurData;
+	TArray< TArray< int32 > > MorphRemapTables;
 
 	FVector StaticLinearOffset;
 	FVector StaticAngularOffset;
 	FVector StaticLinearVelocity;
 	FVector StaticAngularVelocity;
 	FMatrix StaticTransformation;
-	bool StaticOldPositionValid = false;
+	bool OldPositionValid = false;
 
 	float LastDeltaTime;
+
+	uint32 LastRevisionNumber = 0;
 
 	// Begin USceneComponent interface.
 	virtual FBoxSphereBounds CalcBounds(const FTransform & LocalToWorld) const override;
 	// Begin USceneComponent interface.
 
 	void updateFur();
-	void UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, uint32 FrameNumberToPrepare);
+	void UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList, bool Discontinuous);
 	void UpdateMasterBoneMap();
+	void CreateMorphRemapTable(int32 InLod);
 };

@@ -583,209 +583,204 @@ void UGFurComponent::updateFur()
 	FFurSceneProxy* Scene = (FFurSceneProxy*)SceneProxy;
 	int32 FurLodLevel = Scene->GetCurrentFurLodLevel();
 
-	if (PhysicsEnabled && (FurLodLevel == 0 || LODs[FurLodLevel - 1].PhysicsEnabled))
-	{
-		float DeltaTime = fminf(LastDeltaTime, 1.0f);
-		float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData()->CurrentMaxFurLength * ReferenceHairBias + Scene->GetFurData()->CurrentMinFurLength * (1.0f - ReferenceHairBias));
-		//	float ForceFactor = 1.0f / (powf(ReferenceFurLength, FurForcePower) * fmaxf(FurStiffness, 0.000001f));
-		float ForceFactor = 1.0f / powf(ReferenceFurLength, ForceDistribution);
-		float DampingClamped = fmaxf(Damping, 0.000001f);
-		float DampingFactor = powf(1.0f - (DampingClamped / (DampingClamped + 1.0f)), DeltaTime);
-		float MaxForceFinal = (MaxForce * ReferenceFurLength) / powf(ReferenceFurLength, ForceDistribution);
-		float MaxTorque = MaxForceTorqueFactor * MaxForceFinal / Scene->GetFurData()->MaxVertexBoneDistance;
-		//	FVector FurForceFinal = FurForce * (fmaxf(FurWeight, 0.000001f) * ForceFactor);//TODO
-		FVector FurForceFinal = ConstantForce * ReferenceFurLength * ForceFactor / Stiffness;//TODO
+	bool LodPhysicsEnabled = PhysicsEnabled && (FurLodLevel == 0 || LODs[FurLodLevel - 1].PhysicsEnabled);
 
-		float x = DeltaTime * Stiffness;
+	float DeltaTime = fminf(LastDeltaTime, 1.0f);
+	float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData()->CurrentMaxFurLength * ReferenceHairBias + Scene->GetFurData()->CurrentMinFurLength * (1.0f - ReferenceHairBias));
+	//	float ForceFactor = 1.0f / (powf(ReferenceFurLength, FurForcePower) * fmaxf(FurStiffness, 0.000001f));
+	float ForceFactor = 1.0f / powf(ReferenceFurLength, ForceDistribution);
+	float DampingClamped = fmaxf(Damping, 0.000001f);
+	float DampingFactor = powf(1.0f - (DampingClamped / (DampingClamped + 1.0f)), DeltaTime);
+	float MaxForceFinal = (MaxForce * ReferenceFurLength) / powf(ReferenceFurLength, ForceDistribution);
+	float MaxTorque = MaxForceTorqueFactor * MaxForceFinal / Scene->GetFurData()->MaxVertexBoneDistance;
+	//	FVector FurForceFinal = FurForce * (fmaxf(FurWeight, 0.000001f) * ForceFactor);//TODO
+	FVector FurForceFinal = ConstantForce * ReferenceFurLength * ForceFactor / Stiffness;//TODO
 
-		FMatrix ToWorld = GetComponentTransform().ToMatrixNoScale();
+	float x = DeltaTime * Stiffness;
 
-		auto Physics = [&](const FMatrix& NewTransformation, FMatrix& Transformations, FVector& LinearOffset, FVector& LinearVelocity
-			, FVector& AngularOffset, FVector& AngularVelocity) {
-			FVector d = (NewTransformation.GetOrigin() - Transformations.GetOrigin());
-			d *= ForceFactor;
-			LinearOffset -= d;
+	FMatrix ToWorld = GetComponentTransform().ToMatrixNoScale();
 
-			FVector force;
-			FVector newOffset = (LinearVelocity * FMath::Sin(x) + (LinearOffset - FurForceFinal) * FMath::Cos(x)) * DampingFactor + FurForceFinal;
-			FVector newVelocity = (LinearVelocity * FMath::Cos(x) - (LinearOffset - FurForceFinal) * FMath::Sin(x)) * DampingFactor;
-			check(newOffset.X == newOffset.X && newOffset.Y == newOffset.Y && newOffset.Z == newOffset.Z);
-			check(newVelocity.X == newVelocity.X && newVelocity.Y == newVelocity.Y && newVelocity.Z == newVelocity.Z);
-			LinearOffset = newOffset;
-			LinearVelocity = newVelocity;
-			if (LinearOffset.Size() > MaxForceFinal)
-			{
-				LinearOffset *= MaxForceFinal / LinearOffset.Size();
-				float k = FVector::DotProduct(LinearOffset, LinearVelocity) / FVector::DotProduct(LinearOffset, LinearOffset);
-				if (k > 0.0f)
-					LinearVelocity -= LinearOffset * k;
-			}
+	auto Physics = [&](const FMatrix& NewTransformation, FMatrix& Transformations, FVector& LinearOffset, FVector& LinearVelocity
+		, FVector& AngularOffset, FVector& AngularVelocity) {
+		FVector d = (NewTransformation.GetOrigin() - Transformations.GetOrigin());
+		d *= ForceFactor;
+		LinearOffset -= d;
 
-			FQuat rdiff = NewTransformation.ToQuat() * Transformations.ToQuat().Inverse();
-			float angle;
-			rdiff.ToAxisAndAngle(d, angle);
-			if (angle > PI)
-				angle -= 2 * PI;
-			d *= -angle * ForceFactor;
-			AngularOffset -= d;
-			newOffset = (AngularVelocity * FMath::Sin(x) + AngularOffset * FMath::Cos(x)) * DampingFactor;
-			newVelocity = (AngularVelocity * FMath::Cos(x) - AngularOffset * FMath::Sin(x)) * DampingFactor;
-			AngularOffset = newOffset;
-			AngularVelocity = newVelocity;
-			if (AngularOffset.Size() > MaxTorque)
-				AngularOffset *= MaxTorque / AngularOffset.Size();
-
-			Transformations = NewTransformation;
-		};
-
-		if (SkeletalGrowMesh)
+		FVector force;
+		FVector newOffset = (LinearVelocity * FMath::Sin(x) + (LinearOffset - FurForceFinal) * FMath::Cos(x)) * DampingFactor + FurForceFinal;
+		FVector newVelocity = (LinearVelocity * FMath::Cos(x) - (LinearOffset - FurForceFinal) * FMath::Sin(x)) * DampingFactor;
+		check(newOffset.X == newOffset.X && newOffset.Y == newOffset.Y && newOffset.Z == newOffset.Z);
+		check(newVelocity.X == newVelocity.X && newVelocity.Y == newVelocity.Y && newVelocity.Z == newVelocity.Z);
+		LinearOffset = newOffset;
+		LinearVelocity = newVelocity;
+		if (LinearOffset.Size() > MaxForceFinal)
 		{
-			const USkeletalMesh* const ThisMesh = SkeletalGrowMesh;
-			const USkinnedMeshComponent* const MasterComp = MasterPoseComponent.Get();
-			const USkeletalMesh* const MasterCompMesh = MasterComp ? MasterComp->SkeletalMesh : nullptr;
-			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentMeshLodLevel()];
+			LinearOffset *= MaxForceFinal / LinearOffset.Size();
+			float k = FVector::DotProduct(LinearOffset, LinearVelocity) / FVector::DotProduct(LinearOffset, LinearOffset);
+			if (k > 0.0f)
+				LinearVelocity -= LinearOffset * k;
+		}
 
-			FMatrix TempMatrices[256];
-			bool ValidTempMatrices[256];
-			memset(ValidTempMatrices, 0, sizeof(ValidTempMatrices));
-			check(ThisMesh->RefBasesInvMatrix.Num() != 0);
-			if (ReferenceToLocal.Num() != ThisMesh->RefBasesInvMatrix.Num())
+		FQuat rdiff = NewTransformation.ToQuat() * Transformations.ToQuat().Inverse();
+		float angle;
+		rdiff.ToAxisAndAngle(d, angle);
+		if (angle > PI)
+			angle -= 2 * PI;
+		d *= -angle * ForceFactor;
+		AngularOffset -= d;
+		newOffset = (AngularVelocity * FMath::Sin(x) + AngularOffset * FMath::Cos(x)) * DampingFactor;
+		newVelocity = (AngularVelocity * FMath::Cos(x) - AngularOffset * FMath::Sin(x)) * DampingFactor;
+		AngularOffset = newOffset;
+		AngularVelocity = newVelocity;
+		if (AngularOffset.Size() > MaxTorque)
+			AngularOffset *= MaxTorque / AngularOffset.Size();
+
+		Transformations = NewTransformation;
+	};
+
+	if (SkeletalGrowMesh)
+	{
+		const USkeletalMesh* const ThisMesh = SkeletalGrowMesh;
+		const USkinnedMeshComponent* const MasterComp = MasterPoseComponent.Get();
+		const USkeletalMesh* const MasterCompMesh = MasterComp ? MasterComp->SkeletalMesh : nullptr;
+		const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentMeshLodLevel()];
+
+		FMatrix TempMatrices[256];
+		bool ValidTempMatrices[256];
+		memset(ValidTempMatrices, 0, sizeof(ValidTempMatrices));
+		check(ThisMesh->RefBasesInvMatrix.Num() != 0);
+		if (ReferenceToLocal.Num() != ThisMesh->RefBasesInvMatrix.Num())
+		{
+			Transformations.Reset();
+			Transformations.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			ReferenceToLocal.Reset();
+			ReferenceToLocal.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			LinearVelocities.Reset();
+			LinearVelocities.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			AngularVelocities.Reset();
+			AngularVelocities.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			LinearOffsets.Reset();
+			LinearOffsets.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			AngularOffsets.Reset();
+			AngularOffsets.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			OldPositionValid = false;
+		}
+
+		const bool bIsMasterCompValid = MasterComp && MasterBoneMap.Num() == ThisMesh->RefSkeleton.GetNum();
+
+		const TArray<FBoneIndexType>* RequiredBoneSets[3] = { &LOD.ActiveBoneIndices, 0/*ExtraRequiredBoneIndices*/, NULL };
+
+		// Handle case of using ParentAnimComponent for SpaceBases.
+		for (int32 RequiredBoneSetIndex = 0; RequiredBoneSets[RequiredBoneSetIndex] != NULL; RequiredBoneSetIndex++)
+		{
+			const TArray<FBoneIndexType>& RequiredBoneIndices = *RequiredBoneSets[RequiredBoneSetIndex];
+
+			// Get the index of the bone in this skeleton, and loop up in table to find index in parent component mesh.
+			for (int32 BoneIndex = 0; BoneIndex < RequiredBoneIndices.Num(); BoneIndex++)
 			{
-				Transformations.Reset();
-				Transformations.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
-				ReferenceToLocal.Reset();
-				ReferenceToLocal.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
-				LinearVelocities.Reset();
-				LinearVelocities.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
-				AngularVelocities.Reset();
-				AngularVelocities.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
-				LinearOffsets.Reset();
-				LinearOffsets.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
-				AngularOffsets.Reset();
-				AngularOffsets.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
-				OldPositionValid = false;
-			}
+				const int32 ThisBoneIndex = RequiredBoneIndices[BoneIndex];
 
-			const bool bIsMasterCompValid = MasterComp && MasterBoneMap.Num() == ThisMesh->RefSkeleton.GetNum();
-
-			const TArray<FBoneIndexType>* RequiredBoneSets[3] = { &LOD.ActiveBoneIndices, 0/*ExtraRequiredBoneIndices*/, NULL };
-
-			// Handle case of using ParentAnimComponent for SpaceBases.
-			for (int32 RequiredBoneSetIndex = 0; RequiredBoneSets[RequiredBoneSetIndex] != NULL; RequiredBoneSetIndex++)
-			{
-				const TArray<FBoneIndexType>& RequiredBoneIndices = *RequiredBoneSets[RequiredBoneSetIndex];
-
-				// Get the index of the bone in this skeleton, and loop up in table to find index in parent component mesh.
-				for (int32 BoneIndex = 0; BoneIndex < RequiredBoneIndices.Num(); BoneIndex++)
+				if (ThisMesh->RefBasesInvMatrix.IsValidIndex(ThisBoneIndex))
 				{
-					const int32 ThisBoneIndex = RequiredBoneIndices[BoneIndex];
+					// On the off chance the parent matrix isn't valid, revert to identity.
+					TempMatrices[ThisBoneIndex] = FMatrix::Identity;
 
-					if (ThisMesh->RefBasesInvMatrix.IsValidIndex(ThisBoneIndex))
+					if (bIsMasterCompValid)
 					{
-						// On the off chance the parent matrix isn't valid, revert to identity.
-						TempMatrices[ThisBoneIndex] = FMatrix::Identity;
-
-						if (bIsMasterCompValid)
+						// If valid, use matrix from parent component.
+						const int32 MasterBoneIndex = MasterBoneMap[ThisBoneIndex];
+						if (MasterComp->GetComponentSpaceTransforms().IsValidIndex(MasterBoneIndex))
 						{
-							// If valid, use matrix from parent component.
-							const int32 MasterBoneIndex = MasterBoneMap[ThisBoneIndex];
-							if (MasterComp->GetComponentSpaceTransforms().IsValidIndex(MasterBoneIndex))
+							const int32 ParentIndex = ThisMesh->RefSkeleton.GetParentIndex(ThisBoneIndex);
+							bool bNeedToHideBone = MasterComp->BoneVisibilityStates[MasterBoneIndex] != BVS_Visible;
+							if (bNeedToHideBone && ParentIndex != INDEX_NONE)
 							{
-								const int32 ParentIndex = ThisMesh->RefSkeleton.GetParentIndex(ThisBoneIndex);
-								bool bNeedToHideBone = MasterComp->BoneVisibilityStates[MasterBoneIndex] != BVS_Visible;
-								if (bNeedToHideBone && ParentIndex != INDEX_NONE)
-								{
-									TempMatrices[ThisBoneIndex] = TempMatrices[ParentIndex].ApplyScale(0.f);
-								}
-								else
-								{
-									checkSlow(MasterComp->GetComponentSpaceTransforms()[MasterBoneIndex].IsRotationNormalized());
-									TempMatrices[ThisBoneIndex] = MasterComp->GetComponentSpaceTransforms()[MasterBoneIndex].ToMatrixWithScale();
-								}
-								ValidTempMatrices[ThisBoneIndex] = true;
+								TempMatrices[ThisBoneIndex] = TempMatrices[ParentIndex].ApplyScale(0.f);
 							}
-						}
-						else
-						{
-							TempMatrices[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex].Inverse();
+							else
+							{
+								checkSlow(MasterComp->GetComponentSpaceTransforms()[MasterBoneIndex].IsRotationNormalized());
+								TempMatrices[ThisBoneIndex] = MasterComp->GetComponentSpaceTransforms()[MasterBoneIndex].ToMatrixWithScale();
+							}
 							ValidTempMatrices[ThisBoneIndex] = true;
 						}
 					}
-					// removed else statement to set ReferenceToLocal[ThisBoneIndex] = FTransform::Identity;
-					// since it failed in ( ThisMesh->RefBasesInvMatrix.IsValidIndex(ThisBoneIndex) ), ReferenceToLocal is not valid either
-					// because of the initialization code line above to match both array count
-					// if(ReferenceToLocal.Num() != ThisMesh->RefBasesInvMatrix.Num())
-				}
-			}
-
-			if (OldPositionValid)
-			{
-				for (int32 ThisBoneIndex = 0; ThisBoneIndex < ReferenceToLocal.Num(); ++ThisBoneIndex)
-				{
-					FMatrix NewTransformation;
-					if (ValidTempMatrices[ThisBoneIndex])
-					{
-						ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
-						NewTransformation = TempMatrices[ThisBoneIndex] * ToWorld;
-					}
 					else
 					{
-						ReferenceToLocal[ThisBoneIndex] = FMatrix::Identity;
-						NewTransformation = FMatrix::Identity;
+						TempMatrices[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex].Inverse();
+						ValidTempMatrices[ThisBoneIndex] = true;
 					}
-
-					Physics(NewTransformation, Transformations[ThisBoneIndex], LinearOffsets[ThisBoneIndex], LinearVelocities[ThisBoneIndex]
-						, AngularOffsets[ThisBoneIndex], AngularVelocities[ThisBoneIndex]);
 				}
+				// removed else statement to set ReferenceToLocal[ThisBoneIndex] = FTransform::Identity;
+				// since it failed in ( ThisMesh->RefBasesInvMatrix.IsValidIndex(ThisBoneIndex) ), ReferenceToLocal is not valid either
+				// because of the initialization code line above to match both array count
+				// if(ReferenceToLocal.Num() != ThisMesh->RefBasesInvMatrix.Num())
 			}
-			else
+		}
+
+		if (OldPositionValid && LodPhysicsEnabled)
+		{
+			for (int32 ThisBoneIndex = 0; ThisBoneIndex < ReferenceToLocal.Num(); ++ThisBoneIndex)
 			{
-				for (int32 ThisBoneIndex = 0; ThisBoneIndex < ReferenceToLocal.Num(); ++ThisBoneIndex)
+				FMatrix NewTransformation;
+				if (ValidTempMatrices[ThisBoneIndex])
 				{
-					if (ValidTempMatrices[ThisBoneIndex])
-					{
-						ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
-						Transformations[ThisBoneIndex] = TempMatrices[ThisBoneIndex] * ToWorld;
-					}
-					else
-					{
-						ReferenceToLocal[ThisBoneIndex] = FMatrix::Identity;
-						Transformations[ThisBoneIndex] = FMatrix::Identity;
-					}
-
-					LinearOffsets[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
-					AngularOffsets[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
-
-					LinearVelocities[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
-					AngularVelocities[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
+					ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
+					NewTransformation = TempMatrices[ThisBoneIndex] * ToWorld;
 				}
-				OldPositionValid = true;
+				else
+				{
+					ReferenceToLocal[ThisBoneIndex] = FMatrix::Identity;
+					NewTransformation = FMatrix::Identity;
+				}
+
+				Physics(NewTransformation, Transformations[ThisBoneIndex], LinearOffsets[ThisBoneIndex], LinearVelocities[ThisBoneIndex]
+					, AngularOffsets[ThisBoneIndex], AngularVelocities[ThisBoneIndex]);
 			}
 		}
 		else
 		{
-			check(StaticGrowMesh);
-			if (OldPositionValid)
+			for (int32 ThisBoneIndex = 0; ThisBoneIndex < ReferenceToLocal.Num(); ++ThisBoneIndex)
 			{
-				Physics(ToWorld, StaticTransformation, StaticLinearOffset, StaticLinearVelocity, StaticAngularOffset, StaticAngularVelocity);
+				if (ValidTempMatrices[ThisBoneIndex])
+				{
+					ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
+					Transformations[ThisBoneIndex] = TempMatrices[ThisBoneIndex] * ToWorld;
+				}
+				else
+				{
+					ReferenceToLocal[ThisBoneIndex] = FMatrix::Identity;
+					Transformations[ThisBoneIndex] = FMatrix::Identity;
+				}
+
+				LinearOffsets[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
+				AngularOffsets[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
+
+				LinearVelocities[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
+				AngularVelocities[ThisBoneIndex].Set(0.0f, 0.0f, 0.0f);
 			}
-			else
-			{
-				StaticTransformation = ToWorld;
-
-				StaticLinearOffset.Set(0.0f, 0.0f, 0.0f);
-				StaticAngularOffset.Set(0.0f, 0.0f, 0.0f);
-
-				StaticLinearVelocity.Set(0.0f, 0.0f, 0.0f);
-				StaticAngularVelocity.Set(0.0f, 0.0f, 0.0f);
-
-				OldPositionValid = true;
-			}
+			OldPositionValid = true;
 		}
 	}
 	else
 	{
-		OldPositionValid = false;
+		check(StaticGrowMesh);
+		if (OldPositionValid && LodPhysicsEnabled)
+		{
+			Physics(ToWorld, StaticTransformation, StaticLinearOffset, StaticLinearVelocity, StaticAngularOffset, StaticAngularVelocity);
+		}
+		else
+		{
+			StaticTransformation = ToWorld;
+
+			StaticLinearOffset.Set(0.0f, 0.0f, 0.0f);
+			StaticAngularOffset.Set(0.0f, 0.0f, 0.0f);
+
+			StaticLinearVelocity.Set(0.0f, 0.0f, 0.0f);
+			StaticAngularVelocity.Set(0.0f, 0.0f, 0.0f);
+
+			OldPositionValid = true;
+		}
 	}
 
 	// We prepare the next frame but still have the value from the last one

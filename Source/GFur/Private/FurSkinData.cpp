@@ -428,9 +428,9 @@ IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurSkinVertexFactory, "/Plugin/gFur/Privat
 IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
 IMPLEMENT_VERTEX_FACTORY_TYPE(FFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
 
-//#if WITH_EDITORONLY_DATA
+#if WITH_EDITORONLY_DATA
 IMPLEMENT_UNIFORM_BUFFER_STRUCT(FBoneMatricesUniformShaderParameters, TEXT("Bones"));
-//#endif // WITH_EDITORONLY_DATA
+#endif // WITH_EDITORONLY_DATA
 
 static FBoneMatricesUniformShaderParameters GBoneUniformStruct;
 
@@ -648,20 +648,21 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::SetMesh(FRHICommandList& RH
 
 //		const auto FeatureLevel = View.GetFeatureLevel();
 
+		if (BoneMatrices.IsBound())
+		{
+			FShaderResourceViewRHIParamRef CurrentData = ShaderData.GetBoneBufferForReading(false).VertexBufferSRV;
+			RHICmdList.SetShaderResourceViewParameter(ShaderRHI, BoneMatrices.GetBaseIndex(), CurrentData);
+		}
+		if (PreviousBoneMatrices.IsBound())
+		{
+			// todo: Maybe a check for PreviousData!=CurrentData would save some performance (when objects don't have velocty yet) but removing the bool also might save performance
+
+			FShaderResourceViewRHIParamRef PreviousData = ShaderData.GetBoneBufferForReading(true).VertexBufferSRV;
+			RHICmdList.SetShaderResourceViewParameter(ShaderRHI, PreviousBoneMatrices.GetBaseIndex(), PreviousData);
+		}
+
 		if (Physics)
 		{
-			if (BoneMatrices.IsBound())
-			{
-				FShaderResourceViewRHIParamRef CurrentData = ShaderData.GetBoneBufferForReading(false).VertexBufferSRV;
-				RHICmdList.SetShaderResourceViewParameter(ShaderRHI, BoneMatrices.GetBaseIndex(), CurrentData);
-			}
-			if (PreviousBoneMatrices.IsBound())
-			{
-				// todo: Maybe a check for PreviousData!=CurrentData would save some performance (when objects don't have velocty yet) but removing the bool also might save performance
-
-				FShaderResourceViewRHIParamRef PreviousData = ShaderData.GetBoneBufferForReading(true).VertexBufferSRV;
-				RHICmdList.SetShaderResourceViewParameter(ShaderRHI, PreviousBoneMatrices.GetBaseIndex(), PreviousData);
-			}
 			if (BoneFurOffsets.IsBound())
 			{
 				FShaderResourceViewRHIParamRef CurrentData = ShaderData.GetBoneFurOffsetsBufferForReading(false).VertexBufferSRV;

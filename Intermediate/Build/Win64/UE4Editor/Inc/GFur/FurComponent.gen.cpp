@@ -48,6 +48,11 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #endif
 		static void* NewStructOps();
 #if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_PhysicsEnabled_MetaData[];
+#endif
+		static void NewProp_PhysicsEnabled_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_PhysicsEnabled;
+#if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Lod_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FUnsizedIntPropertyParams NewProp_Lod;
@@ -73,9 +78,22 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FFurLod>();
 	}
 #if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_PhysicsEnabled_MetaData[] = {
+		{ "Category", "LOD" },
+		{ "ModuleRelativePath", "Private/FurComponent.h" },
+		{ "ToolTip", "If fur should react to forces and movement while using this LOD." },
+	};
+#endif
+	void Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_PhysicsEnabled_SetBit(void* Obj)
+	{
+		((FFurLod*)Obj)->PhysicsEnabled = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_PhysicsEnabled = { UE4CodeGen_Private::EPropertyClass::Bool, "PhysicsEnabled", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, sizeof(bool), UE4CodeGen_Private::ENativeBool::Native, sizeof(FFurLod), &Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_PhysicsEnabled_SetBit, METADATA_PARAMS(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_PhysicsEnabled_MetaData, ARRAY_COUNT(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_PhysicsEnabled_MetaData)) };
+#if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_Lod_MetaData[] = {
 		{ "Category", "LOD" },
 		{ "ModuleRelativePath", "Private/FurComponent.h" },
+		{ "ToolTip", "Which LOD of the Grow Mesh should be used to generate fur for this LOD." },
 	};
 #endif
 	const UE4CodeGen_Private::FUnsizedIntPropertyParams Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_Lod = { UE4CodeGen_Private::EPropertyClass::Int, "Lod", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, STRUCT_OFFSET(FFurLod, Lod), METADATA_PARAMS(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_Lod_MetaData, ARRAY_COUNT(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_Lod_MetaData)) };
@@ -96,6 +114,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #endif
 	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_ScreenSize = { UE4CodeGen_Private::EPropertyClass::Float, "ScreenSize", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, STRUCT_OFFSET(FFurLod, ScreenSize), METADATA_PARAMS(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_ScreenSize_MetaData, ARRAY_COUNT(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_ScreenSize_MetaData)) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FFurLod_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_PhysicsEnabled,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_Lod,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_LayerCount,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_ScreenSize,
@@ -127,7 +146,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return ReturnStruct;
 	}
-	uint32 Get_Z_Construct_UScriptStruct_FFurLod_CRC() { return 2378465725U; }
+	uint32 Get_Z_Construct_UScriptStruct_FFurLod_CRC() { return 142442272U; }
 	void UGFurComponent::StaticRegisterNativesUGFurComponent()
 	{
 	}
@@ -329,7 +348,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_PhysicsEnabled_MetaData[] = {
 		{ "Category", "gFur Physics" },
 		{ "ModuleRelativePath", "Private/FurComponent.h" },
-		{ "ToolTip", "With value = 1.0, the forces affecting fur are distributed linearly from root to tip.\nValues above 1.0 push the forces more to the tip, leaving the lower parts of fur strands less affected." },
+		{ "ToolTip", "If fur should react to forces and movement." },
 	};
 #endif
 	void Z_Construct_UClass_UGFurComponent_Statics::NewProp_PhysicsEnabled_SetBit(void* Obj)
@@ -486,7 +505,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 1002339249);
+	IMPLEMENT_CLASS(UGFurComponent, 1022411893);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UGFurComponent(Z_Construct_UClass_UGFurComponent, &UGFurComponent::StaticClass, TEXT("/Script/GFur"), TEXT("UGFurComponent"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UGFurComponent);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

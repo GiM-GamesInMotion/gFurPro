@@ -191,6 +191,8 @@ void FFurMorphObject::Update(FRHICommandListImmediate& RHICmdList, const TArray<
 	}
 }
 
+#if WITH_EDITORONLY_DATA
+
 FMorphTargetDelta* UMorphTarget::GetMorphTargetDelta(int32 LODIndex, int32& OutNumDeltas)
 {
 	if (LODIndex < MorphLODModels.Num())
@@ -202,3 +204,5 @@ FMorphTargetDelta* UMorphTarget::GetMorphTargetDelta(int32 LODIndex, int32& OutN
 
 	return NULL;
 }
+
+#endif // WITH_EDITORONLY_DATA

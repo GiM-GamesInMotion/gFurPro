@@ -25,7 +25,7 @@ private: \
 	static void StaticRegisterNativesUGFurComponent(); \
 	friend struct Z_Construct_UClass_UGFurComponent_Statics; \
 public: \
-	DECLARE_CLASS(UGFurComponent, UMeshComponent, COMPILED_IN_FLAGS(0), CASTCLASS_None, TEXT("/Script/GFur"), NO_API) \
+	DECLARE_CLASS(UGFurComponent, UMeshComponent, COMPILED_IN_FLAGS(0 | CLASS_Config), CASTCLASS_None, TEXT("/Script/GFur"), NO_API) \
 	DECLARE_SERIALIZER(UGFurComponent)
 
 
@@ -34,7 +34,7 @@ private: \
 	static void StaticRegisterNativesUGFurComponent(); \
 	friend struct Z_Construct_UClass_UGFurComponent_Statics; \
 public: \
-	DECLARE_CLASS(UGFurComponent, UMeshComponent, COMPILED_IN_FLAGS(0), CASTCLASS_None, TEXT("/Script/GFur"), NO_API) \
+	DECLARE_CLASS(UGFurComponent, UMeshComponent, COMPILED_IN_FLAGS(0 | CLASS_Config), CASTCLASS_None, TEXT("/Script/GFur"), NO_API) \
 	DECLARE_SERIALIZER(UGFurComponent)
 
 

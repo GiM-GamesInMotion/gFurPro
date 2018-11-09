@@ -1,4 +1,4 @@
-// Copyright 2017 GiM s.r.o. All Rights Reserved.
+// Copyright 2018 GiM s.r.o. All Rights Reserved.
 
 #include "/Engine/Public/Platform.ush"
 #include "/Engine/Private/VertexFactoryCommon.ush"
@@ -46,7 +46,7 @@ struct FVertexFactoryInput
 	// TangentZ.w contains sign of tangent basis determinant
 	half4	TangentZ		: ATTRIBUTE2;	
 
-#if FEATURE_LEVEL >= FEATURE_LEVEL_ES3_1 || COMPILER_METAL
+#if FEATURE_LEVEL >= FEATURE_LEVEL_ES3_1 || COMPILER_METAL || COMPILER_VULKAN
 	uint4	BlendIndices	: ATTRIBUTE3;
 	#if GPUSKIN_USE_EXTRA_INFLUENCES
 	uint4	BlendIndicesExtra	: ATTRIBUTE14;
@@ -100,10 +100,12 @@ struct FVertexFactoryInterpolantsVSToPS
 {
 	TANGENTTOWORLD_INTERPOLATOR_BLOCK
 
+#if INTERPOLATE_VERTEX_COLOR
 	float4 Color : COLOR0;
+#endif
 
-#if NUM_MATERIAL_TEXCOORDS
-	float2	TexCoords[NUM_MATERIAL_TEXCOORDS]	: TEXCOORD0;
+#if NUM_TEX_COORD_INTERPOLATORS
+	float2	TexCoords[NUM_TEX_COORD_INTERPOLATORS]	: TEXCOORD0;
 #endif
 
 #if INSTANCED_STEREO
@@ -122,9 +124,9 @@ FMaterialPixelParameters GetMaterialPixelParameters(FVertexFactoryInterpolantsVS
 	// GetMaterialPixelParameters is responsible for fully initializing the result
 	FMaterialPixelParameters Result = MakeInitializedMaterialPixelParameters();
 
-#if NUM_MATERIAL_TEXCOORDS	
+#if NUM_TEX_COORD_INTERPOLATORS	
 	UNROLL
-	for(int CoordinateIndex = 0;CoordinateIndex < NUM_MATERIAL_TEXCOORDS;CoordinateIndex++)
+	for(int CoordinateIndex = 0;CoordinateIndex < NUM_TEX_COORD_INTERPOLATORS;CoordinateIndex++)
 	{
 		Result.TexCoords[CoordinateIndex] = Interpolants.TexCoords[CoordinateIndex];
 	}
@@ -133,8 +135,15 @@ FMaterialPixelParameters GetMaterialPixelParameters(FVertexFactoryInterpolantsVS
 	half3 TangentToWorld0 = Interpolants.TangentToWorld0.xyz;
 	half4 TangentToWorld2 = Interpolants.TangentToWorld2;
 	Result.TangentToWorld = AssembleTangentToWorld( TangentToWorld0, TangentToWorld2 );
-	Result.UnMirrored = TangentToWorld2.w;	
+#if USE_WORLDVERTEXNORMAL_CENTER_INTERPOLATION
+	Result.WorldVertexNormal_Center = Interpolants.TangentToWorld2_Center.xyz;
+#endif
+	Result.UnMirrored = TangentToWorld2.w;
+#if INTERPOLATE_VERTEX_COLOR
 	Result.VertexColor = Interpolants.Color;
+#else
+	Result.VertexColor = 0;
+#endif
 	Result.TwoSidedSign = 1;
 	return Result;
 }
@@ -206,7 +215,10 @@ FMaterialVertexParameters GetMaterialVertexParameters(FVertexFactoryInput Input,
 	Result.VertexColor = Intermediates.Color;
 	Result.TangentToWorld = mul(TangentToLocal, GetLocalToWorld3x3());
 	Result.PreSkinnedPosition = Intermediates.UnpackedPosition.xyz;
-	Result.PreSkinnedNormal = Input.TangentZ.xyz * 2.f - 1.f;
+	Result.PreSkinnedNormal = Input.TangentZ.xyz;
+
+	// Assumes no instacing
+	Result.PrevFrameLocalToWorld = PreviousLocalToWorld;
 
 #if NUM_MATERIAL_TEXCOORDS_VERTEX
 	for(int CoordinateIndex = 0; CoordinateIndex < NUM_MATERIAL_TEXCOORDS_VERTEX; CoordinateIndex++)
@@ -214,7 +226,6 @@ FMaterialVertexParameters GetMaterialVertexParameters(FVertexFactoryInput Input,
 		Result.TexCoords[CoordinateIndex] = Input.TexCoords[CoordinateIndex];
 	}
 #endif
-
 	return Result;
 }
 
@@ -275,7 +286,7 @@ float3 ClothingPosition( FVertexFactoryInput Input, bool bPrevious)
 */
 float3 UnpackedPosition( FVertexFactoryInput Input )
 {
-		return float3(Input.Position.xyz*MeshExtension + MeshOrigin);
+		return float3(Input.Position.xyz);
 }
 
 #if GPUSKIN_MORPH_BLEND
@@ -400,7 +411,7 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 	float3x3 LocalToWorld = PreviousLocalToWorld;
 
 	// Remove scaling.
-	half3 InvScale = Primitive.InvNonUniformScale.xyz;
+	half3 InvScale = Primitive.InvNonUniformScaleAndDeterminantSign.xyz;
 	LocalToWorld[0] *= InvScale.x;
 	LocalToWorld[1] *= InvScale.y;
 	LocalToWorld[2] *= InvScale.z;
@@ -448,9 +459,9 @@ float3x3 SkinTangents( FVertexFactoryInput Input, FVertexFactoryIntermediates In
 
 	// tangent
 	// -1..1
-	half3 LocalTangentX = TangentBias(Input.TangentX);
+	half3 LocalTangentX = Input.TangentX;
 	// -1..1 .xyz:normal, .w:contains sign of tangent basis determinant (left or right handed)
-	half4 LocalTangentZ = TangentBias(Input.TangentZ);
+	half4 LocalTangentZ = Input.TangentZ;
 
 #if GPUSKIN_MORPH_BLEND
 	// calc new normal by offseting it with the delta
@@ -572,7 +583,7 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 
 	float3x3 LocalToWorld = GetLocalToWorld3x3();
 	// Remove scaling.
-	half3 InvScale = Primitive.InvNonUniformScale.xyz;
+	half3 InvScale = Primitive.InvNonUniformScaleAndDeterminantSign.xyz;
 	LocalToWorld[0] *= InvScale.x;
 	LocalToWorld[1] *= InvScale.y;
 	LocalToWorld[2] *= InvScale.z;
@@ -646,7 +657,7 @@ void CalcTangentToWorld(FVertexFactoryInput Input, FVertexFactoryIntermediates I
 	float3x3 LocalToWorld = GetLocalToWorld3x3();
 
 	// Remove scaling.
-	half3 InvScale = Primitive.InvNonUniformScale.xyz;
+	half3 InvScale = Primitive.InvNonUniformScaleAndDeterminantSign.xyz;
 	LocalToWorld[0] *= InvScale.x;
 	LocalToWorld[1] *= InvScale.y;
 	LocalToWorld[2] *= InvScale.z;
@@ -654,21 +665,34 @@ void CalcTangentToWorld(FVertexFactoryInput Input, FVertexFactoryIntermediates I
 	float3x3 TangentToWorld = mul(Intermediates.TangentToLocal, LocalToWorld);
 
 	TangentToWorld0 = TangentToWorld[0];
-	TangentToWorld2 = float4(TangentToWorld[2], TangentBias(Input.TangentZ.w) * Primitive.LocalToWorldDeterminantSign);
+	TangentToWorld2 = float4(TangentToWorld[2], Input.TangentZ.w * Primitive.InvNonUniformScaleAndDeterminantSign.w);
 }
 
 FVertexFactoryInterpolantsVSToPS VertexFactoryGetInterpolantsVSToPS(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates, FMaterialVertexParameters VertexParameters)
 {
 	FVertexFactoryInterpolantsVSToPS Interpolants;
 
-#if NUM_MATERIAL_TEXCOORDS
-	GetMaterialCustomizedUVs(VertexParameters, Interpolants.TexCoords);
+#if NUM_TEX_COORD_INTERPOLATORS
+	float2 CustomizedUVs[NUM_TEX_COORD_INTERPOLATORS];
+	GetMaterialCustomizedUVs(VertexParameters, CustomizedUVs);
+	GetCustomInterpolators(VertexParameters, CustomizedUVs);
+
+	UNROLL
+	for (int CoordinateIndex = 0; CoordinateIndex < NUM_TEX_COORD_INTERPOLATORS; CoordinateIndex++)
+	{
+		Interpolants.TexCoords[CoordinateIndex] = CustomizedUVs[CoordinateIndex];
+	}
 #endif
 
 	Interpolants.TangentToWorld0.w = 0;
 	CalcTangentToWorld(Input, Intermediates, Interpolants.TangentToWorld0.xyz, Interpolants.TangentToWorld2);
+#if USE_WORLDVERTEXNORMAL_CENTER_INTERPOLATION
+	Interpolants.TangentToWorld2_Center = Interpolants.TangentToWorld2;
+#endif
 
+#if INTERPOLATE_VERTEX_COLOR
 	Interpolants.Color = Intermediates.Color;
+#endif
 
 #if INSTANCED_STEREO
 	Interpolants.PackedEyeIndex = 0;
@@ -712,9 +736,9 @@ FVertexFactoryInterpolantsVSToDS VertexFactoryGetInterpolantsVSToDS(FVertexFacto
 FMaterialTessellationParameters GetMaterialTessellationParameters(FVertexFactoryInterpolantsVSToDS Interpolants, float3 CameraLocalWorldPosition)
 {
 	FMaterialTessellationParameters	Result;
-#if NUM_MATERIAL_TEXCOORDS
+#if NUM_TEX_COORD_INTERPOLATORS
 	UNROLL
-	for (int CoordinateIndex = 0;CoordinateIndex < NUM_MATERIAL_TEXCOORDS;CoordinateIndex++)
+	for (int CoordinateIndex = 0;CoordinateIndex < NUM_TEX_COORD_INTERPOLATORS;CoordinateIndex++)
 	{
 		Result.TexCoords[CoordinateIndex] = Interpolants.InterpolantsVSToPS.TexCoords[CoordinateIndex];
 	}
@@ -723,7 +747,9 @@ FMaterialTessellationParameters GetMaterialTessellationParameters(FVertexFactory
 	half3 TangentToWorld0 = Interpolants.InterpolantsVSToPS.TangentToWorld0.xyz;
 	half4 TangentToWorld2 = Interpolants.InterpolantsVSToPS.TangentToWorld2;
 
+#if INTERPOLATE_VERTEX_COLOR
 	Result.VertexColor = Interpolants.InterpolantsVSToPS.Color;
+#endif
 
 	Result.TangentToWorld = AssembleTangentToWorld( TangentToWorld0, TangentToWorld2 );
 
@@ -741,11 +767,13 @@ FVertexFactoryInterpolantsVSToDS VertexFactoryInterpolate(FVertexFactoryInterpol
 
 	TESSELLATION_INTERPOLATE_MEMBER(InterpolantsVSToPS.TangentToWorld0.xyz);
 	TESSELLATION_INTERPOLATE_MEMBER(InterpolantsVSToPS.TangentToWorld2);
+#if INTERPOLATE_VERTEX_COLOR
 	TESSELLATION_INTERPOLATE_MEMBER(InterpolantsVSToPS.Color);
+#endif
 
-#if NUM_MATERIAL_TEXCOORDS
+#if NUM_TEX_COORD_INTERPOLATORS
 	UNROLL
-	for(int tc = 0; tc < NUM_MATERIAL_TEXCOORDS; ++tc)
+	for(int tc = 0; tc < NUM_TEX_COORD_INTERPOLATORS; ++tc)
 	{
 		TESSELLATION_INTERPOLATE_MEMBER(InterpolantsVSToPS.TexCoords[tc]);
 	}
@@ -775,3 +803,8 @@ uint VertexFactoryGetEyeIndex(uint InstanceId)
 	return InstanceId & 1;
 }
 #endif
+
+float4 VertexFactoryGetTranslatedPrimitiveVolumeBounds(FVertexFactoryInterpolantsVSToPS Interpolants)
+{
+	return 0;
+}

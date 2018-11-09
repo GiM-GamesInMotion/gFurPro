@@ -488,10 +488,10 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 	const UE4CodeGen_Private::FClassParams Z_Construct_UClass_UGFurComponent_Statics::ClassParams = {
 		&UGFurComponent::StaticClass,
 		DependentSingletons, ARRAY_COUNT(DependentSingletons),
-		0x00B010A0u,
+		0x00B010A4u,
 		nullptr, 0,
 		Z_Construct_UClass_UGFurComponent_Statics::PropPointers, ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::PropPointers),
-		nullptr,
+		"Engine",
 		&StaticCppClassTypeInfo,
 		nullptr, 0,
 		METADATA_PARAMS(Z_Construct_UClass_UGFurComponent_Statics::Class_MetaDataParams, ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::Class_MetaDataParams))
@@ -505,7 +505,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 1022411893);
+	IMPLEMENT_CLASS(UGFurComponent, 2262065410);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UGFurComponent(Z_Construct_UClass_UGFurComponent, &UGFurComponent::StaticClass, TEXT("/Script/GFur"), TEXT("UGFurComponent"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UGFurComponent);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

@@ -1,9 +1,5 @@
 // Copyright 2018 GiM s.r.o. All Rights Reserved.
 
-/*=============================================================================
-	LocalVertexFactory.usf: Local vertex factory shader code.
-=============================================================================*/
-
 #include "/Engine/Private/VertexFactoryCommon.ush"
 #include "/Engine/Private/LocalVertexFactoryCommon.ush"
 
@@ -100,7 +96,7 @@ FMaterialPixelParameters GetMaterialPixelParameters(FVertexFactoryInterpolantsVS
 half3x3 CalcTangentToWorldNoScale(in half3x3 TangentToLocal)
 {
 	half3x3 LocalToWorld = GetLocalToWorld3x3();
-	half3 InvScale = Primitive.InvNonUniformScale.xyz;
+	half3 InvScale = Primitive.InvNonUniformScaleAndDeterminantSign.xyz;
 	LocalToWorld[0] *= InvScale.x;
 	LocalToWorld[1] *= InvScale.y;
 	LocalToWorld[2] *= InvScale.z;
@@ -118,7 +114,7 @@ FMaterialVertexParameters GetMaterialVertexParameters(FVertexFactoryInput Input,
 	Result.TangentToWorld = Intermediates.TangentToWorld;
 
 	Result.PreSkinnedPosition = Input.Position.xyz;
-	Result.PreSkinnedNormal = TangentToLocal[2]; //Input.TangentZ.xyz * 2.f - 1.f;
+	Result.PreSkinnedNormal = TangentToLocal[2]; //TangentBias(Input.TangentZ.xyz);
 
 #if NUM_MATERIAL_TEXCOORDS_VERTEX
 	UNROLL
@@ -139,7 +135,7 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 
 	float3x3 LocalToWorld = GetLocalToWorld3x3();
 	// Remove scaling.
-	half3 InvScale = Primitive.InvNonUniformScale.xyz;
+	half3 InvScale = Primitive.InvNonUniformScaleAndDeterminantSign.xyz;
 	LocalToWorld[0] *= InvScale.x;
 	LocalToWorld[1] *= InvScale.y;
 	LocalToWorld[2] *= InvScale.z;
@@ -209,7 +205,7 @@ FVertexFactoryIntermediates GetVertexFactoryIntermediates(FVertexFactoryInput In
 	float TangentSign;
 	Intermediates.TangentToLocal = CalcTangentToLocal(Input, TangentSign);
 	Intermediates.TangentToWorld = CalcTangentToWorld(Intermediates,Intermediates.TangentToLocal);
-	Intermediates.TangentToWorldSign = TangentSign * Primitive.LocalToWorldDeterminantSign;
+	Intermediates.TangentToWorldSign = TangentSign * Primitive.InvNonUniformScaleAndDeterminantSign.w;
 
 	return Intermediates;
 }
@@ -289,7 +285,7 @@ float4 VertexFactoryGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexF
 
 	float3x3 LocalToWorld = float3x3(PreviousLocalToWorld[0].xyz, PreviousLocalToWorld[1].xyz, PreviousLocalToWorld[2].xyz);
 	// Remove scaling.
-	half3 InvScale = Primitive.InvNonUniformScale.xyz;
+	half3 InvScale = Primitive.InvNonUniformScaleAndDeterminantSign.xyz;
 	LocalToWorld[0] *= InvScale.x;
 	LocalToWorld[1] *= InvScale.y;
 	LocalToWorld[2] *= InvScale.z;

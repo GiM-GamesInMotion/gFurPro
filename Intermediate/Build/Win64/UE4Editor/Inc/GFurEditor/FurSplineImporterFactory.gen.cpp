@@ -67,7 +67,7 @@ void EmptyLinkFunctionForGeneratedCodeFurSplineImporterFactory() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurSplineImporterFactory, 1558158309);
+	IMPLEMENT_CLASS(UFurSplineImporterFactory, 3943207331);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UFurSplineImporterFactory(Z_Construct_UClass_UFurSplineImporterFactory, &UFurSplineImporterFactory::StaticClass, TEXT("/Script/GFurEditor"), TEXT("UFurSplineImporterFactory"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UFurSplineImporterFactory);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

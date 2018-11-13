@@ -441,8 +441,9 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 	PhysicsOffset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 
 	float PhysicOffsetLength = length(PhysicsOffset);
-	if (PhysicOffsetLength > MaxPhysicsOffsetLength)
-		PhysicsOffset *= MaxPhysicsOffsetLength / PhysicOffsetLength;
+	float MaxPhysicsOffset = MaxPhysicsOffsetLength * FurLength;
+	if (PhysicOffsetLength > MaxPhysicsOffset)
+		PhysicsOffset *= MaxPhysicsOffset / PhysicOffsetLength;
 
 	Position += normalize(FurOffset + PhysicsOffset) * FurLength;
 
@@ -616,8 +617,9 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 	PhysicsOffset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 
 	float PhysicOffsetLength = length(PhysicsOffset);
-	if (PhysicOffsetLength > MaxPhysicsOffsetLength)
-		PhysicsOffset *= MaxPhysicsOffsetLength / PhysicOffsetLength;
+	float MaxPhysicsOffset = MaxPhysicsOffsetLength * FurLength;
+	if (PhysicOffsetLength > MaxPhysicsOffset)
+		PhysicsOffset *= MaxPhysicsOffset / PhysicOffsetLength;
 
 	Position += normalize(FurOffset + PhysicsOffset) * FurLength;
 	

@@ -1,0 +1,58 @@
+// Copyright 2019 GiM s.r.o. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/ObjectMacros.h"
+#include "UObject/Object.h"
+#include "FurCombSettings.generated.h"
+
+UCLASS()
+class GFUREDITOR_API UFurCombSettings : public UObject
+{
+	GENERATED_UCLASS_BODY()
+public:
+
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+
+	~UFurCombSettings();
+
+	float GetRadius() const { return Radius; }
+	void SetRadius(float InRadius);
+
+protected:
+	/** Radius of the Brush used for Painting */
+	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Radius", UIMin = "0.01", UIMax = "2048.0", ClampMin = "0.01", ClampMax = "250000.0"))
+	float Radius;
+
+public:
+	/** Min and Max brush radius retrieved from config */
+	float RadiusMin;
+	float RadiusMax;
+
+	/** Strength of the brush (0.0 - 1.0) */
+	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Strength", UIMin = "0.0", UIMax = "1.0", ClampMin= "0.0", ClampMax = "1.0"))
+	float Strength; 
+
+	/** Amount of falloff to apply (0.0 - 1.0) */
+	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Falloff", UIMin = "0.0", UIMax = "1.0", ClampMin = "0.0", ClampMax = "1.0"))
+	float FalloffAmount;
+
+	/** Whether back-facing triangles should be ignored */
+//	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Ignore back-facing"))TODO
+//	bool bOnlyFrontFacingTriangles;
+};
+#if 0 // TODO
+UCLASS(config = EditorPerProjectUserSettings)
+class GFUR_API UFurCombPreviewSettings : public UObject
+{
+	GENERATED_BODY()
+
+public:
+
+	/** Size of vertex points drawn when mesh painting is active. */
+	UPROPERTY(config, EditAnywhere, Category=Visualization)
+	float VertexPreviewSize;
+
+};
+#endif // 0

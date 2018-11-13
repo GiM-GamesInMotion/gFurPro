@@ -265,6 +265,7 @@ UGFurComponent::UGFurComponent(const FObjectInitializer& ObjectInitializer)
 	ConstantForce.Set(0, 0, -9.8f);
 	ReferenceHairBias = 0.8f;
 	HairLengthForceUniformity = 0.2f;
+	MaxPhysicsOffsetLength = FLT_MAX;
 	NoiseStrength = 0.0f;
 	CastShadow = false;
 	PrimaryComponentTick.bCanEverTick = true;
@@ -811,7 +812,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			const auto& Sections = LOD.RenderSections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
-				FurProxy->GetVertexFactory(SectionIdx)->UpdateSkeletonShaderData(ForceDistribution, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,
+				FurProxy->GetVertexFactory(SectionIdx)->UpdateSkeletonShaderData(ForceDistribution, MaxPhysicsOffsetLength, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,
 					Sections[SectionIdx].BoneMap, Discontinuous, SceneFeatureLevel);
 			}
 			if (MasterPoseComponent.IsValid() && FurProxy->GetMorphObject())

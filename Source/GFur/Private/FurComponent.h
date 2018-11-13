@@ -166,6 +166,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Physics")
 	float HairLengthForceUniformity;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Physics")
+	float MaxPhysicsOffsetLength;
+
 	/**
 	* Introduces noise to the shell vertices along the normal. This helps to break up the uniformity of the shell slices when viewed from the side.
 	*/

@@ -32,6 +32,7 @@ public:
 		MeshOriginParameter.Bind(ParameterMap, TEXT("MeshOrigin"));
 		MeshExtensionParameter.Bind(ParameterMap, TEXT("MeshExtension"));
 		FurOffsetPowerParameter.Bind(ParameterMap, TEXT("FurOffsetPower"));
+		MaxPhysicsOffsetLengthParameter.Bind(ParameterMap, TEXT("MaxPhysicsOffsetLength"));
 		BoneMatrices.Bind(ParameterMap, TEXT("BoneMatrices"));
 		PreviousBoneMatrices.Bind(ParameterMap, TEXT("PreviousBoneMatrices"));
 		BoneFurOffsets.Bind(ParameterMap, TEXT("BoneFurOffsets"));
@@ -44,6 +45,7 @@ public:
 		Ar << MeshOriginParameter;
 		Ar << MeshExtensionParameter;
 		Ar << FurOffsetPowerParameter;
+		Ar << MaxPhysicsOffsetLengthParameter;
 		Ar << BoneMatrices;
 		Ar << PreviousBoneMatrices;
 		Ar << BoneFurOffsets;
@@ -62,6 +64,7 @@ private:
 	FShaderParameter MeshOriginParameter;
 	FShaderParameter MeshExtensionParameter;
 	FShaderParameter FurOffsetPowerParameter;
+	FShaderParameter MaxPhysicsOffsetLengthParameter;
 	FShaderResourceParameter BoneMatrices;
 	FShaderResourceParameter PreviousBoneMatrices;
 	FShaderResourceParameter BoneFurOffsets;
@@ -82,6 +85,7 @@ public:
 		FShaderDataType(ERHIFeatureLevel::Type InFeatureLevel)
 			: CurrentBuffer(0)
 			, Discontinuous(true)
+			, MaxPhysicsOffsetLength(FLT_MAX)
 			, MeshOrigin(0, 0, 0)
 			, MeshExtension(1, 1, 1)
 			, FurOffsetPower(2.0f)
@@ -94,6 +98,7 @@ public:
 		FVector MeshOrigin;
 		FVector MeshExtension;
 		float FurOffsetPower;
+		float MaxPhysicsOffsetLength;
 
 		void Init(uint32 InBoneCount)
 		{
@@ -399,10 +404,11 @@ public:
 		ShaderData.ReleaseBoneData();
 	}
 
-	void UpdateSkeletonShaderData(float InFurOffsetPower, const TArray<FMatrix>& InReferenceToLocal, const TArray<FVector>& InLinearOffsets, const TArray<FVector>& InAngularOffsets,
+	void UpdateSkeletonShaderData(float InFurOffsetPower, float InMaxPhysicsOffsetLength, const TArray<FMatrix>& InReferenceToLocal, const TArray<FVector>& InLinearOffsets, const TArray<FVector>& InAngularOffsets,
 		const TArray<FMatrix>& InTransformations, const TArray<FBoneIndexType>& InBoneMap, bool InDiscontinuous, ERHIFeatureLevel::Type InFeatureLevel) override
 	{
 		ShaderData.FurOffsetPower = InFurOffsetPower;
+		ShaderData.MaxPhysicsOffsetLength = InMaxPhysicsOffsetLength;
 		ShaderData.UpdateBoneData(InReferenceToLocal, InLinearOffsets, InAngularOffsets, InTransformations, InBoneMap, InDiscontinuous, InFeatureLevel);
 	}
 
@@ -645,6 +651,7 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::SetMesh(FRHICommandList& RH
 		SetShaderValue(RHICmdList, ShaderRHI, MeshOriginParameter, ShaderData.MeshOrigin);
 		SetShaderValue(RHICmdList, ShaderRHI, MeshExtensionParameter, ShaderData.MeshExtension);
 		SetShaderValue(RHICmdList, ShaderRHI, FurOffsetPowerParameter, ShaderData.FurOffsetPower);
+		SetShaderValue(RHICmdList, ShaderRHI, MaxPhysicsOffsetLengthParameter, ShaderData.MaxPhysicsOffsetLength);
 
 //		const auto FeatureLevel = View.GetFeatureLevel();
 

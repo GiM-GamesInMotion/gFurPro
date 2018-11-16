@@ -18,12 +18,13 @@
 
 #define LOCTEXT_NAMESPACE "FurComb"
 
-const float FFurComb::MinLayerDist = 0.01f;
+const float FFurComb::MinLayerDist = 0.001f;
 
 FFurComb::FFurComb()
 	: CurrentViewportInteractor(nullptr),
 	TimeSinceStartedPainting(0.0f),
 	Time(0.0f),
+	LastDeltaTime(0.0f),
 	Mode(EFurCombMode::Length),
 	bCombing(false),
 	CombTransaction(nullptr)
@@ -78,7 +79,7 @@ void FFurComb::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDra
 
 void FFurComb::Tick(FEditorViewportClient* ViewportClient, float DeltaTime)
 {
-/*	if (bCombing)
+	if (bCombing)
 	{
 		TimeSinceStartedPainting += DeltaTime;
 	}
@@ -87,79 +88,10 @@ void FFurComb::Tick(FEditorViewportClient* ViewportClient, float DeltaTime)
 	{
 		// Make sure perspective viewports are still set to real-time
 		MeshPaintHelpers::SetRealtimeViewport(true);
-
-		// Set viewport show flags		
-//		MeshPaintHelpers::SetViewportColorMode(GetBrushSettings()->ColorViewMode, ViewportClient);TODO
 	}
 
 	Time += DeltaTime;
-
-
-	if (bRefreshCachedData)
-	{
-		bRefreshCachedData = false;
-		CacheSelectionData();
-		CacheTexturePaintData();
-
-		bDoRestoreRenTargets = true;
-	}
-
-	// Will set the texture override up for the selected texture, important for the drop down combo-list and selecting between material instances.
-	if (PaintSettings->PaintMode == EPaintMode::Textures && PaintableComponents.Num() == 1 && PaintSettings->TexturePaintSettings.PaintTexture)
-	{
-		for (UMeshComponent* MeshComponent : PaintableComponents)
-		{
-			TSharedPtr<IMeshPaintGeometryAdapter>* MeshAdapter = ComponentToAdapterMap.Find(MeshComponent);
-			if (MeshAdapter)
-			{
-				SetSpecificTextureOverrideForMesh(*MeshAdapter->Get(), PaintSettings->TexturePaintSettings.PaintTexture);
-			}
-		}
-	}
-
-	// If this is true probably someone force deleted a texture out from under us
-	bool bBadAssetFound = false;
-
-	if (bDoRestoreRenTargets && PaintSettings->PaintMode == EPaintMode::Textures)
-	{
-		if (PaintingTexture2D == nullptr)
-		{
-			for (TMap< UTexture2D*, FPaintTexture2DData >::TIterator It(PaintTargetData); It; ++It)
-			{
-
-				if (!It.Key())
-				{
-					bBadAssetFound = true;
-					break;
-				}
-
-				FPaintTexture2DData* TextureData = &It.Value();
-				if (TextureData->PaintRenderTargetTexture != nullptr)
-				{
-
-					bool bIsSourceTextureStreamedIn = TextureData->PaintingTexture2D->IsFullyStreamedIn();
-
-					if (!bIsSourceTextureStreamedIn)
-					{
-						//   Make sure it is fully streamed in before we try to do anything with it.
-						TextureData->PaintingTexture2D->SetForceMipLevelsToBeResident(30.0f);
-						TextureData->PaintingTexture2D->WaitForStreaming();
-					}
-
-					//Use the duplicate texture here because as we modify the texture and do undo's, it will be different over the original.
-					TexturePaintHelpers::SetupInitialRenderTargetData(TextureData->PaintingTexture2D, TextureData->PaintRenderTargetTexture);
-
-				}
-			}
-		}
-		// We attempted a restore of the rendertargets so go ahead and clear the flag
-		bDoRestoreRenTargets = false;
-	}
-
-	if (bBadAssetFound)
-	{
-		PaintTargetData.Empty();
-	}*/
+	LastDeltaTime = DeltaTime;
 }
 
 void FFurComb::RegisterCommands(TSharedRef<FUICommandList> CommandList)
@@ -239,7 +171,7 @@ bool FFurComb::Comb(FViewport* Viewport, const FVector& InCameraOrigin, const FV
 
 	const float Strength = Viewport->IsPenActive() ? Viewport->GetTabletPressure() : 1.f;
 	// Handle internal painting functionality
-	return CombInternal(InCameraOrigin, InRayOrigin, InRayDirection, CombAction, Strength);
+	return CombInternal(InCameraOrigin, InRayOrigin, InRayDirection, CombAction, Strength * LastDeltaTime);
 }
 
 bool FFurComb::CombVR(FViewport* Viewport, const FVector& InCameraOrigin, const FVector& InRayOrigin, const FVector& InRayDirection, UVREditorInteractor* VRInteractor)
@@ -444,7 +376,6 @@ void FFurComb::PostUndo()
 bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayOrigin, const FVector& InRayDirection, ECombAction CombAction, float StrengthScale)
 {
 	const float CombRadius = FurCombSettings->GetRadius();
-	const float CombFalloff = FurCombSettings->FalloffAmount;
 	// Fire out a ray to see if there is a *selected* component under the mouse cursor that can be painted.
 	// NOTE: We can't use a GWorld line check for this as that would ignore components that have collision disabled
 
@@ -559,13 +490,29 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 					continue;
 				}
 
+				Params.Location = ComponentSpaceLocation;
+				Params.Location.Y = -Params.Location.Y;
+				Params.OldLocation = InverseComponentTransform.TransformPosition(OldLocation);
+				Params.OldLocation.Y = -Params.OldLocation.Y;
+				Params.Normal = InverseComponentTransform.TransformVector(BestTraceResult.Normal);
+				Params.Normal.Y = -Params.Normal.Y;
+				Params.CombRadius = ComponentSpaceRadius;
+				Params.Strength = CombStrength;
+				Params.Falloff = FurCombSettings->FalloffAmount;
+				Params.ApplyHeight = FurCombSettings->ApplyHeight;
+				Params.ApplySpread = FurCombSettings->ApplySpread;
+				Params.MirrorX = FurCombSettings->bMirrorX;
+				Params.MirrorY = FurCombSettings->bMirrorY;
+				Params.MirrorZ = FurCombSettings->bMirrorZ;
+
 				const FPositionVertexBuffer& Positions = VertexBuffers->PositionVertexBuffer;
 				const FStaticMeshVertexBuffer& Vertices = VertexBuffers->StaticMeshVertexBuffer;
 				int32 VertexCount = Positions.GetNumVertices();
 				for (int32 VertexIndex = 0; VertexIndex < VertexCount; VertexIndex++)
 				{
 					const FVector& Position = Positions.VertexPosition(VertexIndex);
-					if (FVector::DistSquared(Position, ComponentSpaceLocation) > ComponentSpaceRadiusSquared)
+					FVector Location = MirrorVector(ComponentSpaceLocation, Position, Params);
+					if (FVector::DistSquared(Position, Location) > ComponentSpaceRadiusSquared)
 						continue;
 
 					int ClosestSplineIndex = -1;
@@ -600,16 +547,6 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 						}
 					}
 				}
-
-				Params.Location = ComponentSpaceLocation;
-				Params.Location.Y = -Params.Location.Y;
-				Params.OldLocation = InverseComponentTransform.TransformPosition(OldLocation);
-				Params.OldLocation.Y = -Params.OldLocation.Y;
-				Params.Normal = InverseComponentTransform.TransformVector(BestTraceResult.Normal);
-				Params.Normal.Y = -Params.Normal.Y;
-				Params.CombRadius = ComponentSpaceRadius;
-				Params.Strength = CombStrength;
-				Params.Falloff = CombFalloff;
 			}
 
 
@@ -633,11 +570,15 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 				case EFurCombMode::Noise:
 					CombNoise(FurSplines, SplineSet, SplineVertexNormals, Params);
 					break;
+				case EFurCombMode::Relax:
+					CombRelax(FurSplines, SplineSet, SplineVertexNormals, Params);
+					break;
 				}
 				bCombApplied = true;
 				FurSplines->Refresh();
 			}
 		}
+		OldLocation = BestTraceResult.Location;
 	}
 
 	return bCombApplied;
@@ -1015,197 +956,148 @@ void FFurComb::ApplyVertexColor(FPerVertexPaintActionArgs& InArgs, int32 VertexI
 
 
 
+FVector FFurComb::MirrorVector(const FVector& Vec, const FVector& Vertex, const CombParams& Params)
+{
+	FVector Result;
+	Result.X = Params.MirrorX && ((Vertex.X >= 0.0f) != (Vec.X >= 0.0f)) ? -Vec.X : Vec.X;
+	Result.Y = Params.MirrorY && ((Vertex.Y >= 0.0f) != (Vec.Y >= 0.0f)) ? -Vec.Y : Vec.Y;
+	Result.Z = Params.MirrorZ && ((Vertex.Z >= 0.0f) != (Vec.Z >= 0.0f)) ? -Vec.Z : Vec.Z;
+	return Result;
+}
 
+FVector FFurComb::BendFur(const FVector& Dir, const FVector& Normal, const FVector& Offset)
+{
+	float OldSize = Dir.Size();
+	FVector NewDir = Dir + Offset;
+	float NewSize = NewDir.Size();
+	NewDir *= (OldSize / NewSize);
+	float Distance = FVector::DotProduct(Normal, NewDir);
+	if (Distance >= MinLayerDist)
+		return NewDir;
 
+	NewDir += Normal * (-Distance + MinLayerDist);
+	FVector v = NewDir - Normal * MinLayerDist;
+	float s = OldSize > MinLayerDist ? FMath::Sqrt(OldSize * OldSize - MinLayerDist * MinLayerDist) : 0.0f;
+	v *= s / v.Size();
+	return Normal * MinLayerDist + v;
+}
 
+template<bool UseStrengthHeight, typename F, typename G>
+void FFurComb::Comb(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params,
+	const F& FuncPerSpline, const G& FuncPerSegment)
+{
+	float RcpCombRadius = 1.0f / Params.CombRadius;
+	float RcpInvFalloff = 1.0f / (1.0f - Params.Falloff);
+	float Strength = Params.Strength;
+	for (int32 Index : SplineSet)
+	{
+		int32 Idx = FurSplines->Index[Index];
+		int32 Cnt = FurSplines->Count[Index];
+		FVector PrevVertexOld = FurSplines->Vertices[Idx];
+		FVector PrevVertexNew = PrevVertexOld;
+		FVector Location = MirrorVector(Params.Location, PrevVertexOld, Params);
+		float Dist = FVector::Distance(PrevVertexOld, Location);
+		float D = Dist * RcpCombRadius - Params.Falloff;
+		if (D > 0.0f)
+			Strength *= 1.0f - D * RcpInvFalloff;
+		const FVector& Normal = SplineVertexNormals[Index];
+		FuncPerSpline(PrevVertexOld, Normal);
+		for (int32 i = Idx + 1, End = Idx + Cnt; i < End; i++)
+		{
+			float StrengtHeight = 1.0f;
+			if (UseStrengthHeight)
+			{
+				float Height = (i - Idx) / (float)(Cnt - 1);
+				float Exp;
+				if (Params.ApplySpread >= 0)
+					Exp = 1.0f - Params.ApplySpread;
+				else
+					Exp = 1.0f / (1.0001f + Params.ApplySpread);
+				StrengtHeight = powf(1.0f - FMath::Abs(Height - Params.ApplyHeight), Exp);
+			}
 
+			FVector& Vertex = FurSplines->Vertices[i];
+			FVector Dir = Vertex - PrevVertexOld;
+			PrevVertexOld = Vertex;
 
+			Vertex = PrevVertexNew + FuncPerSegment(Dir, Normal, Strength * StrengtHeight);
+			PrevVertexNew = Vertex;
+		}
+	}
+}
 
 
 
 void FFurComb::CombLength(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params)
 {
-	float RcpCombRadius = 1.0f / Params.CombRadius;
-	float RcpInvFalloff = 1.0f / (1.0f - Params.Falloff);
-	float Strength = Params.Strength;
-	for (int32 Index : SplineSet)
-	{
-		int32 Idx = FurSplines->Index[Index];
-		int32 Cnt = FurSplines->Count[Index];
-		FVector PrevVertexOld = FurSplines->Vertices[Idx];
-		FVector PrevVertexNew = PrevVertexOld;
-		float Dist = FVector::Distance(PrevVertexOld, Params.Location);
-		float D = Dist * RcpCombRadius - Params.Falloff;
-		if (D > 0.0f)
-			Strength *= 1.0f - D * RcpInvFalloff;
-		for (int32 i = Idx + 1, End = Idx + Cnt; i < End; i++)
-		{
-			FVector& Vertex = FurSplines->Vertices[i];
-			FVector TempVertex = Vertex;
-			FVector Dir = Vertex - PrevVertexOld;
-			PrevVertexOld = Vertex;
-			float Size = Dir.Size();
-			float NewSize = FMath::Max(Size * (1.0f + Strength), 0.001f);
-			Vertex = PrevVertexNew + Dir * (NewSize / Size);
-			PrevVertexNew = Vertex;
-		}
-	}
+	Comb<false>(FurSplines, SplineSet, SplineVertexNormals, Params, [](const FVector& Vertex, const FVector& Normal) {},
+		[](const FVector& Dir, const FVector& Normal, float Strength) {
+		float Size = Dir.Size();
+		float NewSize = FMath::Max(Size * (1.0f + Strength), 0.001f);
+		return Dir * (NewSize / Size);
+	});
 }
 
 void FFurComb::CombBend(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params)
 {
-	float RcpCombRadius = 1.0f / Params.CombRadius;
-	float RcpInvFalloff = 1.0f / (1.0f - Params.Falloff);
-	float Strength = Params.Strength;
-	FVector BendDir = Params.Location - Params.OldLocation;
-	if (BendDir.X == 0.0f && BendDir.Y == 0.0f && BendDir.Z == 0.0f)
+	FVector OrigBendDir = Params.Location - Params.OldLocation;
+	if (OrigBendDir.X == 0.0f && OrigBendDir.Y == 0.0f && OrigBendDir.Z == 0.0f)
 		return;
-	for (int32 Index : SplineSet)
-	{
-		int32 Idx = FurSplines->Index[Index];
-		int32 Cnt = FurSplines->Count[Index];
-		FVector PrevVertexOld = FurSplines->Vertices[Idx];
-		FVector PrevVertexNew = PrevVertexOld;
-		float PrevDist = 0.0f;
-		float Dist = FVector::Distance(PrevVertexOld, Params.Location);
-		float D = Dist * RcpCombRadius - Params.Falloff;
-		if (D > 0.0f)
-			Strength *= 1.0f - D * RcpInvFalloff;
 
-		FVector Normal = SplineVertexNormals[Index];
-		for (int32 i = Idx + 1, End = Idx + Cnt; i < End; i++)
-		{
-			FPlane Plane(PrevVertexOld, Normal);
-
-			FVector& Vertex = FurSplines->Vertices[i];
-			FVector TempVertex = Vertex;
-			FVector Dir = Vertex - PrevVertexOld;
-			PrevVertexOld = Vertex;
-			float Size = Dir.Size();
-			FVector NewDir = Dir + BendDir * Strength;
-			float NewSize = NewDir.Size();
-			Vertex = PrevVertexNew + NewDir * (Size / NewSize);
-			Dist = Plane.PlaneDot(Vertex);
-			if (Dist < MinLayerDist)
-				Vertex += Normal * (-Dist + MinLayerDist);
-			PrevVertexNew = Vertex;
-		}
-	}
+	FVector BendDir;
+	Comb<true>(FurSplines, SplineSet, SplineVertexNormals, Params, [&OrigBendDir, &BendDir, &Params](const FVector& Vertex, const FVector& Normal) {
+		BendDir = MirrorVector(OrigBendDir, Vertex, Params);
+	}, [&BendDir](const FVector& Dir, const FVector& Normal, float Strength) {
+		return BendFur(Dir, Normal, BendDir * Strength);
+	});
 }
 
 void FFurComb::CombClump(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params)
 {
-	float RcpCombRadius = 1.0f / Params.CombRadius;
-	float RcpInvFalloff = 1.0f / (1.0f - Params.Falloff);
-	float Strength = Params.Strength;
-	for (int32 Index : SplineSet)
-	{
-		int32 Idx = FurSplines->Index[Index];
-		int32 Cnt = FurSplines->Count[Index];
-		FVector PrevVertexOld = FurSplines->Vertices[Idx];
-		FVector PrevVertexNew = PrevVertexOld;
-		float Dist = FVector::Distance(PrevVertexOld, Params.Location);
-		float D = Dist * RcpCombRadius - Params.Falloff;
-		if (D > 0.0f)
-			Strength *= 1.0f - D * RcpInvFalloff;
-		FVector BendDir = Params.Location - PrevVertexOld;
-
-		FVector Normal = SplineVertexNormals[Index];
-		for (int32 i = Idx + 1, End = Idx + Cnt; i < End; i++)
-		{
-			FPlane Plane(PrevVertexOld, Normal);
-
-			FVector& Vertex = FurSplines->Vertices[i];
-			FVector TempVertex = Vertex;
-			FVector Dir = Vertex - PrevVertexOld;
-			PrevVertexOld = Vertex;
-			float Size = Dir.Size();
-			FVector NewDir = Dir + BendDir * Strength;
-			float NewSize = NewDir.Size();
-			Vertex = PrevVertexNew + NewDir * (Size / NewSize);
-			Dist = Plane.PlaneDot(Vertex);
-			if (Dist < MinLayerDist)
-				Vertex += Normal * (-Dist + MinLayerDist);
-			PrevVertexNew = Vertex;
-		}
-	}
+	FVector BendDir;
+	Comb<true>(FurSplines, SplineSet, SplineVertexNormals, Params, [&Params, &BendDir](const FVector& Vertex, const FVector& Normal) {
+		BendDir = MirrorVector(Params.Location, Vertex, Params) - Vertex;
+	}, [&BendDir](const FVector& Dir, const FVector& Normal, float Strength) {
+		return BendFur(Dir, Normal, BendDir * Strength * 0.1f);
+	});
 }
 
 void FFurComb::CombTwist(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params)
 {
-	float RcpCombRadius = 1.0f / Params.CombRadius;
-	float RcpInvFalloff = 1.0f / (1.0f - Params.Falloff);
-	float Strength = Params.Strength;
-	for (int32 Index : SplineSet)
-	{
-		int32 Idx = FurSplines->Index[Index];
-		int32 Cnt = FurSplines->Count[Index];
-		FVector PrevVertexOld = FurSplines->Vertices[Idx];
-		FVector PrevVertexNew = PrevVertexOld;
-		float Dist = FVector::Distance(PrevVertexOld, Params.Location);
-		float D = Dist * RcpCombRadius - Params.Falloff;
-		if (D > 0.0f)
-			Strength *= 1.0f - D * RcpInvFalloff;
-		FVector BendDir = FVector::CrossProduct(Params.Location - PrevVertexOld, Params.Normal);
-
-		FVector Normal = SplineVertexNormals[Index];
-		for (int32 i = Idx + 1, End = Idx + Cnt; i < End; i++)
-		{
-			FPlane Plane(PrevVertexOld, Normal);
-
-			FVector& Vertex = FurSplines->Vertices[i];
-			FVector TempVertex = Vertex;
-			FVector Dir = Vertex - PrevVertexOld;
-			PrevVertexOld = Vertex;
-			float Size = Dir.Size();
-			FVector NewDir = Dir + BendDir * Strength;
-			float NewSize = NewDir.Size();
-			Vertex = PrevVertexNew + NewDir * (Size / NewSize);
-			Dist = Plane.PlaneDot(Vertex);
-			if (Dist < MinLayerDist)
-				Vertex += Normal * (-Dist + MinLayerDist);
-			PrevVertexNew = Vertex;
-		}
-	}
+	FVector BendDir;
+	Comb<true>(FurSplines, SplineSet, SplineVertexNormals, Params, [&Params, &BendDir](const FVector& Vertex, const FVector& Normal) {
+		BendDir = FVector::CrossProduct(MirrorVector(Params.Location, Vertex, Params) - Vertex, Params.Normal);
+	}, [&BendDir](const FVector& Dir, const FVector& Normal, float Strength) {
+		return BendFur(Dir, Normal, BendDir * Strength * 0.1f);
+	});
 }
 
 void FFurComb::CombNoise(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params)
 {
-	float RcpCombRadius = 1.0f / Params.CombRadius;
-	float RcpInvFalloff = 1.0f / (1.0f - Params.Falloff);
-	float Strength = Params.Strength;
-	for (int32 Index : SplineSet)
-	{
-		int32 Idx = FurSplines->Index[Index];
-		int32 Cnt = FurSplines->Count[Index];
-		FVector PrevVertexOld = FurSplines->Vertices[Idx];
-		FVector PrevVertexNew = PrevVertexOld;
-		float Dist = FVector::Distance(PrevVertexOld, Params.Location);
-		float D = Dist * RcpCombRadius - Params.Falloff;
-		if (D > 0.0f)
-			Strength *= 1.0f - D * RcpInvFalloff;
-		FVector BendDir;
-		BendDir.RotateAngleAxis(FMath::FRandRange(0.0f, 2.0f * PI), Params.Normal);
+	FVector BendDir;
+	Comb<true>(FurSplines, SplineSet, SplineVertexNormals, Params, [&Params, &BendDir](const FVector& Vertex, const FVector& Normal) {
+		BendDir.X = FMath::Sin(Vertex.X * 50.0f) + FMath::Sin(Vertex.Y * 35.0f) + FMath::Sin(Vertex.Z * 96.0f);
+		BendDir.X += FMath::Sin(Normal.X * 122.0f) + FMath::Sin(Normal.Y * 67.0f) + FMath::Sin(Normal.Z * 16.0f);
 
-		FVector Normal = SplineVertexNormals[Index];
-		for (int32 i = Idx + 1, End = Idx + Cnt; i < End; i++)
-		{
-			FPlane Plane(PrevVertexOld, Normal);
+		BendDir.Y = FMath::Sin(Vertex.X * 99.0f) + FMath::Sin(Vertex.Y * 75.0f) + FMath::Sin(Vertex.Z * 15.0f);
+		BendDir.Y += FMath::Sin(Normal.X * 30.0f) + FMath::Sin(Normal.Y * 164.0f) + FMath::Sin(Normal.Z * 79.0f);
 
-			FVector& Vertex = FurSplines->Vertices[i];
-			FVector TempVertex = Vertex;
-			FVector Dir = Vertex - PrevVertexOld;
-			PrevVertexOld = Vertex;
-			float Size = Dir.Size();
-			FVector NewDir = Dir + BendDir * Strength;
-			float NewSize = NewDir.Size();
-			Vertex = PrevVertexNew + NewDir * (Size / NewSize);
-			Dist = Plane.PlaneDot(Vertex);
-			if (Dist < MinLayerDist)
-				Vertex += Normal * (-Dist + MinLayerDist);
-			PrevVertexNew = Vertex;
-		}
-	}
+		BendDir.Z = FMath::Sin(Vertex.X * 88.0f) + FMath::Sin(Vertex.Y * 47.0f) + FMath::Sin(Vertex.Z * 94.0f);
+		BendDir.Z += FMath::Sin(Normal.X * 42.0f) + FMath::Sin(Normal.Y * 21.0f) + FMath::Sin(Normal.Z * 74.0f);
+	}, [&BendDir](const FVector& Dir, const FVector& Normal, float Strength) {
+		return BendFur(Dir, Normal, BendDir * Strength * 0.2f);
+	});
+}
+
+void FFurComb::CombRelax(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params)
+{
+	Comb<true>(FurSplines, SplineSet, SplineVertexNormals, Params, [](const FVector& Vertex, const FVector& Normal) {
+	}, [](const FVector& Dir, const FVector& Normal, float Strength) {
+		float Size = Dir.Size();
+		FVector Dest = Normal * Size;
+		FVector BendDir = Dest - Dir;
+		return BendFur(Dir, Normal, BendDir * FMath::Min(1.0f, Strength * 2.0f));
+	});
 }
 
 

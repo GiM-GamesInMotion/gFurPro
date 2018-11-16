@@ -3,6 +3,7 @@
 #include "GFurEditor.h"
 #include "FurSplinesTypeActions.h"
 #include "FurCombEdMode.h"
+#include "FurComponentCustomization.h"
 
 #define LOCTEXT_NAMESPACE "GFurEditor"
 
@@ -28,6 +29,8 @@ void FGFurEditorModule::StartupModule()
 		true, 1000);
 
 	/** Register detail/property customization */
+	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	PropertyModule.RegisterCustomClassLayout("GFurComponent", FOnGetDetailCustomizationInstance::CreateStatic(&FFurComponentCustomization::MakeInstance));
 	//TODO
 /*	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyModule.RegisterCustomClassLayout("PaintModeSettings", FOnGetDetailCustomizationInstance::CreateStatic(&FPaintModeSettingsCustomization::MakeInstance));
@@ -43,6 +46,11 @@ void FGFurEditorModule::ShutdownModule()
 	FEditorModeRegistry::Get().UnregisterMode(FEdModeFurComb::EM_FurComb);
 
 	/** De-register detail/property customization */
+	FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor");
+	if (PropertyModule)
+	{
+		PropertyModule->UnregisterCustomClassLayout("GFurComponent");
+	}
 	//TODO
 /*	FPropertyEditorModule* PropertyModule = FModuleManager::GetModulePtr<FPropertyEditorModule>("PropertyEditor");
 	if (PropertyModule)

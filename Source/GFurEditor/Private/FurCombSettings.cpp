@@ -9,7 +9,9 @@ UFurCombSettings::UFurCombSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer),
 	Radius(16.0f),
 	Strength(0.5f),
-	FalloffAmount(0.5f)
+	FalloffAmount(0.5f),
+	ApplyHeight(1.0f),
+	ApplySpread(0.0f)
 //	bEnableFlow(true)
 //	bOnlyFrontFacingTriangles(true),
 //	ColorViewMode(EMeshPaintColorViewMode::Normal)	

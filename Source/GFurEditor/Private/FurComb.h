@@ -35,6 +35,7 @@ enum class EFurCombMode
 	Clump,
 	Twist,
 	Noise,
+	Relax,
 };
 
 /** Class for combing fur */
@@ -130,6 +131,8 @@ protected:
 	/** Overall time value kept for drawing effects */
 	float Time;
 
+	float LastDeltaTime;
+
 	EFurCombMode Mode;
 	FVector OldLocation;
 
@@ -156,6 +159,11 @@ private:
 		float CombRadius;
 		float Strength;
 		float Falloff;
+		float ApplyHeight;
+		float ApplySpread;
+		bool MirrorX;
+		bool MirrorY;
+		bool MirrorZ;
 	};
 
 	static const float MinLayerDist;
@@ -248,9 +256,17 @@ protected:
 
 	bool LineTraceComponent(struct FHitResult& OutHit, const FVector Start, const FVector End, const struct FCollisionQueryParams& Params, UGFurComponent* FurComponent) const;
 
+	static FVector MirrorVector(const FVector& Vec, const FVector& Vertex, const CombParams& Params);
+	static FVector BendFur(const FVector& Dir, const FVector& Normal, const FVector& Offset);
+
+	template<bool UseStrengthHeight, typename F, typename G>
+	void Comb(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params, const F& FuncPerSpline,
+		const G& FuncPerSegment);
+
 	void CombLength(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params);
 	void CombBend(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params);
 	void CombClump(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params);
 	void CombTwist(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params);
 	void CombNoise(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params);
+	void CombRelax(UFurSplines* FurSplines, const TSet<int32>& SplineSet, const TArray<FVector4>& SplineVertexNormals, const CombParams& Params);
 };

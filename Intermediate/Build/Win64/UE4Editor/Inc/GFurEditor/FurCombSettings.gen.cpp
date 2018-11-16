@@ -32,6 +32,34 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		static const UE4CodeGen_Private::FMetaDataPairParam Class_MetaDataParams[];
 #endif
 #if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_bMirrorZ_MetaData[];
+#endif
+		static void NewProp_bMirrorZ_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_bMirrorZ;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_bMirrorY_MetaData[];
+#endif
+		static void NewProp_bMirrorY_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_bMirrorY;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_bMirrorX_MetaData[];
+#endif
+		static void NewProp_bMirrorX_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_bMirrorX;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_bEnableFlow_MetaData[];
+#endif
+		static void NewProp_bEnableFlow_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_bEnableFlow;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_ApplySpread_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FFloatPropertyParams NewProp_ApplySpread;
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_ApplyHeight_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FFloatPropertyParams NewProp_ApplyHeight;
+#if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_FalloffAmount_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FFloatPropertyParams NewProp_FalloffAmount;
@@ -58,6 +86,74 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	};
 #endif
 #if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData[] = {
+		{ "Category", "Comb" },
+		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+	};
+#endif
+	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_SetBit(void* Obj)
+	{
+		((UFurCombSettings*)Obj)->bMirrorZ = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ = { UE4CodeGen_Private::EPropertyClass::Bool, "bMirrorZ", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, sizeof(bool), UE4CodeGen_Private::ENativeBool::Native, sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData[] = {
+		{ "Category", "Comb" },
+		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+	};
+#endif
+	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_SetBit(void* Obj)
+	{
+		((UFurCombSettings*)Obj)->bMirrorY = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY = { UE4CodeGen_Private::EPropertyClass::Bool, "bMirrorY", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, sizeof(bool), UE4CodeGen_Private::ENativeBool::Native, sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData[] = {
+		{ "Category", "Comb" },
+		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+	};
+#endif
+	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_SetBit(void* Obj)
+	{
+		((UFurCombSettings*)Obj)->bMirrorX = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX = { UE4CodeGen_Private::EPropertyClass::Bool, "bMirrorX", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, sizeof(bool), UE4CodeGen_Private::ENativeBool::Native, sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData[] = {
+		{ "Category", "Comb" },
+		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+	};
+#endif
+	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_SetBit(void* Obj)
+	{
+		((UFurCombSettings*)Obj)->bEnableFlow = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow = { UE4CodeGen_Private::EPropertyClass::Bool, "bEnableFlow", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, sizeof(bool), UE4CodeGen_Private::ENativeBool::Native, sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData[] = {
+		{ "Category", "Comb" },
+		{ "ClampMax", "1.0" },
+		{ "ClampMin", "-1.0" },
+		{ "DisplayName", "Apply Spread" },
+		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "UIMax", "1.0" },
+		{ "UIMin", "-1.0" },
+	};
+#endif
+	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread = { UE4CodeGen_Private::EPropertyClass::Float, "ApplySpread", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, STRUCT_OFFSET(UFurCombSettings, ApplySpread), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight_MetaData[] = {
+		{ "Category", "Comb" },
+		{ "ClampMax", "1.0" },
+		{ "ClampMin", "0.0" },
+		{ "DisplayName", "Apply Height" },
+		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "UIMax", "1.0" },
+		{ "UIMin", "0.0" },
+	};
+#endif
+	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight = { UE4CodeGen_Private::EPropertyClass::Float, "ApplyHeight", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, STRUCT_OFFSET(UFurCombSettings, ApplyHeight), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight_MetaData)) };
+#if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount_MetaData[] = {
 		{ "Category", "Comb" },
 		{ "ClampMax", "1.0" },
@@ -73,7 +169,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Strength_MetaData[] = {
 		{ "Category", "Comb" },
-		{ "ClampMax", "1.0" },
+		{ "ClampMax", "1000.0" },
 		{ "ClampMin", "0.0" },
 		{ "DisplayName", "Strength" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
@@ -86,17 +182,23 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData[] = {
 		{ "Category", "Comb" },
-		{ "ClampMax", "250000.0" },
+		{ "ClampMax", "1000000.0" },
 		{ "ClampMin", "0.01" },
 		{ "DisplayName", "Radius" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Radius of the Brush used for Painting" },
-		{ "UIMax", "2048.0" },
+		{ "UIMax", "50.0" },
 		{ "UIMin", "0.01" },
 	};
 #endif
 	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius = { UE4CodeGen_Private::EPropertyClass::Float, "Radius", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0020080000000001, 1, nullptr, STRUCT_OFFSET(UFurCombSettings, Radius), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData)) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_UFurCombSettings_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Strength,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius,
@@ -124,7 +226,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurCombSettings, 3475751243);
+	IMPLEMENT_CLASS(UFurCombSettings, 772902980);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UFurCombSettings(Z_Construct_UClass_UFurCombSettings, &UFurCombSettings::StaticClass, TEXT("/Script/GFurEditor"), TEXT("UFurCombSettings"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UFurCombSettings);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

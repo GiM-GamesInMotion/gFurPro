@@ -229,6 +229,12 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			NAME_None, LOCTEXT("Mode.FurComb.Noise", "Noise"), LOCTEXT("Mode.FurComb.Tooltip", "TODO tip noise"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
 
+		ModeSwitchButtons.AddToolBarButton(FUIAction(FExecuteAction::CreateLambda([=]()
+		{
+			FurComb->SetMode(EFurCombMode::Relax);
+		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Relax; })),
+			NAME_None, LOCTEXT("Mode.FurComb.Relax", "Relax"), LOCTEXT("Mode.FurComb.Tooltip", "TODO tip Relax"),
+			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
 
 /*		FSlateIcon WeightPaintIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.MeshPaintMode.WeightPaint");
 		ModeSwitchButtons.AddToolBarButton(FUIAction(FExecuteAction::CreateLambda([=]()

@@ -100,8 +100,12 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_LayerCount_MetaData[] = {
 		{ "Category", "LOD" },
+		{ "ClampMax", "128" },
+		{ "ClampMin", "1" },
 		{ "ModuleRelativePath", "Public/FurComponent.h" },
 		{ "ToolTip", "Number of shells for this particular LOD. Should be lower than \"Fur Layer Count\"" },
+		{ "UIMax", "128" },
+		{ "UIMin", "1" },
 	};
 #endif
 	const UE4CodeGen_Private::FUnsizedIntPropertyParams Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_LayerCount = { UE4CodeGen_Private::EPropertyClass::Int, "LayerCount", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, STRUCT_OFFSET(FFurLod, LayerCount), METADATA_PARAMS(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_LayerCount_MetaData, ARRAY_COUNT(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_LayerCount_MetaData)) };
@@ -146,7 +150,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return ReturnStruct;
 	}
-	uint32 Get_Z_Construct_UScriptStruct_FFurLod_CRC() { return 3354434557U; }
+	uint32 Get_Z_Construct_UScriptStruct_FFurLod_CRC() { return 3717467212U; }
 	void UGFurComponent::StaticRegisterNativesUGFurComponent()
 	{
 	}
@@ -382,8 +386,10 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_MinFurLength_MetaData[] = {
 		{ "Category", "gFur Shell settings" },
+		{ "ClampMin", "0.001" },
 		{ "ModuleRelativePath", "Public/FurComponent.h" },
 		{ "ToolTip", "Overrides length of too short splines." },
+		{ "UIMin", "0.001" },
 	};
 #endif
 	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UGFurComponent_Statics::NewProp_MinFurLength = { UE4CodeGen_Private::EPropertyClass::Float, "MinFurLength", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000005, 1, nullptr, STRUCT_OFFSET(UGFurComponent, MinFurLength), METADATA_PARAMS(Z_Construct_UClass_UGFurComponent_Statics::NewProp_MinFurLength_MetaData, ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::NewProp_MinFurLength_MetaData)) };
@@ -422,8 +428,12 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_LayerCount_MetaData[] = {
 		{ "Category", "gFur Shell settings" },
+		{ "ClampMax", "128" },
+		{ "ClampMin", "1" },
 		{ "ModuleRelativePath", "Public/FurComponent.h" },
 		{ "ToolTip", "Sets the number of shells. Less = better performance" },
+		{ "UIMax", "128" },
+		{ "UIMin", "1" },
 	};
 #endif
 	const UE4CodeGen_Private::FUnsizedIntPropertyParams Z_Construct_UClass_UGFurComponent_Statics::NewProp_LayerCount = { UE4CodeGen_Private::EPropertyClass::Int, "LayerCount", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000005, 1, nullptr, STRUCT_OFFSET(UGFurComponent, LayerCount), METADATA_PARAMS(Z_Construct_UClass_UGFurComponent_Statics::NewProp_LayerCount_MetaData, ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::NewProp_LayerCount_MetaData)) };
@@ -445,7 +455,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 	const UE4CodeGen_Private::FObjectPropertyParams Z_Construct_UClass_UGFurComponent_Statics::NewProp_SkeletalGuideMeshes_Inner = { UE4CodeGen_Private::EPropertyClass::Object, "SkeletalGuideMeshes", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0000000000000000, 1, nullptr, 0, Z_Construct_UClass_USkeletalMesh_NoRegister, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_FurSplines_MetaData[] = {
-		{ "Category", "gFur Mesh" },
+		{ "Category", "gFur Guides" },
 		{ "ModuleRelativePath", "Public/FurComponent.h" },
 		{ "ToolTip", "Splines from 3D apps that give basic shape and length to the fur. Does not have to be used." },
 	};
@@ -517,7 +527,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 1817782079);
+	IMPLEMENT_CLASS(UGFurComponent, 161937889);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UGFurComponent(Z_Construct_UClass_UGFurComponent, &UGFurComponent::StaticClass, TEXT("/Script/GFur"), TEXT("UGFurComponent"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UGFurComponent);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

@@ -20,10 +20,16 @@ public:
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 private:
-	void CreateFurSplinesAssetWidget(FDetailWidgetRow& OutWidgetRow, IDetailLayoutBuilder* DetailBuilder) const;
+	float NewLength = 1.0f;
+	int NewControlPointCount = 7;
+
+	void CreateFurSplinesAssetWidget(FDetailWidgetRow& OutWidgetRow, IDetailLayoutBuilder* DetailBuilder);
 	void GenerateNewFurSplines(IDetailLayoutBuilder* DetailBuilder) const;
 	bool FindFurComponent(IDetailLayoutBuilder* DetailBuilder, UGFurComponent*& OutFurComponent) const;
 
-	void GenerateSplines(UFurSplines* FurSplines, USkeletalMesh* Mesh, int ControlPointCount) const;
-	void GenerateSplines(UFurSplines* FurSplines, UStaticMesh* Mesh, int ControlPointCount) const;
+	void GenerateSplines(UFurSplines* FurSplines, USkeletalMesh* Mesh, int32 ControlPointCount, float Length) const;
+	void GenerateSplines(UFurSplines* FurSplines, UStaticMesh* Mesh, int32 ControlPointCount, float Length) const;
+
+	TOptional<float> GetNewLength() const { return NewLength; }
+	TOptional<int32> GetNewControlPointCount() const { return NewControlPointCount; }
 };

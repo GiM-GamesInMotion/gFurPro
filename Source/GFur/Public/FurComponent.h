@@ -19,7 +19,7 @@ struct FFurLod
 	/**
 	* Number of shells for this particular LOD. Should be lower than "Fur Layer Count"
 	*/
-	UPROPERTY(EditAnywhere, Category = "LOD")
+	UPROPERTY(EditAnywhere, Category = "LOD", meta = (UIMin = "1", UIMax = "128", ClampMin = "1", ClampMax = "128"))
 	int LayerCount;
 
 	/**
@@ -59,7 +59,7 @@ public:
 	/**
 	* Splines from 3D apps that give basic shape and length to the fur. Does not have to be used.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Mesh")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Guides")
 	class UFurSplines* FurSplines;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Skeletal Mesh")
@@ -71,7 +71,7 @@ public:
 	/**
 	* Sets the number of shells. Less = better performance
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings", meta = (UIMin = "1", UIMax = "128", ClampMin = "1", ClampMax = "128"))
 	int LayerCount;
 
 	/**
@@ -100,7 +100,7 @@ public:
 	/**
 	* Overrides length of too short splines.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings", meta = (UIMin = "0.001", ClampMin = "0.001"))
 	float MinFurLength;
 
 	/**
@@ -175,6 +175,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
 	float NoiseStrength;
 
+	const TArray<int32>& GetFurSplineMap() const;
+	const TArray<FVector>& GetVertexNormals() const;
+
 public:
 	// Begin UPrimitiveComponent interface.
 	virtual UMaterialInterface* GetMaterial(int32 ElementIndex) const override;
@@ -211,7 +214,7 @@ private:
 	TArray<FVector> LinearOffsets;
 	TArray<FVector> AngularOffsets;
 	TArray< class UMaterialInstanceDynamic* > FurMaterials;
-	TArray< struct FFurData* > FurData;
+	TArray< class FFurData* > FurData;
 	TArray< TArray< int32 > > MorphRemapTables;
 
 	FVector StaticLinearOffset;

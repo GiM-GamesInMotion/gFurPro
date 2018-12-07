@@ -11,10 +11,12 @@ UFurCombSettings::UFurCombSettings(const FObjectInitializer& ObjectInitializer)
 	Strength(0.5f),
 	FalloffAmount(0.5f),
 	ApplyHeight(1.0f),
-	ApplySpread(0.0f)
-//	bEnableFlow(true)
-//	bOnlyFrontFacingTriangles(true),
-//	ColorViewMode(EMeshPaintColorViewMode::Normal)	
+	ApplySpread(0.0f),
+	bEnableFlow(true),
+	bMirrorX(false),
+	bMirrorY(false),
+	bMirrorZ(false),
+	bShowSplines(false)
 {
 	RadiusMin = 0.01f, RadiusMax = 250.0f;
 

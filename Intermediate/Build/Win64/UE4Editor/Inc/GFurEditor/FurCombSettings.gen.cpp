@@ -32,6 +32,11 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		static const UE4CodeGen_Private::FMetaDataPairParam Class_MetaDataParams[];
 #endif
 #if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_bShowSplines_MetaData[];
+#endif
+		static void NewProp_bShowSplines_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_bShowSplines;
+#if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_bMirrorZ_MetaData[];
 #endif
 		static void NewProp_bMirrorZ_SetBit(void* Obj);
@@ -85,6 +90,17 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 	};
 #endif
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_MetaData[] = {
+		{ "Category", "Comb" },
+		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+	};
+#endif
+	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_SetBit(void* Obj)
+	{
+		((UFurCombSettings*)Obj)->bShowSplines = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines = { UE4CodeGen_Private::EPropertyClass::Bool, "bShowSplines", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000001, 1, nullptr, sizeof(bool), UE4CodeGen_Private::ENativeBool::Native, sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData[] = {
 		{ "Category", "Comb" },
@@ -193,6 +209,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #endif
 	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius = { UE4CodeGen_Private::EPropertyClass::Float, "Radius", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0020080000000001, 1, nullptr, STRUCT_OFFSET(UFurCombSettings, Radius), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData)) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_UFurCombSettings_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX,
@@ -226,7 +243,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurCombSettings, 772902980);
+	IMPLEMENT_CLASS(UFurCombSettings, 605000040);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UFurCombSettings(Z_Construct_UClass_UFurCombSettings, &UFurCombSettings::StaticClass, TEXT("/Script/GFurEditor"), TEXT("UFurCombSettings"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UFurCombSettings);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

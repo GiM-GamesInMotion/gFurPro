@@ -91,4 +91,5 @@ private:
 protected:
 	/** Painter used by this edit mode for applying paint actions */
 	FFurComb* FurComb;
+	bool BlockMouse = false;
 };

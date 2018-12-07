@@ -4,51 +4,8 @@
 #include "ShaderParameterUtils.h"
 #include "FurComponent.h"
 
-static TArray< struct FFurStaticData* > StaticFurStaticData;
-static FCriticalSection  StaticFurStaticDataCS;
-
-/** Soft Static Vertex */
-struct FStaticVertex
-{
-	FVector			Position;
-
-	// Tangent, U-direction
-	FPackedNormal	TangentX;
-	// Binormal, V-direction
-	FPackedNormal	TangentY;
-	// Normal
-	FPackedNormal	TangentZ;
-
-	// UVs
-	FVector2D		UVs[MAX_TEXCOORDS];
-	// VertexColor
-	FColor			Color;
-};
-
-/** Fur Static Vertex */
-struct FFurStaticVertex : FStaticVertex
-{
-	FVector FurOffset;
-};
-
-/** Vertex Buffer */
-class FFurStaticVertexBuffer : public FVertexBuffer
-{
-public:
-	TArray<FFurStaticVertex> Vertices;
-
-	virtual void InitRHI() override;
-};
-
-void FFurStaticVertexBuffer::InitRHI()
-{
-	FRHIResourceCreateInfo CreateInfo;
-	VertexBufferRHI = RHICreateVertexBuffer(Vertices.Num() * sizeof(FFurStaticVertex), BUF_Static, CreateInfo);
-	// Copy the vertex data into the vertex buffer.
-	void* VertexBufferData = RHILockVertexBuffer(VertexBufferRHI, 0, Vertices.Num() * sizeof(FFurStaticVertex), RLM_WriteOnly);
-	FMemory::Memcpy(VertexBufferData, Vertices.GetData(), Vertices.Num() * sizeof(FFurStaticVertex));
-	RHIUnlockVertexBuffer(VertexBufferRHI);
-}
+static TArray< FFurStaticData* > FurStaticData;
+static FCriticalSection FurStaticDataCS;
 
 /** Vertex Factory Shader Parameters */
 class FFurStaticVertexFactoryShaderParameters : public FVertexFactoryShaderParameters
@@ -161,36 +118,33 @@ public:
 		FVertexStreamComponent FurOffset;
 	};
 
-	void Init(const FFurStaticVertexBuffer* VertexBuffer)
+	template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT>
+	void Init(const FFurVertexBuffer* VertexBuffer)
 	{
+		typedef FFurStaticVertex<TangentBasisTypeT, UVTypeT> VertexType;
 		ENQUEUE_UNIQUE_RENDER_COMMAND_TWOPARAMETER(InitProceduralMeshVertexFactory,
 			FFurStaticVertexFactoryBase<Physics>*,
 			VertexFactory,
 			this,
-			const FFurStaticVertexBuffer*,
+			const FFurVertexBuffer*,
 			VertexBuffer,
 			VertexBuffer,
 			{
+				const auto TangentElementType = TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
+				const auto UvElementType = UVTypeT == EStaticMeshVertexUVType::HighPrecision ? VET_Float2 : VET_Half2;
+
 				// Initialize the vertex factory's stream components.
 				FDataType NewData;
-		NewData.PositionComponent =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurStaticVertex, Position, VET_Float3);
-		int c = sizeof(FFurStaticVertex::UVs) / sizeof(FFurStaticVertex::UVs[0]);
-		for (int i = 0; i < c; ++i)
-		{
-			NewData.TextureCoordinates.Add(FVertexStreamComponent(
-				VertexBuffer, STRUCT_OFFSET(FFurStaticVertex, UVs[i]), sizeof(FFurStaticVertex), VET_Float2));
-		}
-		NewData.TangentBasisComponents[0] =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurStaticVertex, TangentX, VET_PackedNormal);
-		NewData.TangentBasisComponents[1] =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurStaticVertex, TangentZ, VET_PackedNormal);
-		NewData.ColorComponent =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurStaticVertex, Color, VET_Color);
-		NewData.FurOffset =
-			STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, FFurStaticVertex, FurOffset, VET_Float3);
+				NewData.PositionComponent = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, Position, VET_Float3);
+				NewData.TextureCoordinates.Add(FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, UV0), sizeof(VertexType), UvElementType));
+				NewData.TextureCoordinates.Add(FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, UV1), sizeof(VertexType), VET_Float2));
+				NewData.TextureCoordinates.Add(FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, UV2), sizeof(VertexType), VET_Float2));
+				NewData.TangentBasisComponents[0] = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, TangentX, TangentElementType);
+				NewData.TangentBasisComponents[1] = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, TangentZ, TangentElementType);
+				NewData.ColorComponent = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, Color, VET_Color);
+				NewData.FurOffset = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, FurOffset, VET_Float3);
 
-		VertexFactory->SetData(NewData);
+				VertexFactory->SetData(NewData);
 			});
 	}
 
@@ -334,330 +288,395 @@ void FFurStaticVertexFactoryShaderParameters::SetMesh(FRHICommandList& RHICmdLis
 }
 
 /** Fur Skin Data */
-FFurStaticData::~FFurStaticData()
+FFurStaticData* FFurStaticData::CreateFurData(int32 InFurLayerCount, int32 InLod, UGFurComponent* InFurComponent)
 {
-	VertexBuffer->ReleaseResource();
-	delete VertexBuffer;
-	IndexBuffer.ReleaseResource();
+	check(InFurLayerCount >= MinimalFurLayerCount && InFurLayerCount <= MaximalFurLayerCount);
+
+	FScopeLock lock(&FurStaticDataCS);
+
+	for (FFurStaticData* Data : FurStaticData)
+	{
+		if (Data->Compare(InFurLayerCount, InLod, InFurComponent))
+		{
+			Data->RefCount++;
+			return Data;
+		}
+	}
+	for (FFurStaticData* Data : FurStaticData)
+	{
+		if (Data->RefCount == 0 && Data->Similar(InLod, InFurComponent))
+		{
+			Data->Set(InFurLayerCount, InLod, InFurComponent);
+			Data->BuildFur(BuildType::Minimal);
+			Data->RefCount++;
+			return Data;
+		}
+	}
+
+	FFurStaticData* Data = new FFurStaticData();
+	Data->Set(InFurLayerCount, InLod, InFurComponent);
+	Data->BuildFur(BuildType::Full);
+	FurStaticData.Add(Data);
+	return Data;
 }
 
-FFurStaticData::FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines* InFurSplines, const TArray<UStaticMesh*>& InGuideMeshes, int InFurLayerCount,
-	float InFurLength, float InMinFurLength, float InShellBias, float InHairLengthForceUniformity, float InNoiseStrength, bool InRemoveFacesWithoutSplines)
+void FFurStaticData::DestroyFurData(const TArray<FFurData*>& InFurDataArray)
 {
-	StaticMesh = InStaticMesh;
-	FurLayerCount = InFurLayerCount;
-	FurSplines = InFurSplines;
-	GuideMeshes = InGuideMeshes;
-	Lod = InLod;
-	FurLength = InFurLength;
-	ShellBias = InShellBias;
-	HairLengthForceUniformity = InHairLengthForceUniformity;
-	MinFurLength = InMinFurLength;
-	CurrentMinFurLength = InFurLength;
-	CurrentMaxFurLength = InFurLength;
-	NoiseStrength = InNoiseStrength;
-	RemoveFacesWithoutSplines = InRemoveFacesWithoutSplines;
+	FScopeLock lock(&FurStaticDataCS);
 
-	VertexBuffer = new FFurStaticVertexBuffer();
+	for (auto* Data : InFurDataArray)
+		((FFurStaticData*)Data)->RefCount--;
 
-	if (InFurSplines == nullptr && InGuideMeshes.Num() > 0)
-		InFurSplines = GenerateSplines(InStaticMesh, InLod, InGuideMeshes);
+	StartFurDataCleanupTask([]() {
 
-	auto* SkeletalMeshResource = StaticMesh->RenderData.Get();
-	check(SkeletalMeshResource);
+		FScopeLock lock(&FurStaticDataCS);
 
-	TArray<uint32> Indices;
-	TArray<int32> SplineMap;
-	TArray<uint32> VertexSub;
-
-	const auto& LodModel = SkeletalMeshResource->LODResources[InLod];
-	const auto& SourcePositions = LodModel.VertexBuffers.PositionVertexBuffer;
-	const auto& SourceVertices = LodModel.VertexBuffers.StaticMeshVertexBuffer;
-	const auto& SourceColors = LodModel.VertexBuffers.ColorVertexBuffer;
-	LodModel.IndexBuffer.GetCopy(Indices);
-
-	check(SourcePositions.GetNumVertices() == SourceVertices.GetNumVertices());
-
-	uint32 NumTexCoords = SourceVertices.GetNumTexCoords();
-	bool hasVertexColor = SourceColors.GetNumVertices() > 0;
-	check(!hasVertexColor || SourcePositions.GetNumVertices() == SourceColors.GetNumVertices());
-
-	float MaxDistSq = 0;
-	for (uint32 i = 0; i < SourcePositions.GetNumVertices(); i++)
-	{
-		const auto& Position = SourcePositions.VertexPosition(i);
-		float d = Position.SizeSquared();
-		if (d > MaxDistSq)
-			MaxDistSq = d;
-	}
-	MaxVertexBoneDistance = sqrtf(MaxDistSq);
-
-	FMatrix deltaMatrix;
-	if (InFurSplines)
-	{
-		float MinLen = FLT_MAX;
-		float MaxLen = -FLT_MAX;
-		SplineMap.Reserve(SourcePositions.GetNumVertices());
-		for (uint32 i = 0; i < SourcePositions.GetNumVertices(); i++)
+		for (int32 i = FurStaticData.Num() - 1; i >= 0; i--)
 		{
-			int ClosestSplineIndex = -1;
-			float ClosestDist = FLT_MAX;
-			for (int si = 0; si < InFurSplines->Index.Num(); si++)
+			FFurStaticData* Data = FurStaticData[i];
+			if (Data->RefCount == 0)
 			{
-				FVector p = InFurSplines->Vertices[InFurSplines->Index[si]];
-				p.Y = -p.Y;
-				const auto& Position = SourcePositions.VertexPosition(i);
-				float d = FVector::DistSquared(p, Position);
-				if (d < ClosestDist)
-				{
-					ClosestDist = d;
-					ClosestSplineIndex = si;
-				}
+				FurStaticData.RemoveAt(i);
+				ENQUEUE_RENDER_COMMAND(ReleaseDataCommand)([Data](FRHICommandListImmediate& RHICmdList) { delete Data; });
 			}
-			if (ClosestDist < 0.01f)
-			{
-				uint32 idx = InFurSplines->Index[ClosestSplineIndex];
-				FVector p1 = InFurSplines->Vertices[idx];
-				FVector p2 = InFurSplines->Vertices[idx + InFurSplines->Count[ClosestSplineIndex] - 1];
-				FVector normal = SourceVertices.VertexTangentZ(i);
-				normal.Y = -normal.Y;
-				if (FVector::DotProduct(p2 - p1, normal) > 0.0f || MinFurLength > 0.0f)
-				{
-					float l = (p2 - p1).Size();
-					if (l < MinLen)
-						MinLen = l;
-					if (l > MaxLen)
-						MaxLen = l;
-					SplineMap.Add(ClosestSplineIndex);
-				}
-				else
-				{
-					SplineMap.Add(-1);
-				}
-			}
+		}
+	});
+}
+
+void FFurStaticData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel)
+{
+	auto CreateVertexFactory = [&](const FFurData::FSection& s, auto* vf) {
+		if (bUseHighPrecisionTangentBasis)
+		{
+			if (bUseFullPrecisionUVs)
+				vf->Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer);
 			else
-			{
-				SplineMap.Add(-1);
-			}
-		}
-		CurrentMinFurLength = MinLen * InFurLength;
-		if (CurrentMinFurLength < MinFurLength)
-			CurrentMinFurLength = MinFurLength;
-		CurrentMaxFurLength = MaxLen * InFurLength;
-	}
-
-	const uint32 NumVertices = SourcePositions.GetNumVertices();
-	if (InFurSplines && InRemoveFacesWithoutSplines)
-	{
-		VertexSub.Reset(NumVertices);
-		VertexSub.AddUninitialized(NumVertices);
-		uint32* Vert = &VertexSub[0];
-		uint32 Count = 0;
-		for (uint32 i = 0; i < NumVertices; ++i)
-		{
-			int Index = SplineMap[i];
-			if (Index < 0)
-				Count++;
-			Vert[i] = Count;
-		}
-	}
-
-	for (int Layer = FurLayerCount; Layer > 0; --Layer)
-	{
-		float LinearFactor = Layer / (float)FurLayerCount;
-		float NonLinearFactor;
-		float Derivative;
-		if (ShellBias > 0.0f)
-		{
-			float invShellBias = 1.0f / ShellBias;
-			NonLinearFactor = LinearFactor / (LinearFactor + invShellBias) * (1.0f + invShellBias);
-			Derivative = (invShellBias + invShellBias * invShellBias) / FMath::Square(LinearFactor + invShellBias);
+				vf->Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::Default>(&VertexBuffer);
 		}
 		else
 		{
-			NonLinearFactor = LinearFactor;
-			Derivative = 1.0f;
+			if (bUseFullPrecisionUVs)
+				vf->Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer);
+			else
+				vf->Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::Default>(&VertexBuffer);
 		}
-		for (uint32 i = 0; i < NumVertices; ++i)
+		BeginInitResource(vf);
+		VertexFactories.Add(vf);
+	};
+
+	if (InPhysics)
+	{
+		for (auto& s : Sections)
 		{
-			FFurStaticVertex Vert;
-			uint32 SourceVertexIndex = i;
-			Vert.Position = SourcePositions.VertexPosition(SourceVertexIndex);
-			Vert.TangentX = SourceVertices.VertexTangentX(SourceVertexIndex);
-			Vert.TangentY = SourceVertices.VertexTangentY(SourceVertexIndex);
-			Vert.TangentZ = SourceVertices.VertexTangentZ(SourceVertexIndex);
-			for (uint32 tc = 0; tc < NumTexCoords; tc++)
-				Vert.UVs[tc] = SourceVertices.GetVertexUV(SourceVertexIndex, tc);
-			Vert.Color = hasVertexColor ? SourceColors.VertexColor(SourceVertexIndex) : FColor(255, 255, 255, 255);
-			uint32 ib = 0;
+			CreateVertexFactory(s, new FPhysicsFurStaticVertexFactory(InFeatureLevel));
+		}
+	}
+	else
+	{
+		for (auto& s : Sections)
+		{
+			CreateVertexFactory(s, new FFurStaticVertexFactory(InFeatureLevel));
+		}
+	}
+}
 
-			if (InFurSplines)
+void FFurStaticData::UnbindChangeDelegates()
+{
+#if WITH_EDITORONLY_DATA
+	if (FurSplinesChangeHandle.IsValid())
+	{
+		FurSplinesAssigned->OnSplinesChanged.Remove(FurSplinesChangeHandle);
+		FurSplinesChangeHandle.Reset();
+	}
+	if (FurSplinesCombHandle.IsValid())
+	{
+		FurSplinesAssigned->OnSplinesCombed.Remove(FurSplinesCombHandle);
+		FurSplinesCombHandle.Reset();
+	}
+	if (StaticMeshChangeHandle.IsValid())
+	{
+		StaticMesh->OnMeshChanged.Remove(StaticMeshChangeHandle);
+		StaticMeshChangeHandle.Reset();
+	}
+	for (int32 i = 0; i < GuideMeshes.Num(); i++)
+	{
+		if (GuideMeshes[i])
+			GuideMeshes[i]->OnMeshChanged.Remove(GuideMeshesChangeHandles[i]);
+	}
+	GuideMeshesChangeHandles.Reset();
+#endif // WITH_EDITORONLY_DATA
+}
+
+void FFurStaticData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent)
+{
+	UnbindChangeDelegates();
+
+	FFurData::Set(InFurLayerCount, InLod, InFurComponent);
+
+	StaticMesh = InFurComponent->StaticGrowMesh;
+	GuideMeshes = InFurComponent->StaticGuideMeshes;
+
+	check(StaticMesh);
+
+	if (FurSplinesAssigned == NULL && GuideMeshes.Num() > 0)
+	{
+		FurSplinesUsed = NewObject<UFurSplines>();
+		GenerateSplines(FurSplinesUsed, StaticMesh, InLod, GuideMeshes);
+	}
+#if WITH_EDITORONLY_DATA
+	StaticMeshChangeHandle = StaticMesh->OnMeshChanged.AddLambda([this]() { BuildFur(BuildType::Full); });
+	if (FurSplinesAssigned)
+	{
+		FurSplinesChangeHandle = FurSplinesAssigned->OnSplinesChanged.AddLambda([this]() { BuildFur(BuildType::Splines); });
+		FurSplinesCombHandle = FurSplinesAssigned->OnSplinesCombed.AddLambda([this](const TArray<uint32>& VertexSet) { BuildFur(VertexSet); });
+	}
+	else if (GuideMeshes.Num() > 0)
+	{
+		for (const auto& GuideMesh : GuideMeshes)
+		{
+			if (GuideMesh)
 			{
-				int Index = SplineMap[i];
-				if (Index >= 0)
-				{
-					int Beginning = InFurSplines->Index[Index];
-					int Count = InFurSplines->Count[Index];
-
-					float Bias = NonLinearFactor * (Count - 1);
-					int Bottom = (int)Bias;
-					int Top = (int)ceilf(Bias);
-					float Height = Bias - Bottom;
-
-					FVector Spline = InFurSplines->Vertices[Beginning + Count - 1] - InFurSplines->Vertices[Beginning];
-					float SplineLength = Spline.Size() * InFurLength;
-					FVector TangentZ = Vert.TangentZ.ToFVector();
-					FVector Normal = TangentZ;
-					Normal.Y = -Normal.Y;
-					if (FVector::DotProduct(Normal, Spline) <= 0.0f)
-					{
-						Vert.FurOffset = TangentZ * (NonLinearFactor * MinFurLength);
-					}
-					else if (SplineLength < MinFurLength)
-					{
-						if (SplineLength >= 0.0001f)
-						{
-							float k = MinFurLength / SplineLength;
-							Vert.FurOffset = InFurSplines->Vertices[Beginning + Bottom] * (1.0f - Height) + InFurSplines->Vertices[Beginning + Top] * Height;
-							Vert.FurOffset = (Vert.FurOffset - InFurSplines->Vertices[Beginning]) * InFurLength * k + InFurSplines->Vertices[Beginning];
-							Vert.FurOffset.Y = -Vert.FurOffset.Y;
-							Vert.FurOffset = Vert.FurOffset - Vert.Position;
-						}
-						else
-						{
-							Vert.FurOffset = TangentZ * (NonLinearFactor * MinFurLength);
-						}
-						SplineLength = MinFurLength;
-					}
-					else
-					{
-						Vert.FurOffset = InFurSplines->Vertices[Beginning + Bottom] * (1.0f - Height) + InFurSplines->Vertices[Beginning + Top] * Height;
-						Vert.FurOffset = (Vert.FurOffset - InFurSplines->Vertices[Beginning]) * InFurLength + InFurSplines->Vertices[Beginning];
-						Vert.FurOffset.Y = -Vert.FurOffset.Y;
-						Vert.FurOffset = Vert.FurOffset - Vert.Position;
-					}
-					float r = FMath::RandRange(-InNoiseStrength * Derivative, InNoiseStrength * Derivative);
-					Vert.FurOffset += TangentZ * r;
-
-					Vert.UVs[1].X = Vert.FurOffset.Size();
-					Vert.UVs[1].Y = NonLinearFactor;
-					Vert.UVs[2].X = LinearFactor;
-					Vert.UVs[2].Y = SplineLength / CurrentMaxFurLength;
-
-					if (HairLengthForceUniformity > 0)
-					{
-						float Relative = Vert.UVs[1].X / SplineLength;
-						float Length = SplineLength * (1.0f - HairLengthForceUniformity) + CurrentMaxFurLength * HairLengthForceUniformity;
-						Vert.UVs[1].X = Relative * Length;
-					}
-					else
-					{
-						float Relative = Vert.UVs[1].X / SplineLength;
-						float Interpolator = -HairLengthForceUniformity;
-						float Length = SplineLength * (1.0f - Interpolator) + CurrentMinFurLength * Interpolator;
-						Vert.UVs[1].X = Relative * Length;
-					}
-
-					VertexBuffer->Vertices.Add(Vert);
-				}
-				else if (!InRemoveFacesWithoutSplines)
-				{
-					Vert.UVs[1].X = NonLinearFactor * InMinFurLength;
-					Vert.UVs[1].Y = NonLinearFactor;
-					Vert.UVs[2].X = LinearFactor;
-					Vert.UVs[2].Y = 1.0f;
-					FVector TangentZ = Vert.TangentZ.ToFVector();
-					Vert.FurOffset = TangentZ * (NonLinearFactor * InMinFurLength/* + FMath::RandRange(-InNoiseStrength * Derivative, InNoiseStrength * Derivative)*/);
-
-					VertexBuffer->Vertices.Add(Vert);
-				}
+				auto Handle = GuideMesh->OnMeshChanged.AddLambda([this, InLod]() {
+					if (FurSplinesUsed)
+						FurSplinesUsed->ConditionalBeginDestroy();
+					FurSplinesUsed = NewObject<UFurSplines>();
+					GenerateSplines(FurSplinesUsed, StaticMesh, InLod, GuideMeshes);
+					BuildFur(BuildType::Splines);
+				});
+				GuideMeshesChangeHandles.Add(Handle);
 			}
 			else
 			{
-				Vert.UVs[1].X = NonLinearFactor * InFurLength;
-				Vert.UVs[1].Y = NonLinearFactor;
-				Vert.UVs[2].X = LinearFactor;
-				Vert.UVs[2].Y = 1.0f;
-				FVector TangentZ = Vert.TangentZ.ToFVector();
-				Vert.FurOffset = TangentZ * (NonLinearFactor * InFurLength + FMath::RandRange(-InNoiseStrength * Derivative, InNoiseStrength * Derivative));
+				GuideMeshesChangeHandles.Emplace();
+			}
+		}
+	}
+#endif // WITH_EDITORONLY_DATA
+}
 
-				if (HairLengthForceUniformity > 0)
+bool FFurStaticData::Compare(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent)
+{
+	return FFurData::Compare(InFurLayerCount, InLod, InFurComponent) && StaticMesh == InFurComponent->StaticGrowMesh && GuideMeshes == InFurComponent->StaticGuideMeshes;
+}
+
+bool FFurStaticData::Similar(int32 InLod, class UGFurComponent* InFurComponent)
+{
+	return FFurData::Similar(InLod, InFurComponent) && StaticMesh == InFurComponent->StaticGrowMesh && GuideMeshes == InFurComponent->StaticGuideMeshes;
+}
+
+void FFurStaticData::BuildFur(BuildType Build)
+{
+	auto* StaticMeshResource = StaticMesh->RenderData.Get();
+	check(StaticMeshResource);
+
+	const FStaticMeshLODResources& LodRenderData = StaticMeshResource->LODResources[Lod];
+	if (LodRenderData.VertexBuffers.StaticMeshVertexBuffer.GetUseHighPrecisionTangentBasis())
+		BuildFur<EStaticMeshVertexTangentBasisType::HighPrecision>(LodRenderData, Build);
+	else
+		BuildFur<EStaticMeshVertexTangentBasisType::Default>(LodRenderData, Build);
+}
+
+template<EStaticMeshVertexTangentBasisType TangentBasisTypeT>
+inline void FFurStaticData::BuildFur(const FStaticMeshLODResources& LodRenderData, BuildType Build)
+{
+	if (LodRenderData.VertexBuffers.StaticMeshVertexBuffer.GetUseFullPrecisionUVs())
+		BuildFur<TangentBasisTypeT, EStaticMeshVertexUVType::HighPrecision>(LodRenderData, Build);
+	else
+		BuildFur<TangentBasisTypeT, EStaticMeshVertexUVType::Default>(LodRenderData, Build);
+}
+
+template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT>
+inline void FFurStaticData::BuildFur(const FStaticMeshLODResources& LodRenderData, BuildType Build)
+{
+	typedef FFurStaticVertex<TangentBasisTypeT, UVTypeT> VertexType;
+
+	bUseHighPrecisionTangentBasis = TangentBasisTypeT == EStaticMeshVertexTangentBasisType::HighPrecision;
+	bUseFullPrecisionUVs = UVTypeT == EStaticMeshVertexUVType::HighPrecision;
+
+	const auto& SourcePositions = LodRenderData.VertexBuffers.PositionVertexBuffer;
+	const auto& SourceVertices = LodRenderData.VertexBuffers.StaticMeshVertexBuffer;
+	const auto& SourceColors = LodRenderData.VertexBuffers.ColorVertexBuffer;
+
+	const uint32 SourceVertexCount = SourcePositions.GetNumVertices();
+	check(SourceVertexCount == SourceVertices.GetNumVertices());
+
+	bool HasVertexColor = SourceColors.GetNumVertices() > 0;
+	check(!HasVertexColor || SourceVertexCount == SourceColors.GetNumVertices());
+
+	if (Build == BuildType::Full)
+	{
+		// calc MaxVertexBoneDistance
+		float MaxDistSq = 0;
+		for (uint32 i = 0; i < SourcePositions.GetNumVertices(); i++)
+		{
+			const auto& Position = SourcePositions.VertexPosition(i);
+			float d = Position.SizeSquared();
+			if (d > MaxDistSq)
+				MaxDistSq = d;
+		}
+		MaxVertexBoneDistance = sqrtf(MaxDistSq);
+
+		UnpackNormals<TangentBasisTypeT>(SourceVertices);
+	}
+	if (Build >= BuildType::Splines)
+		GenerateSplineMap(SourcePositions);
+
+	uint32 NewVertexCount = VertexCountPerLayer * FurLayerCount;
+
+	FFurStaticVertexBlitter<TangentBasisTypeT, UVTypeT> VertexBlitter(SourcePositions, SourceVertices, SourceColors);
+
+	while (RenderThreadDataSubmissionPending)
+		;
+
+	VertexType* Vertices = VertexBuffer.Lock<VertexType>(NewVertexCount);
+	GenerateFurVertices(0, SourceVertexCount, Vertices, VertexBlitter);
+	VertexBuffer.Unlock();
+
+	if (Build >= BuildType::Splines || FurLayerCount != OldFurLayerCount || RemoveFacesWithoutSplines != OldRemoveFacesWithoutSplines)
+	{
+		OldFurLayerCount = FurLayerCount;
+		OldRemoveFacesWithoutSplines = RemoveFacesWithoutSplines;
+
+		// indices
+		TArray<uint32> SourceIndices;
+		LodRenderData.IndexBuffer.GetCopy(SourceIndices);
+
+		TArray<FSection>& LocalSections = Sections.Num() ? TempSections : Sections;
+		LocalSections.SetNum(LodRenderData.Sections.Num());
+
+		auto& Indices = IndexBuffer.Lock();
+		Indices.Reset();
+		Indices.AddUninitialized(SourceIndices.Num() * FurLayerCount);
+		uint32 Idx = 0;
+		for (int32 SectionIndex = 0; SectionIndex < LodRenderData.Sections.Num(); SectionIndex++)
+		{
+			const auto& SourceSection = LodRenderData.Sections[SectionIndex];
+			FSection& FurSection = LocalSections[SectionIndex];
+
+			FurSection.MaterialIndex = SourceSection.MaterialIndex;
+			FurSection.MinVertexIndex = 0;
+			FurSection.MaxVertexIndex = NewVertexCount - 1;
+			FurSection.BaseIndex = Idx;
+
+			for (int32 Layer = 0; Layer < FurLayerCount; ++Layer)
+			{
+				int32 VertexIndexOffset = Layer * VertexCountPerLayer;
+				check(VertexIndexOffset >= 0);
+				if (FurSplinesUsed && RemoveFacesWithoutSplines)
 				{
-					float Relative = Vert.UVs[1].X / InFurLength;
-					float Length = InFurLength * (1.0f - HairLengthForceUniformity) + CurrentMaxFurLength * HairLengthForceUniformity;
-					Vert.UVs[1].X = Relative * Length;
+					for (uint32 t = 0; t < SourceSection.NumTriangles; ++t)
+					{
+						uint32 Idx0 = SourceIndices[SourceSection.FirstIndex + t * 3];
+						uint32 Idx1 = SourceIndices[SourceSection.FirstIndex + t * 3 + 1];
+						uint32 Idx2 = SourceIndices[SourceSection.FirstIndex + t * 3 + 2];
+						if (SplineMap[Idx0] >= 0 && SplineMap[Idx1] >= 0 && SplineMap[Idx2] >= 0)
+						{
+							Indices[Idx++] = VertexRemap[Idx0] + VertexIndexOffset;
+							Indices[Idx++] = VertexRemap[Idx1] + VertexIndexOffset;
+							Indices[Idx++] = VertexRemap[Idx2] + VertexIndexOffset;
+						}
+					}
 				}
 				else
 				{
-					float Relative = Vert.UVs[1].X / InFurLength;
-					float Interpolator = -HairLengthForceUniformity;
-					float Length = InFurLength * (1.0f - Interpolator) + CurrentMinFurLength * Interpolator;
-					Vert.UVs[1].X = Relative * Length;
+					for (uint32 i = 0; i < SourceSection.NumTriangles * 3; ++i)
+						Indices[Idx++] = SourceIndices[SourceSection.FirstIndex + i] + VertexIndexOffset;
 				}
-
-				VertexBuffer->Vertices.Add(Vert);
 			}
+			FurSection.NumTriangles = (Idx - FurSection.BaseIndex) / 3;
+			FurSection.NumBones = 0;
 		}
+		check(Idx <= (uint32)Indices.Num());
+		Indices.RemoveAt(Idx, Indices.Num() - Idx, false);
+
+		if (TempSections.Num())
+		{
+			ENQUEUE_RENDER_COMMAND(UpdateDataCommand)([this, NewVertexCount](FRHICommandListImmediate& RHICmdList) {
+				Sections = TempSections;
+				VertexCount = NewVertexCount;
+			});
+		}
+		else
+		{
+			VertexCount = NewVertexCount;
+		}
+
+		IndexBuffer.Unlock();
 	}
 
+	RenderThreadDataSubmissionPending = true;
+	ENQUEUE_RENDER_COMMAND(UpdateDataCommand)([this](FRHICommandListImmediate& RHICmdList) {
+		RenderThreadDataSubmissionPending = false;
+	});
 
-	for (int SectionIndex = 0; SectionIndex < LodModel.Sections.Num(); SectionIndex++)
+#if !WITH_EDITORONLY_DATA
+	Normals.SetNum(0, true);
+	SplineMap.SetNum(0, true);
+	VertexRemap.SetNum(0, true);
+#endif // WITH_EDITORONLY_DATA
+}
+
+void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
+{
+	auto* StaticMeshResource = StaticMesh->RenderData.Get();
+	check(StaticMeshResource);
+
+	const FStaticMeshLODResources& LodRenderData = StaticMeshResource->LODResources[Lod];
+	if (LodRenderData.VertexBuffers.StaticMeshVertexBuffer.GetUseHighPrecisionTangentBasis())
+		BuildFur<EStaticMeshVertexTangentBasisType::HighPrecision>(LodRenderData, InVertexSet);
+	else
+		BuildFur<EStaticMeshVertexTangentBasisType::Default>(LodRenderData, InVertexSet);
+}
+
+template<EStaticMeshVertexTangentBasisType TangentBasisTypeT>
+void FFurStaticData::BuildFur(const FStaticMeshLODResources& LodRenderData, const TArray<uint32>& InVertexSet)
+{
+	if (LodRenderData.VertexBuffers.StaticMeshVertexBuffer.GetUseFullPrecisionUVs())
+		BuildFur<TangentBasisTypeT, EStaticMeshVertexUVType::HighPrecision>(InVertexSet);
+	else
+		BuildFur<TangentBasisTypeT, EStaticMeshVertexUVType::Default>(InVertexSet);
+}
+
+template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT>
+void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
+{
+	typedef FFurStaticVertex<TangentBasisTypeT, UVTypeT> VertexType;
+
+	while (RenderThreadDataSubmissionPending)
+		;
+
+	VertexType* Vertices = VertexBuffer.Lock<VertexType>(VertexCountPerLayer * FurLayerCount);
+	bool UseRemap = VertexRemap.Num() > 0;
+	for (int32 Layer = 0; Layer < FurLayerCount; Layer++)
 	{
-		const auto& ModelSection = LodModel.Sections[SectionIndex];
-		FSection& FurSection = Sections[Sections.AddUninitialized()];
-		new (&FurSection) FSection();
-		FurSection.MaterialIndex = ModelSection.MaterialIndex;
-		FurSection.MinVertexIndex = 0;
-		FurSection.MaxVertexIndex = VertexBuffer->Vertices.Num() - 1;
-		FurSection.BaseIndex = IndexBuffer.Indices.Num();
-
-		for (int Layer = FurLayerCount; Layer > 0; --Layer)
+		auto GenLayerData = CalcFurGenLayerData(FurLayerCount - Layer);
+		for (uint32 SrcVertexIndex : InVertexSet)
 		{
-			int IndexOffset = (Layer - 1) * NumVertices;
-			check(IndexOffset >= 0);
-			if (InFurSplines && InRemoveFacesWithoutSplines)
+			VertexType& Vertex = Vertices[(UseRemap ? VertexRemap[SrcVertexIndex] : SrcVertexIndex) + Layer * VertexCountPerLayer];
+
+			if (FurSplinesUsed)
 			{
-				for (uint32 t = 0; t < ModelSection.NumTriangles; ++t)
-				{
-					uint32 Idx0 = Indices[ModelSection.FirstIndex + t * 3];
-					uint32 Idx1 = Indices[ModelSection.FirstIndex + t * 3 + 1];
-					uint32 Idx2 = Indices[ModelSection.FirstIndex + t * 3 + 2];
-					if (SplineMap[Idx0] >= 0 && SplineMap[Idx1] >= 0 && SplineMap[Idx2] >= 0)
-					{
-						Idx0 -= VertexSub[Idx0];
-						Idx1 -= VertexSub[Idx1];
-						Idx2 -= VertexSub[Idx2];
-						IndexBuffer.Indices.Add(Idx0 + IndexOffset);
-						IndexBuffer.Indices.Add(Idx1 + IndexOffset);
-						IndexBuffer.Indices.Add(Idx2 + IndexOffset);
-					}
-				}
+				int32 SplineIndex = SplineMap[SrcVertexIndex];
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData, SplineIndex);
 			}
 			else
 			{
-				for (uint32 i = 0; i < ModelSection.NumTriangles * 3; ++i)
-					IndexBuffer.Indices.Add(Indices[ModelSection.FirstIndex + i] + IndexOffset);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData);
 			}
 		}
-		FurSection.NumTriangles = (IndexBuffer.Indices.Num() - FurSection.BaseIndex) / 3;
-		FurSection.NumBones = 0;
 	}
 
-	// Init vertex factory
-	if (VertexBuffer->Vertices.Num() == 0)
-		VertexBuffer->Vertices.Add(FFurStaticVertex());
-	if (IndexBuffer.Indices.Num() == 0)
-		IndexBuffer.Indices.Add(0);
+	VertexBuffer.Unlock();
 
-	// Enqueue initialization of render resource
-	BeginInitResource(VertexBuffer);
-	BeginInitResource(&IndexBuffer);
+	RenderThreadDataSubmissionPending = true;
+	ENQUEUE_RENDER_COMMAND(UpdateDataCommand)([this](FRHICommandListImmediate& RHICmdList) {
+		RenderThreadDataSubmissionPending = false;
+	});
 }
 
-UFurSplines* FFurStaticData::GenerateSplines(UStaticMesh* InStaticMesh, int InLod, const TArray<UStaticMesh*>& InGuideMeshes)
+/** Generate Splines */
+void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLod, const TArray<UStaticMesh*>& InGuideMeshes)
 {
-	UFurSplines* Splines = NewObject<UFurSplines>();
-
 	auto* StaticMeshResource = InStaticMesh->RenderData.Get();
 	check(StaticMeshResource);
 
@@ -668,19 +687,15 @@ UFurSplines* FFurStaticData::GenerateSplines(UStaticMesh* InStaticMesh, int InLo
 	const auto& SourcePositions = LodModel.VertexBuffers.PositionVertexBuffer;
 
 	uint32 VertexCount = SourcePositions.GetNumVertices();
-	int SegCount = InGuideMeshes.Num() + 1;
-	Splines->Vertices.AddUninitialized(VertexCount * SegCount);
-	Splines->Index.AddUninitialized(VertexCount);
-	Splines->Count.AddUninitialized(VertexCount);
+	int32 ControlPointCount = InGuideMeshes.Num() + 1;
+	Splines->Vertices.AddUninitialized(VertexCount * ControlPointCount);
 	for (uint32 i = 0; i < VertexCount; i++)
 	{
-		int Index = i * SegCount;
+		int32 Index = i * ControlPointCount;
 		Splines->Vertices[Index] = SourcePositions.VertexPosition(i);
-		Splines->Index[i] = Index;
-		Splines->Count[i] = SegCount;
 	}
 
-	int k = 1;
+	int32 k = 1;
 	for (UStaticMesh* GuideMesh : InGuideMeshes)
 	{
 		if (GuideMesh)
@@ -689,159 +704,17 @@ UFurSplines* FFurStaticData::GenerateSplines(UStaticMesh* InStaticMesh, int InLo
 			check(StaticMeshResource2);
 			const auto& LodModel2 = StaticMeshResource2->LODResources[InLod];
 			const auto& SourcePositions2 = LodModel2.VertexBuffers.PositionVertexBuffer;
-			int c = FMath::Min(SourcePositions2.GetNumVertices(), VertexCount);
-			for (int i = 0; i < c; i++)
-				Splines->Vertices[i * SegCount + k] = SourcePositions2.VertexPosition(i);
+			int32 c = FMath::Min(SourcePositions2.GetNumVertices(), VertexCount);
+			for (int32 i = 0; i < c; i++)
+				Splines->Vertices[i * ControlPointCount + k] = SourcePositions2.VertexPosition(i);
 			for (uint32 i = c; i < VertexCount; i++)
-				Splines->Vertices[i * SegCount + k] = Splines->Vertices[i * SegCount + (k - 1)];
+				Splines->Vertices[i * ControlPointCount + k] = Splines->Vertices[i * ControlPointCount + (k - 1)];
 		}
 		else
 		{
 			for (uint32 i = 0; i < VertexCount; i++)
-				Splines->Vertices[i * SegCount + k] = Splines->Vertices[i * SegCount + (k - 1)];
+				Splines->Vertices[i * ControlPointCount + k] = Splines->Vertices[i * ControlPointCount + (k - 1)];
 		}
 		k++;
 	}
-
-	for (int i = 0, c = SegCount * VertexCount; i < c; i++)
-		Splines->Vertices[i].Y = -Splines->Vertices[i].Y;
-
-	return Splines;
-}
-
-void FFurStaticData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel)
-{
-	if (InPhysics)
-	{
-		for (auto& s : Sections)
-		{
-			FPhysicsFurStaticVertexFactory* vf = new FPhysicsFurStaticVertexFactory(InFeatureLevel);
-			vf->Init(VertexBuffer);
-			BeginInitResource(vf);
-			VertexFactories.Add(vf);
-		}
-	}
-	else
-	{
-		for (auto& s : Sections)
-		{
-			FFurStaticVertexFactory* vf = new FFurStaticVertexFactory(InFeatureLevel);
-			vf->Init(VertexBuffer);
-			BeginInitResource(vf);
-			VertexFactories.Add(vf);
-		}
-	}
-}
-
-void FFurStaticData::ReloadFurSplines(UFurSplines* FurSplines)
-{
-	StaticFurStaticDataCS.Lock();
-
-	for (int32 i = 0; i < StaticFurStaticData.Num(); i++)
-	{
-		FFurStaticData* Data = StaticFurStaticData[i];
-
-		if (Data->FurSplines == FurSplines)
-		{
-			UStaticMesh* StaticMesh = Data->StaticMesh;
-			int Lod = Data->Lod;
-			int FurLayerCount = Data->FurLayerCount;
-			float FurLength = Data->FurLength;
-			float MinFurLength = Data->MinFurLength;
-			float ShellBias = Data->ShellBias;
-			float HairLengthForceUniformity = Data->HairLengthForceUniformity;
-			float NoiseStrength = Data->NoiseStrength;
-			bool RemoveFacesWithoutSplines = Data->RemoveFacesWithoutSplines;
-
-			volatile bool finished = false;
-			ENQUEUE_RENDER_COMMAND(ReleaseDataCommand)([Data, &finished](FRHICommandListImmediate& RHICmdList) { Data->~FFurStaticData(); finished = true; });
-			while (!finished)
-				;
-			new (Data) FFurStaticData(StaticMesh, Lod, FurSplines, TArray<UStaticMesh*>(), FurLayerCount, FurLength, MinFurLength, ShellBias, HairLengthForceUniformity, NoiseStrength, RemoveFacesWithoutSplines);
-		}
-	}
-
-	StaticFurStaticDataCS.Unlock();
-}
-
-
-class FurStaticDataDelayedCleanupTask : public FNonAbandonableTask
-{
-	friend class FAutoDeleteAsyncTask<FurStaticDataDelayedCleanupTask>;
-
-public:
-	FurStaticDataDelayedCleanupTask(const TArray<FFurData*>& InFurDataArray) : FurDataArray(InFurDataArray) {}
-
-protected:
-	const TArray<FFurData*> FurDataArray;
-
-	void DoWork()
-	{
-		FPlatformProcess::Sleep(1.0f);
-
-		StaticFurStaticDataCS.Lock();
-		for (int i = FurDataArray.Num() - 1; i != -1; i--)
-		{
-			FFurStaticData* data = (FFurStaticData*)FurDataArray[i];
-			if (--data->RefCount == 0)
-			{
-				StaticFurStaticData.Remove(data);
-				ENQUEUE_RENDER_COMMAND(ReleaseDataCommand)([data](FRHICommandListImmediate& RHICmdList) { delete data; });
-			}
-		}
-		StaticFurStaticDataCS.Unlock();
-	}
-
-	FORCEINLINE TStatId GetStatId() const
-	{
-		RETURN_QUICK_DECLARE_CYCLE_STAT(FMyTaskName, STATGROUP_ThreadPoolAsyncTasks);
-	}
-};
-
-FFurData* FFurStaticData::CreateFurData(int InFurLayerCount, int InLod, UGFurComponent* FurComponent)
-{
-	if (InFurLayerCount < 1)
-		InFurLayerCount = 1;
-	if (InFurLayerCount > 128)
-		InFurLayerCount = 128;
-
-	float FurLengthClamped = FMath::Max(FurComponent->FurLength, 0.001f);
-
-	StaticFurStaticDataCS.Lock();
-
-	FFurStaticData* Data = nullptr;
-	for (int32 i = 0; i < StaticFurStaticData.Num(); i++)
-	{
-		FFurStaticData* d = StaticFurStaticData[i];
-		if (d->StaticMesh == FurComponent->StaticGrowMesh && d->Lod == InLod && d->FurLayerCount == InFurLayerCount && d->FurSplines == FurComponent->FurSplines
-			&& d->GuideMeshes == FurComponent->StaticGuideMeshes
-			&& d->FurLength == FurLengthClamped && d->MinFurLength == FurComponent->MinFurLength
-			&& d->ShellBias == FurComponent->ShellBias && d->HairLengthForceUniformity == FurComponent->HairLengthForceUniformity
-			&& d->NoiseStrength == FurComponent->NoiseStrength
-			&& d->RemoveFacesWithoutSplines == FurComponent->RemoveFacesWithoutSplines)
-		{
-			Data = d;
-			break;
-		}
-	}
-	if (Data)
-	{
-		Data->RefCount++;
-	}
-	else
-	{
-		Data = new FFurStaticData(FurComponent->StaticGrowMesh, InLod, FurComponent->FurSplines, FurComponent->StaticGuideMeshes, InFurLayerCount, FurLengthClamped,
-			FurComponent->MinFurLength, FurComponent->ShellBias, FurComponent->HairLengthForceUniformity, FurComponent->NoiseStrength, FurComponent->RemoveFacesWithoutSplines);
-		Data->RefCount = 1;
-		StaticFurStaticData.Add(Data);
-	}
-
-	StaticFurStaticDataCS.Unlock();
-
-	return Data;
-}
-
-void FFurStaticData::DestroyFurData(const TArray<FFurData*>& InFurDataArray)
-{
-	(new FAutoDeleteAsyncTask<FurStaticDataDelayedCleanupTask>(InFurDataArray))->StartBackgroundTask();
 }

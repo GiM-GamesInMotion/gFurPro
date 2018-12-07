@@ -54,21 +54,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = Comb)
 	bool bMirrorZ;
 
-	/** Whether back-facing triangles should be ignored */
-//	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Ignore back-facing"))TODO
-//	bool bOnlyFrontFacingTriangles;
+	UPROPERTY(EditAnywhere, Category = Comb)
+	bool bShowSplines;
 };
-#if 0 // TODO
-UCLASS(config = EditorPerProjectUserSettings)
-class GFUR_API UFurCombPreviewSettings : public UObject
-{
-	GENERATED_BODY()
-
-public:
-
-	/** Size of vertex points drawn when mesh painting is active. */
-	UPROPERTY(config, EditAnywhere, Category=Visualization)
-	float VertexPreviewSize;
-
-};
-#endif // 0

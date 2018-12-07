@@ -78,8 +78,6 @@ void FEdModeFurComb::Enter()
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 	AssetRegistryModule.Get().OnAssetRemoved().AddSP(this, &FEdModeFurComb::OnAssetRemoved);
 
-	SelectionChangedHandle = USelection::SelectionChangedEvent.AddLambda([=](UObject* Object) { FurComb->Refresh();  });
-
 	if (UsesToolkits() && !Toolkit.IsValid())
 	{
 		Toolkit = GetToolkit();
@@ -111,7 +109,11 @@ void FEdModeFurComb::Enter()
 		FurComb->RegisterCommands(Toolkit->GetToolkitCommands());
 	}
 
-	FurComb->Refresh();
+	USelection* SelectedActors = GEditor->GetSelectedActors();
+	TArray<AActor*> Actors;
+	SelectedActors->GetSelectedObjects(Actors);
+	for (AActor* Actor : Actors)
+		FurComb->ActorSelected(Actor);
 }
 
 void FEdModeFurComb::Exit()
@@ -123,7 +125,6 @@ void FEdModeFurComb::Exit()
 	}
 
 	/** Reset paint state and unregister commands */
-	FurComb->Reset();
 	if (UsesToolkits())
 	{
 		FurComb->UnregisterCommands(Toolkit->GetToolkitCommands());
@@ -174,6 +175,9 @@ void FEdModeFurComb::Exit()
 bool FEdModeFurComb::CapturedMouseMove(FEditorViewportClient* InViewportClient, FViewport* InViewport, int32 InMouseX, int32 InMouseY)
 {
 	// We only care about perspective viewports
+	if (BlockMouse)
+		return true;
+
 	bool bCombApplied = false;
 	if (InViewportClient->IsPerspective())
 	{
@@ -189,6 +193,8 @@ bool FEdModeFurComb::CapturedMouseMove(FEditorViewportClient* InViewportClient, 
 			FViewportCursorLocation MouseViewportRay(View, (FEditorViewportClient*)InViewport->GetClient(), InMouseX, InMouseY);
 
 			bCombApplied = FurComb->Comb(InViewport, View->ViewMatrices.GetViewOrigin(), MouseViewportRay.GetOrigin(), MouseViewportRay.GetDirection());
+			if (bCombApplied)
+				BlockMouse = true;
 		}
 	}
 
@@ -307,32 +313,26 @@ bool FEdModeFurComb::InputKey(FEditorViewportClient* InViewportClient, FViewport
 
 void FEdModeFurComb::OnPreSaveWorld(uint32 SaveFlags, UWorld* World)
 {
-	FurComb->Refresh();
 }
 
 void FEdModeFurComb::OnPostSaveWorld(uint32 SaveFlags, UWorld* World, bool bSuccess)
 {
-	FurComb->Refresh();
 }
 
 void FEdModeFurComb::OnPostImportAsset(UFactory* Factory, UObject* Object)
 {
-	FurComb->Refresh();
 }
 
 void FEdModeFurComb::OnPostReimportAsset(UObject* Object, bool bSuccess)
 {
-	FurComb->Refresh();
 }
 
 void FEdModeFurComb::OnAssetRemoved(const FAssetData& AssetData)
 {
-	FurComb->Refresh();
 }
 
 void FEdModeFurComb::OnObjectsReplaced(const TMap<UObject*, UObject*>& OldToNewInstanceMap)
 {
-	FurComb->Refresh();
 }
 
 void FEdModeFurComb::OnResetViewMode()
@@ -345,8 +345,6 @@ void FEdModeFurComb::OnResetViewMode()
 		{
 			continue;
 		}
-
-//		MeshPaintHelpers::SetViewportColorMode(EMeshPaintColorViewMode::Normal, ViewportClient);//TODO
 	}
 }
 
@@ -363,6 +361,8 @@ void FEdModeFurComb::Render(const FSceneView* View, FViewport* Viewport, FPrimit
 	/** Call parent implementation */
 	FEdMode::Render(View, Viewport, PDI);
 	FurComb->Render(View, Viewport, PDI);
+
+	BlockMouse = false;
 
 	// Flow painting
 	if (FurComb->IsCombing())
@@ -418,7 +418,6 @@ bool FEdModeFurComb::Select(AActor* InActor, bool bInSelected)
 /** FEdMode: Called when the currently selected actor has changed */
 void FEdModeFurComb::ActorSelectionChangeNotify()
 {
-	FurComb->Refresh();
 }
 
 /** IMeshPaintEdMode: Called once per frame */
@@ -436,7 +435,6 @@ FFurComb* FEdModeFurComb::GetFurComb()
 
 bool FEdModeFurComb::ProcessEditDelete()
 {
-	FurComb->Refresh();
 	return false;
 }
 

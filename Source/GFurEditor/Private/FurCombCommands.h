@@ -22,29 +22,5 @@ public:
 	TSharedPtr<FUICommandInfo> IncreaseCombSize;
 	TSharedPtr<FUICommandInfo> DecreaseCombSize;
 
-	/* TODO
-	TSharedPtr<FUICommandInfo> NextTexture;
-	TSharedPtr<FUICommandInfo> PreviousTexture;
-	TSharedPtr<FUICommandInfo> CommitTexturePainting;
-
-	TSharedPtr<FUICommandInfo> Copy;
-	TSharedPtr<FUICommandInfo> Paste;
-	TSharedPtr<FUICommandInfo> Remove;
-	TSharedPtr<FUICommandInfo> Fix;
-	TSharedPtr<FUICommandInfo> Fill;
-	TSharedPtr<FUICommandInfo> Propagate;
-	TSharedPtr<FUICommandInfo> Import;
-	TSharedPtr<FUICommandInfo> Save;
-
-	TSharedPtr<FUICommandInfo> SwitchForeAndBackgroundColor;
-	TSharedPtr<FUICommandInfo> CycleToNextLOD;
-	TSharedPtr<FUICommandInfo> CycleToPreviousLOD;
-
-	TSharedPtr<FUICommandInfo> PropagateTexturePaint;
-	TSharedPtr<FUICommandInfo> SaveTexturePaint;
-
-	TSharedPtr<FUICommandInfo> PropagateVertexColorsToLODs;
-	*/
-
 	TArray<TSharedPtr<FUICommandInfo>> Commands;
 };

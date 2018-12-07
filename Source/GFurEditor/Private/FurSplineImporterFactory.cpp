@@ -10,9 +10,6 @@
 #include "Modules/ModuleManager.h"
 #include "Misc/PackageName.h"
 #include "Editor.h"
-//#include "TileMapAssetImportData.h"TODO
-//#include "IAssetTools.h"
-//#include "AssetToolsModule.h"
 #include "AssetRegistryModule.h"
 #include "PackageTools.h"
 #include "FurSplines.h"
@@ -198,9 +195,11 @@ EReimportResult::Type UFurSplineImporterFactory::Reimport(UObject* Obj)
 		Splines->Vertices.Reset();
 		Splines->Index.Reset();
 		Splines->Count.Reset();
+		Splines->Version = 1;
 		EReimportResult::Type r = ImportSplines(Scene, Splines) ? EReimportResult::Succeeded : EReimportResult::Failed;
+		Splines->UpdateSplines();
 		sdkManager->Destroy();
-		Splines->Refresh();
+		Splines->OnSplinesChanged.Broadcast();
 		return r;
 	}
 	return EReimportResult::Failed;
@@ -371,7 +370,7 @@ bool UFurSplineImporterFactory::ImportLine(FbxNode* Node, UFurSplines* FurSpline
 		int index = Indices->GetAt(i);
 
 		const FbxVector4& v = controlPoints[index];
-		FurSplines->Vertices.Add(FVector(v.mData[0], v.mData[1], v.mData[2]));
+		FurSplines->Vertices.Add(FVector(v.mData[0], -v.mData[1], v.mData[2]));
 		if (NextEndPointIndex == i)
 		{
 			FurSplines->Index.Add(StartIndex);
@@ -383,6 +382,7 @@ bool UFurSplineImporterFactory::ImportLine(FbxNode* Node, UFurSplines* FurSpline
 				NextEndPointIndex = EndPoints->GetAt(NextEndPoint);
 		}
 	}
+	FurSplines->Version = 1;
 
 	return true;
 }

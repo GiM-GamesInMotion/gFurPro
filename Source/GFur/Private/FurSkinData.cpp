@@ -72,8 +72,6 @@ private:
 template<bool MorphTargets, bool Physics, bool ExtraInfluences>
 class FFurSkinVertexFactoryBase : public FFurVertexFactory
 {
-	DECLARE_VERTEX_FACTORY_TYPE(FFurSkinVertexFactory);
-
 	typedef FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences> This;
 
 public:
@@ -259,7 +257,7 @@ public:
 	{
 		ShaderData.Init(BoneCount);
 		ENQUEUE_UNIQUE_RENDER_COMMAND_THREEPARAMETER(InitProceduralMeshVertexFactory,
-			This*, VertexFactory, this,
+			FFurSkinVertexFactoryBase*, VertexFactory, this,
 			const FFurSkinVertexBuffer*, VertexBuffer, VertexBuffer,
 			const FVertexBuffer*, MorphVertexBuffer, MorphVertexBuffer,
 			{
@@ -410,14 +408,85 @@ public:
 	FShaderDataType ShaderData;
 };
 
-typedef FFurSkinVertexFactoryBase<true, true, true> FMorphPhysicsExtraInfluencesFurSkinVertexFactory;
-typedef FFurSkinVertexFactoryBase<false, true, true> FPhysicsExtraInfluencesFurSkinVertexFactory;
-typedef FFurSkinVertexFactoryBase<true, false, true> FMorphExtraInfluencesFurSkinVertexFactory;
-typedef FFurSkinVertexFactoryBase<false, false, true> FExtraInfluencesFurSkinVertexFactory;
-typedef FFurSkinVertexFactoryBase<true, true, false> FMorphPhysicsFurSkinVertexFactory;
-typedef FFurSkinVertexFactoryBase<false, true, false> FPhysicsFurSkinVertexFactory;
-typedef FFurSkinVertexFactoryBase<true, false, false> FMorphFurSkinVertexFactory;
-typedef FFurSkinVertexFactoryBase<false, false, false> FFurSkinVertexFactory;
+class FMorphPhysicsExtraInfluencesFurSkinVertexFactory : public FFurSkinVertexFactoryBase<true, true, true>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FMorphPhysicsExtraInfluencesFurSkinVertexFactory);
+public:
+	FMorphPhysicsExtraInfluencesFurSkinVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurSkinVertexFactoryBase<true, true, true>(InFeatureLevel)
+	{
+	}
+};
+
+class FPhysicsExtraInfluencesFurSkinVertexFactory : public FFurSkinVertexFactoryBase<false, true, true>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FPhysicsExtraInfluencesFurSkinVertexFactory);
+public:
+	FPhysicsExtraInfluencesFurSkinVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurSkinVertexFactoryBase<false, true, true>(InFeatureLevel)
+	{
+	}
+};
+
+class FMorphExtraInfluencesFurSkinVertexFactory : public FFurSkinVertexFactoryBase<true, false, true>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FMorphExtraInfluencesFurSkinVertexFactory);
+public:
+	FMorphExtraInfluencesFurSkinVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurSkinVertexFactoryBase<true, false, true>(InFeatureLevel)
+	{
+	}
+};
+
+class FExtraInfluencesFurSkinVertexFactory : public FFurSkinVertexFactoryBase<false, false, true>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FExtraInfluencesFurSkinVertexFactory);
+public:
+	FExtraInfluencesFurSkinVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurSkinVertexFactoryBase<false, false, true>(InFeatureLevel)
+	{
+	}
+};
+
+class FMorphPhysicsFurSkinVertexFactory : public FFurSkinVertexFactoryBase<true, true, false>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FMorphPhysicsFurSkinVertexFactory);
+public:
+	FMorphPhysicsFurSkinVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurSkinVertexFactoryBase<true, true, false>(InFeatureLevel)
+	{
+	}
+};
+
+class FPhysicsFurSkinVertexFactory : public FFurSkinVertexFactoryBase<false, true, false>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FPhysicsFurSkinVertexFactory);
+public:
+	FPhysicsFurSkinVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurSkinVertexFactoryBase<false, true, false>(InFeatureLevel)
+	{
+	}
+};
+
+class FMorphFurSkinVertexFactory : public FFurSkinVertexFactoryBase<true, false, false>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FMorphFurSkinVertexFactory);
+public:
+	FMorphFurSkinVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurSkinVertexFactoryBase<true, false, false>(InFeatureLevel)
+	{
+	}
+};
+
+class FFurSkinVertexFactory : public FFurSkinVertexFactoryBase<false, false, false>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FFurSkinVertexFactory);
+public:
+	FFurSkinVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurSkinVertexFactoryBase<false, false, false>(InFeatureLevel)
+	{
+	}
+};
 
 IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphPhysicsExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
 IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);

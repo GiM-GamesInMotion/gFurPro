@@ -110,7 +110,6 @@ void FFurMorphObject::Update(FRHICommandListImmediate& RHICmdList, const TArray<
 			checkSlow(MorphTarget.MorphTarget->HasDataForLOD(LODIndex));
 			const float MorphTargetWeight = MorphTargetWeights[MorphTarget.WeightIndex];
 			const float MorphAbsWeight = FMath::Abs(MorphTargetWeight);
-			checkSlow(MorphAbsWeight >= MinMorphTargetBlendWeight && MorphAbsWeight <= MaxMorphTargetBlendWeight);
 
 
 			// Get deltas

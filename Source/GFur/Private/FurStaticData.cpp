@@ -105,8 +105,6 @@ private:
 template<bool Physics>
 class FFurStaticVertexFactoryBase : public FFurVertexFactory
 {
-	DECLARE_VERTEX_FACTORY_TYPE(FFurStaticVertexFactory);
-
 public:
 	struct FShaderDataType
 	{
@@ -164,7 +162,7 @@ public:
 	void Init(const FFurStaticVertexBuffer* VertexBuffer)
 	{
 		ENQUEUE_UNIQUE_RENDER_COMMAND_TWOPARAMETER(InitProceduralMeshVertexFactory,
-			FFurStaticVertexFactoryBase<Physics>*,
+			FFurStaticVertexFactoryBase*,
 			VertexFactory,
 			this,
 			const FFurStaticVertexBuffer*,
@@ -291,8 +289,25 @@ public:
 	FShaderDataType ShaderData;
 };
 
-typedef FFurStaticVertexFactoryBase<true> FPhysicsFurStaticVertexFactory;
-typedef FFurStaticVertexFactoryBase<false> FFurStaticVertexFactory;
+class FPhysicsFurStaticVertexFactory : public FFurStaticVertexFactoryBase<true>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FPhysicsFurStaticVertexFactory);
+public:
+	FPhysicsFurStaticVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurStaticVertexFactoryBase<true>(InFeatureLevel)
+	{
+	}
+};
+
+class FFurStaticVertexFactory : public FFurStaticVertexFactoryBase<false>
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FFurStaticVertexFactory);
+public:
+	FFurStaticVertexFactory(ERHIFeatureLevel::Type InFeatureLevel)
+		: FFurStaticVertexFactoryBase<false>(InFeatureLevel)
+	{
+	}
+};
 
 IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush", true, false, true, true, false);
 IMPLEMENT_VERTEX_FACTORY_TYPE(FFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush", true, false, true, true, false);

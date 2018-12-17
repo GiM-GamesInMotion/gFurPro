@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Runtime/Engine/Classes/Engine/SkeletalMesh.h"
+#include "Runtime/RenderCore/Public/PackedNormal.h"
 #include "FurData.h"
 
 /** Soft Skin Vertex */

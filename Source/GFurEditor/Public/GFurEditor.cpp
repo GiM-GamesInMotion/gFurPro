@@ -21,7 +21,7 @@ void FGFurEditorModule::StartupModule()
 
 	FEditorModeRegistry::Get().RegisterMode<FEdModeFurComb>(
 		FEdModeFurComb::EM_FurComb,
-		NSLOCTEXT("FurComb_Mode", "FurComb_ModeName", "Comb"),
+		NSLOCTEXT("FurComb_Mode", "FurComb_ModeName", "gFur"),
 		FSlateIcon(FEditorStyle::GetStyleSetName(), "LevelEditor.MeshPaintMode", "LevelEditor.MeshPaintMode.Small"),
 		true, 1000);
 

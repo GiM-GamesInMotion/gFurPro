@@ -31,29 +31,36 @@ public:
 	float RadiusMax;
 
 	/** Strength of the brush (0.0 - 1.0) */
-	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Strength", UIMin = "0.0", UIMax = "1.0", ClampMin= "0.0", ClampMax = "1000.0"))
+	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Strength", UIMin = "0.0", UIMax = "5.0", ClampMin= "0.0", ClampMax = "1000.0"))
 	float Strength; 
 
 	/** Amount of falloff to apply (0.0 - 1.0) */
 	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Falloff", UIMin = "0.0", UIMax = "1.0", ClampMin = "0.0", ClampMax = "1.0"))
 	float FalloffAmount;
 
-	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Apply Height", UIMin = "0.0", UIMax = "1.0", ClampMin = "0.0", ClampMax = "1.0"))
+	/** Height of fur spline at which the brush effect is applied. 0=root, 1=tip */
+	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Effect Height", UIMin = "0.0", UIMax = "1.0", ClampMin = "0.0", ClampMax = "1.0"))
 	float ApplyHeight;
 
-	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Apply Spread", UIMin = "-1.0", UIMax = "1.0", ClampMin = "-1.0", ClampMax = "1.0"))
+	/** Affects the distance at which the effect is applied or faded out in both directions from the "Effect Height" point. -1 = extremely short, mostly at exact location defined by "Effect Height", 0 smooth distribution which fades out in both directions from "Effect Height", 1 affects the whole spline same way, achieving sort of linear effect.*/
+	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Effect Distribution", UIMin = "-1.0", UIMax = "1.0", ClampMin = "-1.0", ClampMax = "1.0"))
 	float ApplySpread;
 
+	/** If the brush should affect the fur even if it's not moved.*/
 	UPROPERTY(EditAnywhere, Category = Comb)
 	bool bEnableFlow;
 
+	/** Mirrors the grooming along the X axis of the mesh.*/
 	UPROPERTY(EditAnywhere, Category = Comb)
 	bool bMirrorX;
+	/** Mirrors the grooming along the Y axis of the mesh.*/
 	UPROPERTY(EditAnywhere, Category = Comb)
 	bool bMirrorY;
+	/** Mirrors the grooming along the Z axis of the mesh.*/
 	UPROPERTY(EditAnywhere, Category = Comb)
 	bool bMirrorZ;
 
+	/** Toggles visualization of the spline guides.*/
 	UPROPERTY(EditAnywhere, Category = Comb)
 	bool bShowSplines;
 };

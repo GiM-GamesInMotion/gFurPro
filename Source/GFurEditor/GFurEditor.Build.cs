@@ -8,6 +8,8 @@ public class GFurEditor : ModuleRules
 	public GFurEditor(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		bFasterWithoutUnity = true;
+		MinFilesUsingPrecompiledHeaderOverride = 1;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "Slate", "InputCore", "RHI", "RenderCore", "ShaderCore",
 			"UnrealEd", "EditorStyle", "VREditor", "MeshPaint" });

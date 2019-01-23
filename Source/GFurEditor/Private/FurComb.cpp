@@ -517,7 +517,7 @@ void FFurComb::RenderInteractorWidget(const FVector& InRayOrigin, const FVector&
 
 void FFurComb::RenderSplines(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI, ESceneDepthPriorityGroup DepthGroup)
 {
-	const FColor Color = FColor::Black;
+	const FColor Color = FColor::Red;
 
 	for (UGFurComponent* FurComponent : FurComponents)
 	{
@@ -694,11 +694,11 @@ FVector FFurComb::BendFur(const FVector& Dir, const FVector& Normal, const FVect
 template<bool UseStrengthHeight, typename F, typename G>
 void FFurComb::Comb(UFurSplines* FurSplines, const CombParams& Params, const F& FuncPerSpline, const G& FuncPerSegment)
 {
-	float RcpCombRadius = 1.0f / Params.CombRadius;
-	float RcpInvFalloff = 1.0f / (1.0f - Params.Falloff);
-	float Strength = Params.Strength;
+	const float RcpCombRadius = 1.0f / Params.CombRadius;
+	const float RcpInvFalloff = 1.0f / (1.0f - Params.Falloff);
 	for (int32 Index : SplineSet)
 	{
+		float Strength = Params.Strength;
 		int32 Cnt = FurSplines->ControlPointCount;
 		int32 Idx = Index * Cnt;
 		FVector PrevVertexOld = FurSplines->Vertices[Idx];
@@ -720,7 +720,7 @@ void FFurComb::Comb(UFurSplines* FurSplines, const CombParams& Params, const F& 
 				if (Params.ApplySpread >= 0)
 					Exp = 1.0f - Params.ApplySpread;
 				else
-					Exp = 1.0f / (1.0001f + Params.ApplySpread);
+					Exp = 1.0f / (1.1f + Params.ApplySpread);
 				StrengtHeight = powf(1.0f - FMath::Abs(Height - Params.ApplyHeight), Exp);
 			}
 
@@ -793,7 +793,7 @@ void FFurComb::CombBend(UFurSplines* FurSplines, const CombParams& Params)
 	Comb<true>(FurSplines, Params, [&OrigBendDir, &BendDir, &Params](const FPerSplineData& Data) {
 		BendDir = MirrorVector(OrigBendDir, Data.BaseVertex, Params);
 	}, [&BendDir](const FPerSegmentData& Data) {
-		return BendFur(Data.Dir, Data.Normal, BendDir * Data.Strength);
+		return BendFur(Data.Dir, Data.Normal, BendDir * Data.Strength * 5.0f);
 	});
 }
 

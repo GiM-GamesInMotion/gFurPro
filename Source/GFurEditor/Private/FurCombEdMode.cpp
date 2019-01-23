@@ -3,6 +3,7 @@
 #include "FurCombEdMode.h"
 #include "FurComb.h"
 #include "FurCombModeToolKit.h"
+#include "FurCombSettings.h"
 
 #include "EdMode.h"
 #include "EditorModeManager.h"

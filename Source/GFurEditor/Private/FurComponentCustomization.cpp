@@ -25,6 +25,7 @@
 #include "Runtime/Engine/Classes/Engine/StaticMesh.h"
 #include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
 #include "Runtime/Engine/Public/ComponentRecreateRenderStateContext.h"
+#include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
 
 #define LOCTEXT_NAMESPACE "GFurEditor"
 
@@ -238,6 +239,7 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, USkele
 	const auto& SourceVertices = LodModel.StaticVertexBuffers.StaticMeshVertexBuffer;
 
 	uint32 VertexCount = SourcePositions.GetNumVertices();
+	FurSplines->Version = 2;
 	FurSplines->Vertices.AddUninitialized(VertexCount * ControlPointCount);
 	FurSplines->ControlPointCount = ControlPointCount;
 	uint32 Cnt = 0;
@@ -278,6 +280,7 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, UStati
 	const auto& SourceVertices = LodModel.VertexBuffers.StaticMeshVertexBuffer;
 
 	uint32 VertexCount = SourcePositions.GetNumVertices();
+	FurSplines->Version = 2;
 	FurSplines->Vertices.AddUninitialized(VertexCount * ControlPointCount);
 	FurSplines->ControlPointCount = ControlPointCount;
 	uint32 Cnt = 0;

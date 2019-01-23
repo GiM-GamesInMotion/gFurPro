@@ -5,6 +5,8 @@
 #include "FurCombEdMode.h"
 #include "FurComponentCustomization.h"
 
+#include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
+
 #define LOCTEXT_NAMESPACE "GFurEditor"
 
 IMPLEMENT_GAME_MODULE(FGFurEditorModule, FurEditor);

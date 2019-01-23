@@ -19,7 +19,7 @@ void EmptyLinkFunctionForGeneratedCodeGFurEditor_init() {}
 			static const UE4CodeGen_Private::FPackageParams PackageParams = {
 				"/Script/GFurEditor",
 				PKG_CompiledIn | 0x00000040,
-				0xA992EE6C,
+				0xB3A13D35,
 				0x575ED45E,
 				nullptr, 0,
 				METADATA_PARAMS(nullptr, 0)

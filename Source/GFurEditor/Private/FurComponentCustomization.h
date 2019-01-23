@@ -10,6 +10,7 @@
 class UFurSplines;
 class USkeletalMesh;
 class UStaticMesh;
+class UGFurComponent;
 
 class FFurComponentCustomization : public IDetailCustomization
 {
@@ -20,7 +21,7 @@ public:
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 private:
-	float NewLength = 1.0f;
+	float NewLength = 3.0f;
 	int NewControlPointCount = 7;
 
 	void CreateFurSplinesAssetWidget(FDetailWidgetRow& OutWidgetRow, IDetailLayoutBuilder* DetailBuilder);

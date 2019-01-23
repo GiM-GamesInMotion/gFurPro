@@ -1,6 +1,14 @@
 {
 	"OutputFiles": [
-		"Module.GFur.cpp.obj",
-		"Module.GFur.gen.cpp.obj"
+		"FurComponent.cpp.obj",
+		"FurData.cpp.obj",
+		"FurMorphObject.cpp.obj",
+		"FurSkinData.cpp.obj",
+		"FurSplines.cpp.obj",
+		"FurStaticData.cpp.obj",
+		"GFur.cpp.obj",
+		"FurComponent.gen.cpp.obj",
+		"FurSplines.gen.cpp.obj",
+		"GFur.init.gen.cpp.obj"
 	]
 }

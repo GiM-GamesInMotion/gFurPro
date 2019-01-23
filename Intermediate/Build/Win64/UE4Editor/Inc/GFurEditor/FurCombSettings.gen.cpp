@@ -94,6 +94,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_MetaData[] = {
 		{ "Category", "Comb" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "ToolTip", "Toggles visualization of the spline guides." },
 	};
 #endif
 	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_SetBit(void* Obj)
@@ -105,6 +106,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData[] = {
 		{ "Category", "Comb" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "ToolTip", "Mirrors the grooming along the Z axis of the mesh." },
 	};
 #endif
 	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_SetBit(void* Obj)
@@ -116,6 +118,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData[] = {
 		{ "Category", "Comb" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "ToolTip", "Mirrors the grooming along the Y axis of the mesh." },
 	};
 #endif
 	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_SetBit(void* Obj)
@@ -127,6 +130,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData[] = {
 		{ "Category", "Comb" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "ToolTip", "Mirrors the grooming along the X axis of the mesh." },
 	};
 #endif
 	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_SetBit(void* Obj)
@@ -138,6 +142,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData[] = {
 		{ "Category", "Comb" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "ToolTip", "If the brush should affect the fur even if it's not moved." },
 	};
 #endif
 	void Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_SetBit(void* Obj)
@@ -150,8 +155,9 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "Category", "Comb" },
 		{ "ClampMax", "1.0" },
 		{ "ClampMin", "-1.0" },
-		{ "DisplayName", "Apply Spread" },
+		{ "DisplayName", "Effect Distribution" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "ToolTip", "Affects the distance at which the effect is applied or faded out in both directions from the \"Effect Height\" point. -1 = extremely short, mostly at exact location defined by \"Effect Height\", 0 smooth distribution which fades out in both directions from \"Effect Height\", 1 affects the whole spline same way, achieving sort of linear effect." },
 		{ "UIMax", "1.0" },
 		{ "UIMin", "-1.0" },
 	};
@@ -162,8 +168,9 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "Category", "Comb" },
 		{ "ClampMax", "1.0" },
 		{ "ClampMin", "0.0" },
-		{ "DisplayName", "Apply Height" },
+		{ "DisplayName", "Effect Height" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "ToolTip", "Height of fur spline at which the brush effect is applied. 0=root, 1=tip" },
 		{ "UIMax", "1.0" },
 		{ "UIMin", "0.0" },
 	};
@@ -190,7 +197,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "DisplayName", "Strength" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Strength of the brush (0.0 - 1.0)" },
-		{ "UIMax", "1.0" },
+		{ "UIMax", "5.0" },
 		{ "UIMin", "0.0" },
 	};
 #endif
@@ -243,7 +250,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurCombSettings, 605000040);
+	IMPLEMENT_CLASS(UFurCombSettings, 821591559);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UFurCombSettings(Z_Construct_UClass_UFurCombSettings, &UFurCombSettings::StaticClass, TEXT("/Script/GFurEditor"), TEXT("UFurCombSettings"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UFurCombSettings);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

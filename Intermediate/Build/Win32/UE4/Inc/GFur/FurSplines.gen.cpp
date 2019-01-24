@@ -42,25 +42,38 @@ void EmptyLinkFunctionForGeneratedCodeFurSplines() {}
 			};
 #endif
 #if WITH_METADATA
+			static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Version_MetaData[] = {
+				{ "ModuleRelativePath", "Public/FurSplines.h" },
+			};
+#endif
+			static const UE4CodeGen_Private::FIntPropertyParams NewProp_Version = { UE4CodeGen_Private::EPropertyClass::Int, "Version", RF_Public|RF_Transient|RF_MarkAsNative, 0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, Version), METADATA_PARAMS(NewProp_Version_MetaData, ARRAY_COUNT(NewProp_Version_MetaData)) };
+#if WITH_METADATA
 			static const UE4CodeGen_Private::FMetaDataPairParam NewProp_ImportFilename_MetaData[] = {
 				{ "ModuleRelativePath", "Public/FurSplines.h" },
 			};
 #endif
 			static const UE4CodeGen_Private::FStrPropertyParams NewProp_ImportFilename = { UE4CodeGen_Private::EPropertyClass::Str, "ImportFilename", RF_Public|RF_Transient|RF_MarkAsNative, 0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, ImportFilename), METADATA_PARAMS(NewProp_ImportFilename_MetaData, ARRAY_COUNT(NewProp_ImportFilename_MetaData)) };
 #if WITH_METADATA
+			static const UE4CodeGen_Private::FMetaDataPairParam NewProp_ControlPointCount_MetaData[] = {
+				{ "ModuleRelativePath", "Public/FurSplines.h" },
+			};
+#endif
+			static const UE4CodeGen_Private::FIntPropertyParams NewProp_ControlPointCount = { UE4CodeGen_Private::EPropertyClass::Int, "ControlPointCount", RF_Public|RF_Transient|RF_MarkAsNative, 0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, ControlPointCount), METADATA_PARAMS(NewProp_ControlPointCount_MetaData, ARRAY_COUNT(NewProp_ControlPointCount_MetaData)) };
+#if WITH_METADATA
 			static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Count_MetaData[] = {
 				{ "ModuleRelativePath", "Public/FurSplines.h" },
 			};
 #endif
 			static const UE4CodeGen_Private::FArrayPropertyParams NewProp_Count = { UE4CodeGen_Private::EPropertyClass::Array, "Count", RF_Public|RF_Transient|RF_MarkAsNative, 0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, Count), METADATA_PARAMS(NewProp_Count_MetaData, ARRAY_COUNT(NewProp_Count_MetaData)) };
-			static const UE4CodeGen_Private::FUnsizedIntPropertyParams NewProp_Count_Inner = { UE4CodeGen_Private::EPropertyClass::Int, "Count", RF_Public|RF_Transient|RF_MarkAsNative, 0x0000000000000000, 1, nullptr, 0, METADATA_PARAMS(nullptr, 0) };
+			static const UE4CodeGen_Private::FIntPropertyParams NewProp_Count_Inner = { UE4CodeGen_Private::EPropertyClass::Int, "Count", RF_Public|RF_Transient|RF_MarkAsNative, 0x0000000000000000, 1, nullptr, 0, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 			static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Index_MetaData[] = {
 				{ "ModuleRelativePath", "Public/FurSplines.h" },
+				{ "ToolTip", "Old - don't use" },
 			};
 #endif
 			static const UE4CodeGen_Private::FArrayPropertyParams NewProp_Index = { UE4CodeGen_Private::EPropertyClass::Array, "Index", RF_Public|RF_Transient|RF_MarkAsNative, 0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, Index), METADATA_PARAMS(NewProp_Index_MetaData, ARRAY_COUNT(NewProp_Index_MetaData)) };
-			static const UE4CodeGen_Private::FUnsizedIntPropertyParams NewProp_Index_Inner = { UE4CodeGen_Private::EPropertyClass::Int, "Index", RF_Public|RF_Transient|RF_MarkAsNative, 0x0000000000000000, 1, nullptr, 0, METADATA_PARAMS(nullptr, 0) };
+			static const UE4CodeGen_Private::FIntPropertyParams NewProp_Index_Inner = { UE4CodeGen_Private::EPropertyClass::Int, "Index", RF_Public|RF_Transient|RF_MarkAsNative, 0x0000000000000000, 1, nullptr, 0, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 			static const UE4CodeGen_Private::FMetaDataPairParam NewProp_Vertices_MetaData[] = {
 				{ "ModuleRelativePath", "Public/FurSplines.h" },
@@ -69,7 +82,9 @@ void EmptyLinkFunctionForGeneratedCodeFurSplines() {}
 			static const UE4CodeGen_Private::FArrayPropertyParams NewProp_Vertices = { UE4CodeGen_Private::EPropertyClass::Array, "Vertices", RF_Public|RF_Transient|RF_MarkAsNative, 0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, Vertices), METADATA_PARAMS(NewProp_Vertices_MetaData, ARRAY_COUNT(NewProp_Vertices_MetaData)) };
 			static const UE4CodeGen_Private::FStructPropertyParams NewProp_Vertices_Inner = { UE4CodeGen_Private::EPropertyClass::Struct, "Vertices", RF_Public|RF_Transient|RF_MarkAsNative, 0x0000000000000000, 1, nullptr, 0, Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
 			static const UE4CodeGen_Private::FPropertyParamsBase* const PropPointers[] = {
+				(const UE4CodeGen_Private::FPropertyParamsBase*)&NewProp_Version,
 				(const UE4CodeGen_Private::FPropertyParamsBase*)&NewProp_ImportFilename,
+				(const UE4CodeGen_Private::FPropertyParamsBase*)&NewProp_ControlPointCount,
 				(const UE4CodeGen_Private::FPropertyParamsBase*)&NewProp_Count,
 				(const UE4CodeGen_Private::FPropertyParamsBase*)&NewProp_Count_Inner,
 				(const UE4CodeGen_Private::FPropertyParamsBase*)&NewProp_Index,
@@ -95,7 +110,7 @@ void EmptyLinkFunctionForGeneratedCodeFurSplines() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurSplines, 1534991963);
+	IMPLEMENT_CLASS(UFurSplines, 2946233035);
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UFurSplines(Z_Construct_UClass_UFurSplines, &UFurSplines::StaticClass, TEXT("/Script/GFur"), TEXT("UFurSplines"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UFurSplines);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

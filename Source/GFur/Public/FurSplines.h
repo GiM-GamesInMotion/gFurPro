@@ -13,14 +13,40 @@ public:
 	UPROPERTY()
 	TArray<FVector> Vertices;
 
+	// Old - don't use
 	UPROPERTY()
-	TArray<int> Index;
+	TArray<int32> Index;
+	UPROPERTY()
+	TArray<int32> Count;
 
 	UPROPERTY()
-	TArray<int> Count;
+	int32 ControlPointCount;
 
 	UPROPERTY()
 	FString ImportFilename;
 
-	void Refresh();
+	UPROPERTY()
+	int32 Version;
+
+	int32 SplineCount() const { return Vertices.Num() / ControlPointCount; }
+	FVector GetFirstControlPoint(int32 SplineIndex) const { return Vertices[SplineIndex * ControlPointCount]; }
+	FVector GetLastControlPoint(int32 SplineIndex) const { return Vertices[SplineIndex * ControlPointCount + ControlPointCount - 1]; }
+
+	void PostLoad() override;
+
+	void UpdateSplines();
+
+#if WITH_EDITOR
+	/** Notification when anything changed */
+	DECLARE_MULTICAST_DELEGATE(FOnSplinesChanged);
+	FOnSplinesChanged OnSplinesChanged;
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnSplinesCombed, const TArray<uint32>&);
+	FOnSplinesCombed OnSplinesCombed;
+
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostEditUndo() override;
+#endif
+
+private:
+	void ConvertToUniformControlPointCount(int32 NumControlPoints);
 };

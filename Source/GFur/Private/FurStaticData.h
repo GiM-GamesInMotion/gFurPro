@@ -6,21 +6,46 @@
 #include "FurData.h"
 
 /** Fur Static Data */
-struct FFurStaticData: public FFurData
+class FFurStaticData: public FFurData
 {
-	UStaticMesh* StaticMesh;
-	TArray<UStaticMesh*> GuideMeshes;
-	class FFurStaticVertexBuffer* VertexBuffer;
-
-	~FFurStaticData();
-
-	FFurStaticData(UStaticMesh* InStaticMesh, int InLod, UFurSplines* InFurSplines, const TArray<UStaticMesh*>& InGuideMeshes, int InFurLayerCount,
-		float InFurLength, float InMinFurLength, float InShellBias, float InHairLengthForceUniformity, float InNoiseStrength, bool InRemoveFacesWithoutSplines);
-	static UFurSplines* GenerateSplines(UStaticMesh* InStaticMesh, int InLod, const TArray<UStaticMesh*>& InGuideMeshes);
+public:
+	static FFurStaticData* CreateFurData(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent);
+	static void DestroyFurData(const TArray<FFurData*>& InFurDataArray);
 
 	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel) override;
+protected:
+	UStaticMesh* StaticMesh;
+	TArray<UStaticMesh*> GuideMeshes;
 
-	static void ReloadFurSplines(UFurSplines* FurSplines);
-	static FFurData* CreateFurData(int InFurLayerCount, int InLod, class UGFurComponent* FurComponent);
-	static void DestroyFurData(const TArray<FFurData*>& InFurDataArray);
+#if WITH_EDITORONLY_DATA
+	FDelegateHandle FurSplinesChangeHandle;
+	FDelegateHandle FurSplinesCombHandle;
+	FDelegateHandle StaticMeshChangeHandle;
+	TArray<FDelegateHandle> GuideMeshesChangeHandles;
+#endif WITH_EDITORONLY_DATA
+
+	FFurStaticData() {}
+	~FFurStaticData() { UnbindChangeDelegates(); }
+
+	void UnbindChangeDelegates();
+	void Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent);
+
+	bool Compare(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent);
+	bool Similar(int32 InLod, class UGFurComponent* InFurComponent);
+
+	void BuildFur(BuildType Build);
+
+	template<EStaticMeshVertexTangentBasisType TangentBasisTypeT>
+	void BuildFur(const FStaticMeshLODResources& LodRenderData, BuildType Build);
+	template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT>
+	void BuildFur(const FStaticMeshLODResources& LodRenderData, BuildType Build);
+
+	void BuildFur(const TArray<uint32>& InVertexSet);
+	template<EStaticMeshVertexTangentBasisType TangentBasisTypeT>
+	void BuildFur(const FStaticMeshLODResources& LodRenderData, const TArray<uint32>& InVertexSet);
+	template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT>
+	void BuildFur(const TArray<uint32>& InVertexSet);
 };
+
+/** Generate Splines */
+void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLod, const TArray<UStaticMesh*>& InGuideMeshes);

@@ -7,8 +7,10 @@ public class GFur : ModuleRules
 	public GFur(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		bFasterWithoutUnity = true;
+		MinFilesUsingPrecompiledHeaderOverride = 1;
 
-        PublicIncludePaths.Add(ModuleDirectory + "/Public");
+		PublicIncludePaths.Add(ModuleDirectory + "/Public");
 
 
         PrivateIncludePaths.Add(ModuleDirectory + "/Private");
@@ -30,6 +32,7 @@ public class GFur : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"Projects"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

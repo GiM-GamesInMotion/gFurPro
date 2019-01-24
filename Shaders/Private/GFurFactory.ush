@@ -1,4 +1,4 @@
-// Copyright 2017 GiM s.r.o. All Rights Reserved.
+// Copyright 2018 GiM s.r.o. All Rights Reserved.
 
 #include "/Engine/Public/Platform.ush"
 #include "/Engine/Private/VertexFactoryCommon.ush"
@@ -28,6 +28,7 @@ float3 MeshOrigin;
 float3 MeshExtension;
 
 float FurOffsetPower;
+float MaxPhysicsOffsetLength;
 
 #if GPUSKIN_APEX_CLOTH
 /** Vertex buffer from which to read simulated positions of clothing. */
@@ -214,7 +215,6 @@ FMaterialVertexParameters GetMaterialVertexParameters(FVertexFactoryInput Input,
 		Result.TexCoords[CoordinateIndex] = Input.TexCoords[CoordinateIndex];
 	}
 #endif
-
 	return Result;
 }
 
@@ -362,12 +362,12 @@ float3 SkinPosition( FVertexFactoryInput Input, FVertexFactoryIntermediates Inte
 
 #if GFUR_PHYSICS
 
-float3 CalcPrevBoneFurOffset(int Index, float3 Position)
+float3 CalcPrevBoneFurPhysicsOffset(int Index, float3 Position)
 {
 	return PreviousBoneFurOffsets[Index * 3].xyz + cross(Position - PreviousBoneFurOffsets[Index * 3 + 2].xyz, PreviousBoneFurOffsets[Index * 3 + 1].xyz);
 }
 
-float3 CalcBoneFurOffset(int Index, float3 Position)
+float3 CalcBoneFurPhysicsOffset(int Index, float3 Position)
 {
 	return BoneFurOffsets[Index * 3].xyz + cross(Position - BoneFurOffsets[Index * 3 + 2].xyz, BoneFurOffsets[Index * 3 + 1].xyz);
 }
@@ -414,22 +414,26 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 
 	float FurLength = length(FurOffset);
 
-	float3 Offset = Input.BlendWeights.x * CalcPrevBoneFurOffset(Input.BlendIndices.x, Position);
-	Offset += Input.BlendWeights.y * CalcPrevBoneFurOffset(Input.BlendIndices.y, Position);
-	Offset += Input.BlendWeights.z * CalcPrevBoneFurOffset(Input.BlendIndices.z, Position);
-	Offset += Input.BlendWeights.w * CalcPrevBoneFurOffset(Input.BlendIndices.w, Position);
+	float3 PhysicsOffset = Input.BlendWeights.x * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.x, Position);
+	PhysicsOffset += Input.BlendWeights.y * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.y, Position);
+	PhysicsOffset += Input.BlendWeights.z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.z, Position);
+	PhysicsOffset += Input.BlendWeights.w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.w, Position);
 #if GPUSKIN_USE_EXTRA_INFLUENCES
-	Offset += Input.BlendWeightsExtra.x * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.x, Position);
-	Offset += Input.BlendWeightsExtra.y * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.y, Position);
-	Offset += Input.BlendWeightsExtra.z * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.z, Position);
-	Offset += Input.BlendWeightsExtra.w * CalcPrevBoneFurOffset(Input.BlendIndicesExtra.w, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.x * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.x, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.y * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.y, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.z, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.w, Position);
 #endif // GPUSKIN_USE_EXTRA_INFLUENCES
-	
-	Offset -= dot(Offset, NormalVec) * NormalVec;
-	Offset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 
-	Offset = normalize(FurOffset + Offset) * FurLength;
-	Position += Offset;
+	PhysicsOffset -= dot(PhysicsOffset, NormalVec) * NormalVec;
+	PhysicsOffset *= pow(Input.TexCoords[1].x, FurOffsetPower);
+
+	float PhysicOffsetLength = length(PhysicsOffset);
+	float MaxPhysicsOffset = MaxPhysicsOffsetLength * FurLength;
+	if (PhysicOffsetLength > MaxPhysicsOffset)
+		PhysicsOffset *= MaxPhysicsOffset / PhysicOffsetLength;
+
+	Position += normalize(FurOffset + PhysicsOffset) * FurLength;
 
 #else // GFUR_PHYSICS
 
@@ -586,23 +590,26 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 
 	float FurLength = length(FurOffset);
 
-	float3 Offset = Input.BlendWeights.x * CalcBoneFurOffset(Input.BlendIndices.x, Position);
-	Offset += Input.BlendWeights.y * CalcBoneFurOffset(Input.BlendIndices.y, Position);
-	Offset += Input.BlendWeights.z * CalcBoneFurOffset(Input.BlendIndices.z, Position);
-	Offset += Input.BlendWeights.w * CalcBoneFurOffset(Input.BlendIndices.w, Position);
+	float3 PhysicsOffset = Input.BlendWeights.x * CalcBoneFurPhysicsOffset(Input.BlendIndices.x, Position);
+	PhysicsOffset += Input.BlendWeights.y * CalcBoneFurPhysicsOffset(Input.BlendIndices.y, Position);
+	PhysicsOffset += Input.BlendWeights.z * CalcBoneFurPhysicsOffset(Input.BlendIndices.z, Position);
+	PhysicsOffset += Input.BlendWeights.w * CalcBoneFurPhysicsOffset(Input.BlendIndices.w, Position);
 #if GPUSKIN_USE_EXTRA_INFLUENCES
-	Offset += Input.BlendWeightsExtra.x * CalcBoneFurOffset(Input.BlendIndicesExtra.x, Position);
-	Offset += Input.BlendWeightsExtra.y * CalcBoneFurOffset(Input.BlendIndicesExtra.y, Position);
-	Offset += Input.BlendWeightsExtra.z * CalcBoneFurOffset(Input.BlendIndicesExtra.z, Position);
-	Offset += Input.BlendWeightsExtra.w * CalcBoneFurOffset(Input.BlendIndicesExtra.w, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.x * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.x, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.y * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.y, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.z * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.z, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.w * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.w, Position);
 #endif // GPUSKIN_USE_EXTRA_INFLUENCES
 
-	Offset -= dot(Offset, NormalVec) * NormalVec;
-	Offset *= pow(Input.TexCoords[1].x, FurOffsetPower);
+	PhysicsOffset -= dot(PhysicsOffset, NormalVec) * NormalVec;
+	PhysicsOffset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 
-	Offset = normalize(FurOffset + Offset) * FurLength;
+	float PhysicOffsetLength = length(PhysicsOffset);
+	float MaxPhysicsOffset = MaxPhysicsOffsetLength * FurLength;
+	if (PhysicOffsetLength > MaxPhysicsOffset)
+		PhysicsOffset *= MaxPhysicsOffset / PhysicOffsetLength;
 
-	Position += Offset;
+	Position += normalize(FurOffset + PhysicsOffset) * FurLength;
 	
 #else // GFUR_PHYSICS
 

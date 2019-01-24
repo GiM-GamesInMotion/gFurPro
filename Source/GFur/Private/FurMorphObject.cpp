@@ -8,38 +8,6 @@
 #include "Runtime/Engine/Classes/Animation/MorphTarget.h"
 #include "ShaderParameterUtils.h"
 
-/** Fur Morph Vertex Buffer */
-class FFurMorphVertexBuffer : public FVertexBuffer
-{
-public:
-	FFurMorphVertexBuffer(int InNumVertices) : NumVertices(InNumVertices)
-	{
-	}
-
-	/**
-	* Initialize the dynamic RHI for this rendering resource
-	*/
-	virtual void InitDynamicRHI();
-
-	/**
-	* Release the dynamic RHI for this rendering resource
-	*/
-	virtual void ReleaseDynamicRHI();
-
-	/**
-	* Morph target vertex name
-	*/
-	virtual FString GetFriendlyName() const { return TEXT("gFur Morph target mesh vertices"); }
-
-	/**
-	 * Get Resource Size : mostly copied from InitDynamicRHI - how much they allocate when initialize
-	 */
-
-
-private:
-	int NumVertices;
-};
-
 void FFurMorphVertexBuffer::InitDynamicRHI()
 {
 	// Create the buffer rendering resource
@@ -57,8 +25,6 @@ void FFurMorphVertexBuffer::InitDynamicRHI()
 	void* BufferData = RHILockVertexBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
 	FMorphGPUSkinVertex* Buffer = (FMorphGPUSkinVertex*)BufferData;
 	FMemory::Memzero(&Buffer[0], Size);
-	for (int i = 0; i < NumVertices; i++)
-		Buffer[i].DeltaPosition.Z = 100.0f;
 	// Unlock the buffer.
 	RHIUnlockVertexBuffer(VertexBufferRHI);
 }
@@ -72,23 +38,21 @@ void FFurMorphVertexBuffer::ReleaseDynamicRHI()
 FFurMorphObject::FFurMorphObject(FFurSkinData* InFurData)
 {
 	FurData = InFurData;
-	VertexBuffer = new FFurMorphVertexBuffer(InFurData->NumVertices());
-	BeginInitResource(VertexBuffer);
 }
 
 FFurMorphObject::~FFurMorphObject()
 {
-	VertexBuffer->ReleaseResource();
-	delete VertexBuffer;
+	if (VertexBuffer.IsInitialized())
+		VertexBuffer.ReleaseResource();
 }
 
-void FFurMorphObject::Update(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTables)
+void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTables)
 {
-	if (IsValidRef(VertexBuffer->VertexBufferRHI))
+	int32 NumVertices = FurData->GetNumVertices_RenderThread() / FurData->GetFurLayerCount();
+	if (NumVertices > 0)
 	{
-		int32 NumVertices = FurData->NumVertices() / FurData->FurLayerCount;
-		int32 NumLayers = FurData->FurLayerCount;
-		int32 LODIndex = FurData->Lod;
+		int32 NumLayers = FurData->GetFurLayerCount();
+		int32 LODIndex = FurData->GetLod();
 
 		uint32 Size = NumVertices * sizeof(FMorphGPUSkinVertex);
 
@@ -110,6 +74,7 @@ void FFurMorphObject::Update(FRHICommandListImmediate& RHICmdList, const TArray<
 			checkSlow(MorphTarget.MorphTarget->HasDataForLOD(LODIndex));
 			const float MorphTargetWeight = MorphTargetWeights[MorphTarget.WeightIndex];
 			const float MorphAbsWeight = FMath::Abs(MorphTargetWeight);
+			checkSlow(MorphAbsWeight >= MinMorphTargetBlendWeight && MorphAbsWeight <= MaxMorphTargetBlendWeight);
 
 
 			// Get deltas
@@ -163,8 +128,20 @@ void FFurMorphObject::Update(FRHICommandListImmediate& RHICmdList, const TArray<
 
 		// Lock the real buffer.
 		{
-			FMorphGPUSkinVertex* ActualBuffer = (FMorphGPUSkinVertex*)RHILockVertexBuffer(VertexBuffer->VertexBufferRHI, 0, Size * NumLayers, RLM_WriteOnly);
-			for (const auto& Section : FurData->Sections)
+			if (!VertexBuffer.IsInitialized())
+			{
+				VertexBuffer.NumVertices = NumVertices;
+				VertexBuffer.InitResource();
+			}
+			else if (VertexBuffer.NumVertices != NumVertices)
+			{
+				VertexBuffer.NumVertices = NumVertices;
+				VertexBuffer.ReleaseDynamicRHI();
+				VertexBuffer.InitDynamicRHI();
+			}
+
+			FMorphGPUSkinVertex* ActualBuffer = (FMorphGPUSkinVertex*)RHILockVertexBuffer(VertexBuffer.VertexBufferRHI, 0, Size * NumLayers, RLM_WriteOnly);
+			for (const auto& Section : FurData->GetSections_RenderThread())
 			{
 				uint32 NumSectionVertices = Section.MaxVertexIndex - Section.MinVertexIndex + 1;
 				check(NumSectionVertices % NumLayers == 0);
@@ -183,7 +160,7 @@ void FFurMorphObject::Update(FRHICommandListImmediate& RHICmdList, const TArray<
 
 		{
 			// Unlock the buffer.
-			RHIUnlockVertexBuffer(VertexBuffer->VertexBufferRHI);
+			RHIUnlockVertexBuffer(VertexBuffer.VertexBufferRHI);
 			// set update flag
 //			MorphVertexBuffer.bHasBeenUpdated = true;
 		}

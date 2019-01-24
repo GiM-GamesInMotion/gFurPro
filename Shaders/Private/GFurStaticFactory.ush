@@ -1,9 +1,5 @@
 // Copyright 2018 GiM s.r.o. All Rights Reserved.
 
-/*=============================================================================
-	LocalVertexFactory.usf: Local vertex factory shader code.
-=============================================================================*/
-
 #include "/Engine/Private/VertexFactoryCommon.ush"
 #include "/Engine/Private/LocalVertexFactoryCommon.ush"
 

@@ -78,8 +78,7 @@ public:
 		FVector PreviousFurAngularOffset;
 
 		FShaderDataType()
-			: Discontinuous(true)
-			, MeshOrigin(0, 0, 0)
+			: MeshOrigin(0, 0, 0)
 			, MeshExtension(1, 1, 1)
 			, FurOffsetPower(2.0f)
 			, FurLinearOffset(0, 0, 0)
@@ -88,6 +87,7 @@ public:
 			, PreviousFurLinearOffset(0, 0, 0)
 			, PreviousFurPosition(0, 0, 0)
 			, PreviousFurAngularOffset(0, 0, 0)
+			, Discontinuous(true)
 		{
 		}
 
@@ -128,7 +128,7 @@ public:
 			VertexBuffer,
 			VertexBuffer,
 			{
-				const auto TangentElementType = TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
+				const auto TangentElementType = typename TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
 				const auto UvElementType = UVTypeT == EStaticMeshVertexUVType::HighPrecision ? VET_Float2 : VET_Half2;
 
 				// Initialize the vertex factory's stream components.

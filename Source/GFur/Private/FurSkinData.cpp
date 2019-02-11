@@ -97,12 +97,12 @@ public:
 	{
 		FShaderDataType(ERHIFeatureLevel::Type InFeatureLevel)
 			: CurrentBuffer(0)
-			, Discontinuous(true)
-			, MaxPhysicsOffsetLength(FLT_MAX)
 			, MeshOrigin(0, 0, 0)
 			, MeshExtension(1, 1, 1)
 			, FurOffsetPower(2.0f)
+			, MaxPhysicsOffsetLength(FLT_MAX)
 			, FeatureLevel(InFeatureLevel)
+			, Discontinuous(true)
 		{
 		}
 
@@ -283,7 +283,7 @@ public:
 			const FFurVertexBuffer*, VertexBuffer, VertexBuffer,
 			const FVertexBuffer*, MorphVertexBuffer, MorphVertexBuffer,
 			{
-				const auto TangentElementType = TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
+				const auto TangentElementType = typename TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
 				const auto UvElementType = UVTypeT == EStaticMeshVertexUVType::HighPrecision ? VET_Float2 : VET_Half2;
 
 				// Initialize the vertex factory's stream components.

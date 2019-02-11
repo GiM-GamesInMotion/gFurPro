@@ -612,9 +612,9 @@ void UGFurComponent::updateFur()
 
 	FMatrix ToWorld = GetComponentTransform().ToMatrixNoScale();
 
-	auto Physics = [&](const FMatrix& NewTransformation, FMatrix& Transformations, FVector& LinearOffset, FVector& LinearVelocity
+	auto Physics = [&](const FMatrix& NewTransformation, FMatrix& Transformation, FVector& LinearOffset, FVector& LinearVelocity
 		, FVector& AngularOffset, FVector& AngularVelocity) {
-		FVector d = (NewTransformation.GetOrigin() - Transformations.GetOrigin());
+		FVector d = (NewTransformation.GetOrigin() - Transformation.GetOrigin());
 		d *= ForceFactor;
 		LinearOffset -= d;
 
@@ -633,7 +633,7 @@ void UGFurComponent::updateFur()
 				LinearVelocity -= LinearOffset * k;
 		}
 
-		FQuat rdiff = NewTransformation.ToQuat() * Transformations.ToQuat().Inverse();
+		FQuat rdiff = NewTransformation.ToQuat() * Transformation.ToQuat().Inverse();
 		float angle;
 		rdiff.ToAxisAndAngle(d, angle);
 		if (angle > PI)
@@ -647,7 +647,7 @@ void UGFurComponent::updateFur()
 		if (AngularOffset.Size() > MaxTorque)
 			AngularOffset *= MaxTorque / AngularOffset.Size();
 
-		Transformations = NewTransformation;
+		Transformation = NewTransformation;
 	};
 
 	if (SkeletalGrowMesh)

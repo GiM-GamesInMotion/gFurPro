@@ -22,7 +22,7 @@ protected:
 	FDelegateHandle FurSplinesCombHandle;
 	FDelegateHandle StaticMeshChangeHandle;
 	TArray<FDelegateHandle> GuideMeshesChangeHandles;
-#endif WITH_EDITORONLY_DATA
+#endif // WITH_EDITORONLY_DATA
 
 	FFurStaticData() {}
 	~FFurStaticData() { UnbindChangeDelegates(); }

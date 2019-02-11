@@ -88,7 +88,7 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 		{
 			FurComb->SetMode(EFurCombMode::Length);
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Length; })),
-			NAME_None, LOCTEXT("Mode.FurComb.Length", "Length"), LOCTEXT("Mode.FurComb.Length.Tooltip", "Length - makes the fur longer, holding shift while combing make the fur shorter"),
+			NAME_None, LOCTEXT("Mode.FurComb.Length", "Length"), LOCTEXT("Mode.FurComb.Length.Tooltip", "Length - makes the fur longer, holding shift while combing makes the fur shorter"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
 
 		ModeSwitchButtons.AddToolBarButton(FUIAction(FExecuteAction::CreateLambda([=]()

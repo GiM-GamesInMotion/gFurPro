@@ -36,7 +36,7 @@ protected:
 	FDelegateHandle FurSplinesCombHandle;
 	FDelegateHandle SkeletalMeshChangeHandle;
 	TArray<FDelegateHandle> GuideMeshesChangeHandles;
-#endif WITH_EDITORONLY_DATA
+#endif // WITH_EDITORONLY_DATA
 
 	FFurSkinData() {}
 	~FFurSkinData() { UnbindChangeDelegates(); }

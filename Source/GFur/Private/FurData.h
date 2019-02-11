@@ -221,33 +221,35 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 {
 	uint32 VerticesPerLayer;
 	uint32 DstVertexIndex = 0;
-	auto GenLayerData = CalcFurGenLayerData(FurLayerCount);
-	for (uint32 SrcVertexIndex = SrcVertexIndexBegin; SrcVertexIndex < SrcVertexIndexEnd; SrcVertexIndex++)
 	{
-		auto& Vertex = Vertices[DstVertexIndex];
-		VertexBlitter.Blit(Vertex, SrcVertexIndex);
-		if (FurSplinesUsed)
+		auto GenLayerData = CalcFurGenLayerData(FurLayerCount);
+		for (uint32 SrcVertexIndex = SrcVertexIndexBegin; SrcVertexIndex < SrcVertexIndexEnd; SrcVertexIndex++)
 		{
-			int32 SplineIndex = SplineMap[SrcVertexIndex];
-			if (RemoveFacesWithoutSplines)
+			auto& Vertex = Vertices[DstVertexIndex];
+			VertexBlitter.Blit(Vertex, SrcVertexIndex);
+			if (FurSplinesUsed)
 			{
-				if (SplineIndex == -1)
+				int32 SplineIndex = SplineMap[SrcVertexIndex];
+				if (RemoveFacesWithoutSplines)
 				{
-					VertexRemap[SrcVertexIndex] = -1;
-					continue;
+					if (SplineIndex == -1)
+					{
+						VertexRemap[SrcVertexIndex] = -1;
+						continue;
+					}
+					else
+					{
+						VertexRemap[SrcVertexIndex] = DstVertexIndex;
+					}
 				}
-				else
-				{
-					VertexRemap[SrcVertexIndex] = DstVertexIndex;
-				}
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData, SplineIndex);
 			}
-			GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData, SplineIndex);
+			else
+			{
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData);
+			}
+			DstVertexIndex++;
 		}
-		else
-		{
-			GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData);
-		}
-		DstVertexIndex++;
 	}
 	VerticesPerLayer = DstVertexIndex;
 

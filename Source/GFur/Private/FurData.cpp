@@ -164,7 +164,7 @@ void FFurData::GenerateSplineMap(const FPositionVertexBuffer& InPositions)
 		uint32 ValidVertexCount = 0;
 		float MinLenSquared = FLT_MAX;
 		float MaxLenSquared = -FLT_MAX;
-		SplineMap.Reserve(SourceVertexCount);
+		SplineMap.AddUninitialized(SourceVertexCount);
 
 		const int32 Size = 64;
 		TArray<int32> Cells;
@@ -221,39 +221,49 @@ void FFurData::GenerateSplineMap(const FPositionVertexBuffer& InPositions)
 
 		for (uint32 i = 0; i < SourceVertexCount; i++)
 		{
+			const float Epsilon = 0.01f;
+			const float EpsilonSquared = Epsilon * Epsilon;
 			FVector p = InPositions.VertexPosition(i);
-			uint32 X = FMath::FloorToInt((p.X - MinX) * FactorWidth);
-			uint32 Y = FMath::FloorToInt((p.Y - MinY) * FactorHeight);
-			if (X < Size && Y < Size)
+			int32 BeginX = FMath::FloorToInt((p.X - Epsilon - MinX) * FactorWidth);
+			int32 BeginY = FMath::FloorToInt((p.Y - Epsilon - MinY) * FactorHeight);
+			int32 EndX = FMath::FloorToInt((p.X + Epsilon - MinX) * FactorWidth);
+			int32 EndY = FMath::FloorToInt((p.Y + Epsilon - MinY) * FactorHeight);
+			for (int32 Y = BeginY; Y <= EndY; Y++)
 			{
-				int32 Idx = Cells[Y * Size + X];
-				while (Idx != -1)
+				for (int32 X = BeginX; X <= EndX; X++)
 				{
-					FVector s = FurSplinesUsed->GetFirstControlPoint(Idx);
-					if (s == p)
+					if (X < Size && Y < Size)
 					{
-						FVector s2 = FurSplinesUsed->GetLastControlPoint(Idx);
-						if (FVector::DotProduct(s2 - s, Normals[i]) > 0.0f || MinFurLength > 0.0f)
+						int32 Idx = Cells[Y * Size + X];
+						while (Idx != -1)
 						{
-							float SizeSquared = (s2 - s).SizeSquared();
-							if (SizeSquared < MinLenSquared)
-								MinLenSquared = SizeSquared;
-							if (SizeSquared > MaxLenSquared)
-								MaxLenSquared = SizeSquared;
-							SplineMap.Add(Idx);
-							ValidVertexCount++;
+							FVector s = FurSplinesUsed->GetFirstControlPoint(Idx);
+							if (FVector::DistSquared(s, p) <= EpsilonSquared)
+							{
+								FVector s2 = FurSplinesUsed->GetLastControlPoint(Idx);
+								if (FVector::DotProduct(s2 - s, Normals[i]) > 0.0f || MinFurLength > 0.0f)
+								{
+									float SizeSquared = (s2 - s).SizeSquared();
+									if (SizeSquared < MinLenSquared)
+										MinLenSquared = SizeSquared;
+									if (SizeSquared > MaxLenSquared)
+										MaxLenSquared = SizeSquared;
+									SplineMap[i] = Idx;
+									ValidVertexCount++;
+								}
+								else
+								{
+									SplineMap[i] = -1;
+								}
+								break;
+							}
+							Idx = NextIndex[Idx];
 						}
-						else
+						if (Idx == -1)
 						{
-							SplineMap.Add(-1);
+							SplineMap[i] = -1;
 						}
-						break;
 					}
-					Idx = NextIndex[Idx];
-				}
-				if (Idx == -1)
-				{
-					SplineMap.Add(-1);
 				}
 			}
 		}

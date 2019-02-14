@@ -322,6 +322,7 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 			if (FurSplines == nullptr)
 				continue;
 
+			int32 SplineCount = FurSplines->SplineCount();
 			const auto& SplineMap = FurComponent->GetFurSplineMap();
 			const auto& VertexNormals = FurComponent->GetVertexNormals();
 
@@ -355,8 +356,8 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 
 			VertexSet.Reset();
 			SplineSet.Reset();
-			if (SplineNormals.Num() < VertexCount)
-				SplineNormals.AddUninitialized(VertexCount - SplineNormals.Num());
+			if (SplineNormals.Num() < SplineCount)
+				SplineNormals.AddUninitialized(SplineCount - SplineNormals.Num());
 
 			CombParams Params;
 			Params.Location = ComponentSpaceLocation;

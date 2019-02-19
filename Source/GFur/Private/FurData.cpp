@@ -224,10 +224,11 @@ void FFurData::GenerateSplineMap(const FPositionVertexBuffer& InPositions)
 			const float Epsilon = 0.01f;
 			const float EpsilonSquared = Epsilon * Epsilon;
 			FVector p = InPositions.VertexPosition(i);
-			int32 BeginX = FMath::FloorToInt((p.X - Epsilon - MinX) * FactorWidth);
-			int32 BeginY = FMath::FloorToInt((p.Y - Epsilon - MinY) * FactorHeight);
-			int32 EndX = FMath::FloorToInt((p.X + Epsilon - MinX) * FactorWidth);
-			int32 EndY = FMath::FloorToInt((p.Y + Epsilon - MinY) * FactorHeight);
+			int32 BeginX = FMath::Max(FMath::FloorToInt((p.X - Epsilon - MinX) * FactorWidth), 0);
+			int32 BeginY = FMath::Max(FMath::FloorToInt((p.Y - Epsilon - MinY) * FactorHeight), 0);
+			int32 EndX = FMath::Min(FMath::FloorToInt((p.X + Epsilon - MinX) * FactorWidth), Size - 1);
+			int32 EndY = FMath::Min(FMath::FloorToInt((p.Y + Epsilon - MinY) * FactorHeight), Size - 1);
+			SplineMap[i] = -1;
 			for (int32 Y = BeginY; Y <= EndY; Y++)
 			{
 				for (int32 X = BeginX; X <= EndX; X++)

@@ -17,7 +17,7 @@ class FFurSkinVertexBlitter : public FFurStaticVertexBlitter<TangentBasisTypeT, 
 {
 public:
 	FFurSkinVertexBlitter(const FPositionVertexBuffer& InPositions, const FStaticMeshVertexBuffer& InVertices, const FColorVertexBuffer& InColors, const FSkinWeightVertexBuffer& InSkinWeights)
-		: FFurStaticVertexBlitter(InPositions, InVertices, InColors), SkinWeights(InSkinWeights)
+		: FFurStaticVertexBlitter<TangentBasisTypeT, UVTypeT>(InPositions, InVertices, InColors), SkinWeights(InSkinWeights)
 	{}
 
 	void Blit(FFurSkinVertex<TangentBasisTypeT, UVTypeT, bExtraBoneInfluencesT>& OutVertex, uint32 InVertexIndex) const
@@ -283,7 +283,7 @@ public:
 			const FFurVertexBuffer*, VertexBuffer, VertexBuffer,
 			const FVertexBuffer*, MorphVertexBuffer, MorphVertexBuffer,
 			{
-				const auto TangentElementType = typename TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
+				const auto TangentElementType = TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
 				const auto UvElementType = UVTypeT == EStaticMeshVertexUVType::HighPrecision ? VET_Float2 : VET_Half2;
 
 				// Initialize the vertex factory's stream components.

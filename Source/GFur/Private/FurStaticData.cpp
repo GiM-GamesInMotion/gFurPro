@@ -128,7 +128,7 @@ public:
 			VertexBuffer,
 			VertexBuffer,
 			{
-				const auto TangentElementType = typename TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
+				const auto TangentElementType = TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
 				const auto UvElementType = UVTypeT == EStaticMeshVertexUVType::HighPrecision ? VET_Float2 : VET_Half2;
 
 				// Initialize the vertex factory's stream components.

@@ -657,9 +657,8 @@ void UGFurComponent::updateFur()
 		const USkeletalMesh* const MasterCompMesh = MasterComp ? MasterComp->SkeletalMesh : nullptr;
 		const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentMeshLodLevel()];
 
-		FMatrix TempMatrices[256];
-		bool ValidTempMatrices[256];
-		memset(ValidTempMatrices, 0, sizeof(ValidTempMatrices));
+		TArray<FMatrix, TInlineAllocator<256>> TempMatrices;
+		TArray<bool, TInlineAllocator<256>> ValidTempMatrices;
 		check(ThisMesh->RefBasesInvMatrix.Num() != 0);
 		if (ReferenceToLocal.Num() != ThisMesh->RefBasesInvMatrix.Num())
 		{
@@ -678,6 +677,9 @@ void UGFurComponent::updateFur()
 			OldPositionValid = false;
 		}
 
+		ValidTempMatrices.AddDefaulted(ReferenceToLocal.Num());
+		TempMatrices.AddUninitialized(ReferenceToLocal.Num());
+
 		const bool bIsMasterCompValid = MasterComp && MasterBoneMap.Num() == ThisMesh->RefSkeleton.GetNum();
 
 		const TArray<FBoneIndexType>* RequiredBoneSets[3] = { &LOD.ActiveBoneIndices, 0/*ExtraRequiredBoneIndices*/, NULL };
@@ -686,11 +688,24 @@ void UGFurComponent::updateFur()
 		for (int32 RequiredBoneSetIndex = 0; RequiredBoneSets[RequiredBoneSetIndex] != NULL; RequiredBoneSetIndex++)
 		{
 			const TArray<FBoneIndexType>& RequiredBoneIndices = *RequiredBoneSets[RequiredBoneSetIndex];
+			auto Cnt = FMath::Max(RequiredBoneIndices.Num(), RequiredBoneIndices.Num() ? RequiredBoneIndices.Last() + 1 : 0);
+			if (Cnt > ValidTempMatrices.Num())
+			{
+				auto Count = Cnt - ValidTempMatrices.Num();
+				ValidTempMatrices.AddDefaulted(Count);
+				TempMatrices.AddUninitialized(Count);
+			}
 
 			// Get the index of the bone in this skeleton, and loop up in table to find index in parent component mesh.
 			for (int32 BoneIndex = 0; BoneIndex < RequiredBoneIndices.Num(); BoneIndex++)
 			{
 				const int32 ThisBoneIndex = RequiredBoneIndices[BoneIndex];
+				if (ThisBoneIndex >= ValidTempMatrices.Num())
+				{
+					auto Count = ThisBoneIndex - ValidTempMatrices.Num() + 1;
+					ValidTempMatrices.AddDefaulted(Count);
+					TempMatrices.AddUninitialized(Count);
+				}
 
 				if (ThisMesh->RefBasesInvMatrix.IsValidIndex(ThisBoneIndex))
 				{
@@ -739,6 +754,7 @@ void UGFurComponent::updateFur()
 				{
 					ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
 					NewTransformation = TempMatrices[ThisBoneIndex] * ToWorld;
+					NewTransformation.RemoveScaling();
 				}
 				else
 				{
@@ -758,6 +774,7 @@ void UGFurComponent::updateFur()
 				{
 					ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
 					Transformations[ThisBoneIndex] = TempMatrices[ThisBoneIndex] * ToWorld;
+					Transformations[ThisBoneIndex].RemoveScaling();
 				}
 				else
 				{

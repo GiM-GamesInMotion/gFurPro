@@ -813,6 +813,7 @@ void FFurComb::CombTwist(UFurSplines* FurSplines, const CombParams& Params)
 	FVector BendDir;
 	Comb<true>(FurSplines, Params, [&Params, &BendDir](const FPerSplineData& Data) {
 		BendDir = FVector::CrossProduct(MirrorVector(Params.Location, Data.BaseVertex, Params) - Data.BaseVertex, Params.Normal);
+		BendDir = MirrorVector(BendDir, Data.BaseVertex, Params);
 	}, [&BendDir](const FPerSegmentData& Data) {
 		return BendFur(Data.Dir, Data.Normal, BendDir * Data.Strength * 0.1f);
 	});

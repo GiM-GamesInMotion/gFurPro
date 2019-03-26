@@ -932,30 +932,44 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 					const auto& MasterTangentX = MasterVertices.VertexTangentX(i);
 					const auto& MasterTangentY = MasterVertices.VertexTangentY(i);
 					const auto& MasterTangentZ = MasterVertices.VertexTangentZ(i);
-					for (uint32 j = Section.BaseVertexIndex; j < Section.BaseVertexIndex + Section.NumVertices; j++)
-					{
-						const auto& Position = Positions.VertexPosition(j);
-						const auto& SkinWeight = SkinWeights.GetSkinWeightPtr<true>(j);
-						const auto& TangentX = Vertices.VertexTangentX(j);
-						const auto& TangentY = Vertices.VertexTangentY(j);
-						const auto& TangentZ = Vertices.VertexTangentZ(j);
+
+
+					auto Compare = [&](uint32 Index) {
+						const auto& Position = Positions.VertexPosition(Index);
+						const auto& SkinWeight = SkinWeights.GetSkinWeightPtr<true>(Index);
+						const auto& TangentX = Vertices.VertexTangentX(Index);
+						const auto& TangentY = Vertices.VertexTangentY(Index);
+						const auto& TangentZ = Vertices.VertexTangentZ(Index);
 						if (MasterPosition == Position && memcmp(MasterSkinWeight, SkinWeight, SkinWeightSize) == 0
 							&& MasterTangentX == TangentX && MasterTangentY == TangentY && MasterTangentZ == TangentZ)
 						{
-							bool equals = true;
 							for (uint32 k = 0; k < UVCount; k++)
 							{
-								if (MasterVertices.GetVertexUV(i, k) != Vertices.GetVertexUV(j, k))
-								{
-									equals = false;
-									break;
-								}
+								if (MasterVertices.GetVertexUV(i, k) != Vertices.GetVertexUV(Index, k))
+									return false;
 							}
-							if (equals)
-							{
-								MorphRemapTable[i] = j;
+							MorphRemapTable[i] = Index;
+							return true;
+						}
+						return false;
+					};
+
+					bool Found = false;
+					for (uint32 j = FMath::Max(i, Section.BaseVertexIndex); j < Section.BaseVertexIndex + Section.NumVertices; j++)
+					{
+						if (Compare(j))
+						{
+							Found = true;
+							break;
+						}
+					}
+
+					if (!Found)
+					{
+						for (uint32 j = Section.BaseVertexIndex, e = FMath::Min(i, Section.BaseVertexIndex + Section.NumVertices); j < e; j++)
+						{
+							if (Compare(j))
 								break;
-							}
 						}
 					}
 				}

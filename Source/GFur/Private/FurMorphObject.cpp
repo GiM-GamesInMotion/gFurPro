@@ -48,7 +48,8 @@ FFurMorphObject::~FFurMorphObject()
 
 void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTables)
 {
-	int32 NumVertices = FurData->GetNumVertices_RenderThread() / FurData->GetFurLayerCount();
+	int32 NumFurVertices = FurData->GetNumVertices_RenderThread();
+	int32 NumVertices = NumFurVertices / FurData->GetFurLayerCount();
 	if (NumVertices > 0)
 	{
 		int32 NumLayers = FurData->GetFurLayerCount();
@@ -130,12 +131,12 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 		{
 			if (!VertexBuffer.IsInitialized())
 			{
-				VertexBuffer.NumVertices = NumVertices;
+				VertexBuffer.NumVertices = NumFurVertices;
 				VertexBuffer.InitResource();
 			}
-			else if (VertexBuffer.NumVertices != NumVertices)
+			else if (VertexBuffer.NumVertices != NumFurVertices)
 			{
-				VertexBuffer.NumVertices = NumVertices;
+				VertexBuffer.NumVertices = NumFurVertices;
 				VertexBuffer.ReleaseDynamicRHI();
 				VertexBuffer.InitDynamicRHI();
 			}

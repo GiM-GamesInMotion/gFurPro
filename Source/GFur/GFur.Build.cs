@@ -19,7 +19,7 @@ public class GFur : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "CoreUObject", "Engine", "InputCore", "RHI", "RenderCore", "ShaderCore"
+				"Core", "CoreUObject", "Engine", "InputCore", "RHI", "RenderCore"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

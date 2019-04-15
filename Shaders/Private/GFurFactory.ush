@@ -205,6 +205,7 @@ struct FVertexFactoryIntermediates
 	// in world space (non translated)
 	float3 PreviousSimulatedPosition;
 #endif
+	uint PrimitiveId;
 
 };
 
@@ -581,7 +582,7 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 	else
 #endif
 	{
-		Position = TransformLocalToWorld(SkinPosition(Input, Intermediates));
+		Position = TransformLocalToWorld(SkinPosition(Input, Intermediates), Intermediates.PrimitiveId);
 	}
 
 #if NUM_MATERIAL_TEXCOORDS_VERTEX >= 2

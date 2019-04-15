@@ -3,6 +3,8 @@
 #include "FurSkinData.h"
 #include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
 #include "Runtime/Engine/Private/SkeletalRenderGPUSkin.h"
+#include "Runtime/Renderer/Public/MeshMaterialShader.h"
+#include "Runtime/RHI/Public/RHICommandList.h"
 #include "ShaderParameterUtils.h"
 #include "FurComponent.h"
 
@@ -71,7 +73,16 @@ public:
 	/**
 	* Set any shader data specific to this vertex factory
 	*/
-	virtual void SetMesh(FRHICommandList& RHICmdList, FShader* Shader, const FVertexFactory* VertexFactory, const FSceneView& View, const FMeshBatchElement& BatchElement, uint32 DataFlags) const override;
+	virtual void GetElementShaderBindings(
+		const class FSceneInterface* Scene,
+		const class FSceneView* View,
+		const class FMeshMaterialShader* Shader,
+		bool bShaderRequiresPositionOnlyStream,
+		ERHIFeatureLevel::Type FeatureLevel,
+		const class FVertexFactory* VertexFactory,
+		const struct FMeshBatchElement& BatchElement,
+		class FMeshDrawSingleShaderBindings& ShaderBindings,
+		FVertexInputStreamArray& VertexStreams) const override;
 
 	uint32 GetSize() const override { return sizeof(*this); }
 
@@ -96,11 +107,11 @@ public:
 	struct FShaderDataType
 	{
 		FShaderDataType(ERHIFeatureLevel::Type InFeatureLevel)
-			: CurrentBuffer(0)
-			, MeshOrigin(0, 0, 0)
+			: MeshOrigin(0, 0, 0)
 			, MeshExtension(1, 1, 1)
 			, FurOffsetPower(2.0f)
 			, MaxPhysicsOffsetLength(FLT_MAX)
+			, CurrentBuffer(0)
 			, FeatureLevel(InFeatureLevel)
 			, Discontinuous(true)
 		{
@@ -278,11 +289,8 @@ public:
 	{
 		typedef FFurSkinVertex<TangentBasisTypeT, UVTypeT, bExtraInfluencesT> VertexType;
 		ShaderData.Init(BoneCount);
-		ENQUEUE_UNIQUE_RENDER_COMMAND_THREEPARAMETER(InitProceduralMeshVertexFactory,
-			FFurSkinVertexFactoryBase*, VertexFactory, this,
-			const FFurVertexBuffer*, VertexBuffer, VertexBuffer,
-			const FVertexBuffer*, MorphVertexBuffer, MorphVertexBuffer,
-			{
+		ENQUEUE_RENDER_COMMAND(InitProceduralMeshVertexFactory)
+			([this, VertexBuffer, MorphVertexBuffer](FRHICommandListImmediate& RHICmdList) {
 				const auto TangentElementType = TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
 				const auto UvElementType = UVTypeT == EStaticMeshVertexUVType::HighPrecision ? VET_Float2 : VET_Half2;
 
@@ -309,7 +317,7 @@ public:
 					NewData.DeltaTangentZ = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(MorphVertexBuffer, FMorphGPUSkinVertex, DeltaTangentZ, VET_Float3);
 				}
 
-				VertexFactory->SetData(NewData);
+				SetData(NewData);
 			});
 	}
 
@@ -326,7 +334,7 @@ public:
 		return (Material->IsUsedWithSkeletalMesh() || Material->IsSpecialEngineMaterial());
 	}
 
-	static void ModifyCompilationEnvironment(EShaderPlatform Platform, const FMaterial* Material, FShaderCompilerEnvironment& OutEnvironment)
+	static void ModifyCompilationEnvironment(const FVertexFactoryType*, EShaderPlatform Platform, const FMaterial* Material, FShaderCompilerEnvironment& OutEnvironment)
 	{
 //		Super::ModifyCompilationEnvironment(Platform, Material, OutEnvironment);
 		if (MorphTargets)
@@ -521,9 +529,7 @@ IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurSkinVertexFactory, "/Plugin/gFur/Privat
 IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
 IMPLEMENT_VERTEX_FACTORY_TYPE(FFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
 
-#if WITH_EDITORONLY_DATA
-IMPLEMENT_UNIFORM_BUFFER_STRUCT(FBoneMatricesUniformShaderParameters, TEXT("Bones"));
-#endif // WITH_EDITORONLY_DATA
+IMPLEMENT_GLOBAL_SHADER_PARAMETER_STRUCT(FBoneMatricesUniformShaderParameters, "Bones");
 
 static FBoneMatricesUniformShaderParameters GBoneUniformStruct;
 
@@ -540,7 +546,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 {
 	const uint32 NumBones = BoneMap.Num();
 	check(NumBones <= MaxGPUSkinBones);
-	FSkinMatrix3x4* ChunkMatrices = nullptr;
+	float* ChunkMatrices = nullptr;
 	FVector4* Offsets = nullptr;
 
 	FVertexBufferAndSRV* CurrentBoneBuffer = 0;
@@ -582,7 +588,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 
 		if (NumBones)
 		{
-			ChunkMatrices = (FSkinMatrix3x4*)RHILockVertexBuffer(CurrentBoneBuffer->VertexBufferRHI, 0, VectorArraySize, RLM_WriteOnly);
+			ChunkMatrices = (float*)RHILockVertexBuffer(CurrentBoneBuffer->VertexBufferRHI, 0, VectorArraySize, RLM_WriteOnly);
 			Offsets = (FVector4*)RHILockVertexBuffer(CurrentBoneFurOffsetsBuffer->VertexBufferRHI, 0, OffsetArraySize, RLM_WriteOnly);
 		}
 	}
@@ -590,8 +596,8 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	{
 		if (NumBones)
 		{
-			check(NumBones * sizeof(FSkinMatrix3x4) <= sizeof(GBoneUniformStruct));
-			ChunkMatrices = (FSkinMatrix3x4*)&GBoneUniformStruct;
+			check(NumBones * sizeof(float) * 12 <= sizeof(GBoneUniformStruct));
+			ChunkMatrices = (float*)&GBoneUniformStruct;
 		}
 	}
 
@@ -608,9 +614,9 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			FPlatformMisc::Prefetch(ReferenceToLocalMatrices.GetData() + RefToLocalIdx + PreFetchStride);
 			FPlatformMisc::Prefetch(ReferenceToLocalMatrices.GetData() + RefToLocalIdx + PreFetchStride, PLATFORM_CACHE_LINE_SIZE);
 
-			FSkinMatrix3x4& BoneMat = ChunkMatrices[BoneIdx];
+			float* BoneMat = ChunkMatrices + BoneIdx * 12;
 			const FMatrix& RefToLocal = ReferenceToLocalMatrices[RefToLocalIdx];
-			RefToLocal.To3x4MatrixTranspose((float*)BoneMat.M);
+			RefToLocal.To3x4MatrixTranspose(BoneMat);
 
 			Offsets[BoneIdx * 3] = LinearOffsets[RefToLocalIdx];
 			Offsets[BoneIdx * 3 + 1] = AngularOffsets[RefToLocalIdx];
@@ -626,9 +632,9 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			FPlatformMisc::Prefetch(ReferenceToLocalMatrices.GetData() + RefToLocalIdx + PreFetchStride);
 			FPlatformMisc::Prefetch(ReferenceToLocalMatrices.GetData() + RefToLocalIdx + PreFetchStride, PLATFORM_CACHE_LINE_SIZE);
 
-			FSkinMatrix3x4& BoneMat = ChunkMatrices[BoneIdx];
+			float* BoneMat = ChunkMatrices + BoneIdx * 12;
 			const FMatrix& RefToLocal = ReferenceToLocalMatrices[RefToLocalIdx];
-			RefToLocal.To3x4MatrixTranspose((float*)BoneMat.M);
+			RefToLocal.To3x4MatrixTranspose(BoneMat);
 		}
 	}
 	if (InFeatureLevel >= ERHIFeatureLevel::ES3_1)
@@ -643,7 +649,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	}
 	else
 	{
-		UniformBuffer = RHICreateUniformBuffer(&GBoneUniformStruct, FBoneMatricesUniformShaderParameters::StaticStruct.GetLayout(), UniformBuffer_MultiFrame);
+		UniformBuffer = RHICreateUniformBuffer(&GBoneUniformStruct, FBoneMatricesUniformShaderParameters::StaticStructMetadata.GetLayout(), UniformBuffer_MultiFrame);
 	}
 }
 
@@ -652,7 +658,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 {
 	const uint32 NumBones = BoneCount;
 	check(NumBones <= MaxGPUSkinBones);
-	FSkinMatrix3x4* ChunkMatrices = nullptr;
+	float* ChunkMatrices = nullptr;
 
 	if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
 	{
@@ -712,8 +718,8 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	{
 		if (NumBones)
 		{
-			check(NumBones * sizeof(FSkinMatrix3x4) <= sizeof(GBoneUniformStruct));
-			ChunkMatrices = (FSkinMatrix3x4*)&GBoneUniformStruct;
+			check(NumBones * sizeof(float) * 12 <= sizeof(GBoneUniformStruct));
+			ChunkMatrices = (float*)&GBoneUniformStruct;
 		}
 	}
 
@@ -722,12 +728,21 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	}
 	else
 	{
-		UniformBuffer = RHICreateUniformBuffer(&GBoneUniformStruct, FBoneMatricesUniformShaderParameters::StaticStruct.GetLayout(), UniformBuffer_MultiFrame);
+		UniformBuffer = RHICreateUniformBuffer(&GBoneUniformStruct, FBoneMatricesUniformShaderParameters::StaticStructMetadata.GetLayout(), UniformBuffer_MultiFrame);
 	}
 }
 
 template<bool Physics>
-void FFurSkinVertexFactoryShaderParameters<Physics>::SetMesh(FRHICommandList& RHICmdList, FShader* Shader, const FVertexFactory* VertexFactory, const FSceneView& View, const FMeshBatchElement& BatchElement, uint32 DataFlags) const
+void FFurSkinVertexFactoryShaderParameters<Physics>::GetElementShaderBindings(
+	const class FSceneInterface* Scene,
+	const class FSceneView* View,
+	const class FMeshMaterialShader* Shader,
+	bool bShaderRequiresPositionOnlyStream,
+	ERHIFeatureLevel::Type FeatureLevel,
+	const class FVertexFactory* VertexFactory,
+	const struct FMeshBatchElement& BatchElement,
+	class FMeshDrawSingleShaderBindings& ShaderBindings,
+	FVertexInputStreamArray& VertexStreams) const
 {
 	FRHIVertexShader* ShaderRHI = Shader->GetVertexShader();
 
@@ -735,24 +750,24 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::SetMesh(FRHICommandList& RH
 	{
 		FFurSkinVertexFactory::FShaderDataType& ShaderData = ((FFurSkinVertexFactory*)VertexFactory)->ShaderData;
 
-		SetShaderValue(RHICmdList, ShaderRHI, MeshOriginParameter, ShaderData.MeshOrigin);
-		SetShaderValue(RHICmdList, ShaderRHI, MeshExtensionParameter, ShaderData.MeshExtension);
-		SetShaderValue(RHICmdList, ShaderRHI, FurOffsetPowerParameter, ShaderData.FurOffsetPower);
-		SetShaderValue(RHICmdList, ShaderRHI, MaxPhysicsOffsetLengthParameter, ShaderData.MaxPhysicsOffsetLength);
+		ShaderBindings.Add(MeshOriginParameter, ShaderData.MeshOrigin);
+		ShaderBindings.Add(MeshExtensionParameter, ShaderData.MeshExtension);
+		ShaderBindings.Add(FurOffsetPowerParameter, ShaderData.FurOffsetPower);
+		ShaderBindings.Add(MaxPhysicsOffsetLengthParameter, ShaderData.MaxPhysicsOffsetLength);
 
 //		const auto FeatureLevel = View.GetFeatureLevel();
 
 		if (BoneMatrices.IsBound())
 		{
 			FShaderResourceViewRHIParamRef CurrentData = ShaderData.GetBoneBufferForReading(false).VertexBufferSRV;
-			RHICmdList.SetShaderResourceViewParameter(ShaderRHI, BoneMatrices.GetBaseIndex(), CurrentData);
+			ShaderBindings.Add(BoneMatrices, CurrentData);
 		}
 		if (PreviousBoneMatrices.IsBound())
 		{
 			// todo: Maybe a check for PreviousData!=CurrentData would save some performance (when objects don't have velocty yet) but removing the bool also might save performance
 
 			FShaderResourceViewRHIParamRef PreviousData = ShaderData.GetBoneBufferForReading(true).VertexBufferSRV;
-			RHICmdList.SetShaderResourceViewParameter(ShaderRHI, PreviousBoneMatrices.GetBaseIndex(), PreviousData);
+			ShaderBindings.Add(PreviousBoneMatrices, PreviousData);
 		}
 
 		if (Physics)
@@ -760,17 +775,17 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::SetMesh(FRHICommandList& RH
 			if (BoneFurOffsets.IsBound())
 			{
 				FShaderResourceViewRHIParamRef CurrentData = ShaderData.GetBoneFurOffsetsBufferForReading(false).VertexBufferSRV;
-				RHICmdList.SetShaderResourceViewParameter(ShaderRHI, BoneFurOffsets.GetBaseIndex(), CurrentData);
+				ShaderBindings.Add(BoneFurOffsets, CurrentData);
 			}
 			if (PreviousBoneFurOffsets.IsBound())
 			{
 				FShaderResourceViewRHIParamRef PreviousData = ShaderData.GetBoneFurOffsetsBufferForReading(true).VertexBufferSRV;
-				RHICmdList.SetShaderResourceViewParameter(ShaderRHI, PreviousBoneFurOffsets.GetBaseIndex(), PreviousData);
+				ShaderBindings.Add(PreviousBoneFurOffsets, PreviousData);
 			}
 		}
 		else
 		{
-			SetUniformBufferParameter(RHICmdList, ShaderRHI, Shader->GetUniformBufferParameter<FBoneMatricesUniformShaderParameters>(), ShaderData.GetUniformBuffer());
+			ShaderBindings.Add(Shader->GetUniformBufferParameter<FBoneMatricesUniformShaderParameters>(), ShaderData.GetUniformBuffer());
 		}
 	}
 }

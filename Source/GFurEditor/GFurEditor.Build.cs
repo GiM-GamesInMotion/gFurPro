@@ -11,7 +11,7 @@ public class GFurEditor : ModuleRules
 		bFasterWithoutUnity = true;
 		MinFilesUsingPrecompiledHeaderOverride = 1;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "Slate", "InputCore", "RHI", "RenderCore", "ShaderCore",
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "Slate", "InputCore", "RHI", "RenderCore",
 			"UnrealEd", "EditorStyle", "VREditor", "MeshPaint" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "SlateCore", "PropertyEditor", "LevelEditor", "ViewportInteraction" });

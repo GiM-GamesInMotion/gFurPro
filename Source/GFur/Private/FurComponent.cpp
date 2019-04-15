@@ -64,7 +64,7 @@ public:
 		const bool Wireframe = AllowDebugViewmodes() && ViewFamily.EngineShowFlags.Wireframe;
 
 		auto WireframeMaterialInstance = new FColoredMaterialRenderProxy(
-			GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy(IsSelected()) : NULL,
+			GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : NULL,
 			FLinearColor(0, 0.5f, 1.f));
 
 		Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
@@ -139,7 +139,7 @@ public:
 						else
 						{
 							UMaterialInstanceDynamic* material = FurMaterials[section.MaterialIndex];
-							MaterialProxy = material->GetRenderProxy(IsSelected());
+							MaterialProxy = material->GetRenderProxy();
 						}
 
 						FMeshBatch& Mesh = Collector.AllocateMesh();
@@ -719,7 +719,7 @@ void UGFurComponent::updateFur()
 						if (MasterComp->GetComponentSpaceTransforms().IsValidIndex(MasterBoneIndex))
 						{
 							const int32 ParentIndex = ThisMesh->RefSkeleton.GetParentIndex(ThisBoneIndex);
-							bool bNeedToHideBone = MasterComp->BoneVisibilityStates[MasterBoneIndex] != BVS_Visible;
+							bool bNeedToHideBone = MasterComp->GetBoneVisibilityStates()[MasterBoneIndex] != BVS_Visible;
 							if (bNeedToHideBone && ParentIndex != INDEX_NONE)
 							{
 								TempMatrices[ThisBoneIndex] = TempMatrices[ParentIndex].ApplyScale(0.f);

@@ -73,7 +73,8 @@ void FEdModeFurComb::Enter()
 	FEditorDelegates::PostSaveWorld.AddSP(this, &FEdModeFurComb::OnPostSaveWorld);
 
 	// Catch assets if they are about to be (re)imported
-	FEditorDelegates::OnAssetPostImport.AddSP(this, &FEdModeFurComb::OnPostImportAsset);
+	GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.AddSP(this, &FEdModeFurComb::OnPostImportAsset);
+//	FEditorDelegates::OnAssetPostImport.AddSP(this, &FEdModeFurComb::OnPostImportAsset);
 	FReimportManager::Instance()->OnPostReimport().AddSP(this, &FEdModeFurComb::OnPostReimportAsset);
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
@@ -163,7 +164,8 @@ void FEdModeFurComb::Exit()
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 	AssetRegistryModule.Get().OnAssetRemoved().RemoveAll(this);
 	FReimportManager::Instance()->OnPostReimport().RemoveAll(this);
-	FEditorDelegates::OnAssetPostImport.RemoveAll(this);
+	GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.RemoveAll(this);
+//	FEditorDelegates::OnAssetPostImport.RemoveAll(this);
 	FEditorDelegates::PreSaveWorld.RemoveAll(this);
 	FEditorDelegates::PostSaveWorld.RemoveAll(this);
 	GEditor->OnObjectsReplaced().RemoveAll(this);
@@ -339,9 +341,8 @@ void FEdModeFurComb::OnObjectsReplaced(const TMap<UObject*, UObject*>& OldToNewI
 void FEdModeFurComb::OnResetViewMode()
 {
 	// Reset viewport color mode for all active viewports
-	for (int32 ViewIndex = 0; ViewIndex < GEditor->AllViewportClients.Num(); ++ViewIndex)
+	for (FEditorViewportClient* ViewportClient : GEditor->GetAllViewportClients())
 	{
-		FEditorViewportClient* ViewportClient = GEditor->AllViewportClients[ViewIndex];
 		if (!ViewportClient || ViewportClient->GetModeTools() != GetModeManager())
 		{
 			continue;

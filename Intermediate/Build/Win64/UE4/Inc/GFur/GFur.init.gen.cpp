@@ -1,4 +1,4 @@
-// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 /*===========================================================================
 	Generated code exported from UnrealHeaderTool.
 	DO NOT modify this manually! Edit the corresponding .h files instead!
@@ -18,10 +18,11 @@ void EmptyLinkFunctionForGeneratedCodeGFur_init() {}
 		{
 			static const UE4CodeGen_Private::FPackageParams PackageParams = {
 				"/Script/GFur",
+				nullptr,
+				0,
 				PKG_CompiledIn | 0x00000000,
-				0x7C061977,
-				0xE21B2A58,
-				nullptr, 0,
+				0xFC934B24,
+				0xA3DC3923,
 				METADATA_PARAMS(nullptr, 0)
 			};
 			UE4CodeGen_Private::ConstructUPackage(ReturnPackage, PackageParams);

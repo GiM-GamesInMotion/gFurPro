@@ -9,8 +9,6 @@
 
 #define LOCTEXT_NAMESPACE "GFurEditor"
 
-IMPLEMENT_GAME_MODULE(FGFurEditorModule, FurEditor);
-
 void FGFurEditorModule::StartupModule()
 {
 	//Custom detail views
@@ -41,3 +39,5 @@ void FGFurEditorModule::ShutdownModule()
 		PropertyModule->UnregisterCustomClassLayout("GFurComponent");
 	}
 }
+
+IMPLEMENT_MODULE(FGFurEditorModule, GFurEditor)

@@ -3,6 +3,8 @@
 #include "FurStaticData.h"
 #include "ShaderParameterUtils.h"
 #include "FurComponent.h"
+#include "Runtime/Renderer/Public/MeshMaterialShader.h"
+#include "Runtime/RHI/Public/RHICommandList.h"
 
 static TArray< FFurStaticData* > FurStaticData;
 static FCriticalSection FurStaticDataCS;
@@ -42,7 +44,16 @@ public:
 	/**
 	* Set any shader data specific to this vertex factory
 	*/
-	virtual void SetMesh(FRHICommandList& RHICmdList, FShader* Shader, const FVertexFactory* VertexFactory, const FSceneView& View, const FMeshBatchElement& BatchElement, uint32 DataFlags) const override;
+	virtual void GetElementShaderBindings(
+		const class FSceneInterface* Scene,
+		const class FSceneView* View,
+		const class FMeshMaterialShader* Shader,
+		bool bShaderRequiresPositionOnlyStream,
+		ERHIFeatureLevel::Type FeatureLevel,
+		const class FVertexFactory* VertexFactory,
+		const struct FMeshBatchElement& BatchElement,
+		class FMeshDrawSingleShaderBindings& ShaderBindings,
+		FVertexInputStreamArray& VertexStreams) const override;
 
 	uint32 GetSize() const override { return sizeof(*this); }
 
@@ -120,14 +131,8 @@ public:
 	void Init(const FFurVertexBuffer* VertexBuffer)
 	{
 		typedef FFurStaticVertex<TangentBasisTypeT, UVTypeT> VertexType;
-		ENQUEUE_UNIQUE_RENDER_COMMAND_TWOPARAMETER(InitProceduralMeshVertexFactory,
-			FFurStaticVertexFactoryBase*,
-			VertexFactory,
-			this,
-			const FFurVertexBuffer*,
-			VertexBuffer,
-			VertexBuffer,
-			{
+		ENQUEUE_RENDER_COMMAND(InitProceduralMeshVertexFactory)(
+			[VertexBuffer, this](FRHICommandListImmediate& RHICmdList) {
 				const auto TangentElementType = TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::VertexElementType;
 				const auto UvElementType = UVTypeT == EStaticMeshVertexUVType::HighPrecision ? VET_Float2 : VET_Half2;
 
@@ -142,7 +147,7 @@ public:
 				NewData.ColorComponent = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, Color, VET_Color);
 				NewData.FurOffset = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, FurOffset, VET_Float3);
 
-				VertexFactory->SetData(NewData);
+				SetData(NewData);
 			});
 	}
 
@@ -159,7 +164,7 @@ public:
 		return true;
 	}
 
-	static void ModifyCompilationEnvironment(EShaderPlatform Platform, const FMaterial* Material, FShaderCompilerEnvironment& OutEnvironment)
+	static void ModifyCompilationEnvironment(const FVertexFactoryType*, EShaderPlatform Platform, const FMaterial* Material, FShaderCompilerEnvironment& OutEnvironment)
 	{
 //		Super::ModifyCompilationEnvironment(Platform, Material, OutEnvironment);
 		if (Physics)
@@ -272,7 +277,16 @@ void FFurStaticVertexFactoryBase<Physics>::FShaderDataType::GoToNextFrame(bool I
 	Discontinuous = InDiscontinuous;
 }
 
-void FFurStaticVertexFactoryShaderParameters::SetMesh(FRHICommandList& RHICmdList, FShader* Shader, const FVertexFactory* VertexFactory, const FSceneView& View, const FMeshBatchElement& BatchElement, uint32 DataFlags) const
+void FFurStaticVertexFactoryShaderParameters::GetElementShaderBindings(
+	const class FSceneInterface* Scene,
+	const class FSceneView* View,
+	const class FMeshMaterialShader* Shader,
+	bool bShaderRequiresPositionOnlyStream,
+	ERHIFeatureLevel::Type FeatureLevel,
+	const class FVertexFactory* VertexFactory,
+	const struct FMeshBatchElement& BatchElement,
+	class FMeshDrawSingleShaderBindings& ShaderBindings,
+	FVertexInputStreamArray& VertexStreams) const
 {
 	FRHIVertexShader* ShaderRHI = Shader->GetVertexShader();
 
@@ -280,24 +294,24 @@ void FFurStaticVertexFactoryShaderParameters::SetMesh(FRHICommandList& RHICmdLis
 	{
 		FFurStaticVertexFactory::FShaderDataType& ShaderData = ((FFurStaticVertexFactory*)VertexFactory)->ShaderData;
 
-		SetShaderValue(RHICmdList, ShaderRHI, MeshOriginParameter, ShaderData.MeshOrigin);
-		SetShaderValue(RHICmdList, ShaderRHI, MeshExtensionParameter, ShaderData.MeshExtension);
-		SetShaderValue(RHICmdList, ShaderRHI, FurOffsetPowerParameter, ShaderData.FurOffsetPower);
-		SetShaderValue(RHICmdList, ShaderRHI, FurLinearOffsetParameter, ShaderData.FurLinearOffset);
-		SetShaderValue(RHICmdList, ShaderRHI, FurPositionParameter, ShaderData.FurPosition);
-		SetShaderValue(RHICmdList, ShaderRHI, FurAngularOffsetParameter, ShaderData.FurAngularOffset);
+		ShaderBindings.Add(MeshOriginParameter, ShaderData.MeshOrigin);
+		ShaderBindings.Add(MeshExtensionParameter, ShaderData.MeshExtension);
+		ShaderBindings.Add(FurOffsetPowerParameter, ShaderData.FurOffsetPower);
+		ShaderBindings.Add(FurLinearOffsetParameter, ShaderData.FurLinearOffset);
+		ShaderBindings.Add(FurPositionParameter, ShaderData.FurPosition);
+		ShaderBindings.Add(FurAngularOffsetParameter, ShaderData.FurAngularOffset);
 
 		if (ShaderData.IsPreviousDataValid())
 		{
-			SetShaderValue(RHICmdList, ShaderRHI, PreviousFurLinearOffsetParameter, ShaderData.PreviousFurLinearOffset);
-			SetShaderValue(RHICmdList, ShaderRHI, PreviousFurPositionParameter, ShaderData.PreviousFurPosition);
-			SetShaderValue(RHICmdList, ShaderRHI, PreviousFurAngularOffsetParameter, ShaderData.PreviousFurAngularOffset);
+			ShaderBindings.Add(PreviousFurLinearOffsetParameter, ShaderData.PreviousFurLinearOffset);
+			ShaderBindings.Add(PreviousFurPositionParameter, ShaderData.PreviousFurPosition);
+			ShaderBindings.Add(PreviousFurAngularOffsetParameter, ShaderData.PreviousFurAngularOffset);
 		}
 		else
 		{
-			SetShaderValue(RHICmdList, ShaderRHI, PreviousFurLinearOffsetParameter, ShaderData.FurLinearOffset);
-			SetShaderValue(RHICmdList, ShaderRHI, PreviousFurPositionParameter, ShaderData.FurPosition);
-			SetShaderValue(RHICmdList, ShaderRHI, PreviousFurAngularOffsetParameter, ShaderData.FurAngularOffset);
+			ShaderBindings.Add(PreviousFurLinearOffsetParameter, ShaderData.FurLinearOffset);
+			ShaderBindings.Add(PreviousFurPositionParameter, ShaderData.FurPosition);
+			ShaderBindings.Add(PreviousFurAngularOffsetParameter, ShaderData.FurAngularOffset);
 		}
 	}
 }

@@ -10,7 +10,7 @@
 	"DocsURL": "gim.studio/gfur-user-manual",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/9073da3940d4482384d111870ccc9ab7",
 	"SupportURL": "gfur@gim.studio",
-	"EngineVersion": "4.21.0",
+	"EngineVersion": "4.22.0",
 	"CanContainContent": true,
 	"Installed": true,
 	"Modules": [

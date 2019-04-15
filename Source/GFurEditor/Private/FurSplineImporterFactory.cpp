@@ -24,8 +24,7 @@ class MemoryStream : public FbxStream
 {
 public:
 	inline MemoryStream(const void* InData, FbxInt64 InSize, int InReaderId)
-		: Data(InData), Size(InSize), ReaderId(InReaderId),
-		Position(0), State(EState::eClosed)
+		: Data(InData), Size(InSize), Position(0), State(EState::eClosed), ReaderId(InReaderId)
 	{
 
 	}

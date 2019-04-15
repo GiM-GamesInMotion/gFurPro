@@ -22,11 +22,11 @@ const float FFurComb::MinLayerDist = 0.001f;
 
 FFurComb::FFurComb()
 	: CurrentViewportInteractor(nullptr),
+	bCombing(false),
 	TimeSinceStartedPainting(0.0f),
 	Time(0.0f),
 	LastDeltaTime(0.0f),
 	Mode(EFurCombMode::Length),
-	bCombing(false),
 	CombTransaction(nullptr)
 {}
 

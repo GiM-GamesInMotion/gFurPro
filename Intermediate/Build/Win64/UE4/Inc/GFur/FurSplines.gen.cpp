@@ -1,4 +1,4 @@
-// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
+// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 /*===========================================================================
 	Generated code exported from UnrealHeaderTool.
 	DO NOT modify this manually! Edit the corresponding .h files instead!
@@ -78,41 +78,41 @@ void EmptyLinkFunctionForGeneratedCodeFurSplines() {}
 		{ "ModuleRelativePath", "Public/FurSplines.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Version = { UE4CodeGen_Private::EPropertyClass::Int, "Version", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, Version), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_Version_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_Version_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Version = { "Version", nullptr, (EPropertyFlags)0x0010000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurSplines, Version), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_Version_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_Version_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurSplines_Statics::NewProp_ImportFilename_MetaData[] = {
 		{ "ModuleRelativePath", "Public/FurSplines.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FStrPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_ImportFilename = { UE4CodeGen_Private::EPropertyClass::Str, "ImportFilename", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, ImportFilename), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_ImportFilename_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_ImportFilename_MetaData)) };
+	const UE4CodeGen_Private::FStrPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_ImportFilename = { "ImportFilename", nullptr, (EPropertyFlags)0x0010000000000000, UE4CodeGen_Private::EPropertyGenFlags::Str, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurSplines, ImportFilename), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_ImportFilename_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_ImportFilename_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurSplines_Statics::NewProp_ControlPointCount_MetaData[] = {
 		{ "ModuleRelativePath", "Public/FurSplines.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_ControlPointCount = { UE4CodeGen_Private::EPropertyClass::Int, "ControlPointCount", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, ControlPointCount), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_ControlPointCount_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_ControlPointCount_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_ControlPointCount = { "ControlPointCount", nullptr, (EPropertyFlags)0x0010000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurSplines, ControlPointCount), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_ControlPointCount_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_ControlPointCount_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurSplines_Statics::NewProp_Count_MetaData[] = {
 		{ "ModuleRelativePath", "Public/FurSplines.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Count = { UE4CodeGen_Private::EPropertyClass::Array, "Count", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, Count), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_Count_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_Count_MetaData)) };
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Count_Inner = { UE4CodeGen_Private::EPropertyClass::Int, "Count", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0000000000000000, 1, nullptr, 0, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Count = { "Count", nullptr, (EPropertyFlags)0x0010000000000000, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurSplines, Count), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_Count_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_Count_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Count_Inner = { "Count", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurSplines_Statics::NewProp_Index_MetaData[] = {
 		{ "ModuleRelativePath", "Public/FurSplines.h" },
 		{ "ToolTip", "Old - don't use" },
 	};
 #endif
-	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Index = { UE4CodeGen_Private::EPropertyClass::Array, "Index", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, Index), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_Index_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_Index_MetaData)) };
-	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Index_Inner = { UE4CodeGen_Private::EPropertyClass::Int, "Index", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0000000000000000, 1, nullptr, 0, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Index = { "Index", nullptr, (EPropertyFlags)0x0010000000000000, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurSplines, Index), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_Index_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_Index_MetaData)) };
+	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Index_Inner = { "Index", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurSplines_Statics::NewProp_Vertices_MetaData[] = {
 		{ "ModuleRelativePath", "Public/FurSplines.h" },
 	};
 #endif
-	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Vertices = { UE4CodeGen_Private::EPropertyClass::Array, "Vertices", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0010000000000000, 1, nullptr, STRUCT_OFFSET(UFurSplines, Vertices), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_Vertices_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_Vertices_MetaData)) };
-	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Vertices_Inner = { UE4CodeGen_Private::EPropertyClass::Struct, "Vertices", RF_Public|RF_Transient|RF_MarkAsNative, (EPropertyFlags)0x0000000000000000, 1, nullptr, 0, Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
+	const UE4CodeGen_Private::FArrayPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Vertices = { "Vertices", nullptr, (EPropertyFlags)0x0010000000000000, UE4CodeGen_Private::EPropertyGenFlags::Array, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurSplines, Vertices), METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::NewProp_Vertices_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::NewProp_Vertices_MetaData)) };
+	const UE4CodeGen_Private::FStructPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Vertices_Inner = { "Vertices", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Struct, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, Z_Construct_UScriptStruct_FVector, METADATA_PARAMS(nullptr, 0) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_UFurSplines_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurSplines_Statics::NewProp_Version,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurSplines_Statics::NewProp_ImportFilename,
@@ -129,13 +129,17 @@ void EmptyLinkFunctionForGeneratedCodeFurSplines() {}
 	};
 	const UE4CodeGen_Private::FClassParams Z_Construct_UClass_UFurSplines_Statics::ClassParams = {
 		&UFurSplines::StaticClass,
-		DependentSingletons, ARRAY_COUNT(DependentSingletons),
-		0x001000A0u,
-		nullptr, 0,
-		Z_Construct_UClass_UFurSplines_Statics::PropPointers, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::PropPointers),
 		nullptr,
 		&StaticCppClassTypeInfo,
-		nullptr, 0,
+		DependentSingletons,
+		nullptr,
+		Z_Construct_UClass_UFurSplines_Statics::PropPointers,
+		nullptr,
+		ARRAY_COUNT(DependentSingletons),
+		0,
+		ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::PropPointers),
+		0,
+		0x001000A0u,
 		METADATA_PARAMS(Z_Construct_UClass_UFurSplines_Statics::Class_MetaDataParams, ARRAY_COUNT(Z_Construct_UClass_UFurSplines_Statics::Class_MetaDataParams))
 	};
 	UClass* Z_Construct_UClass_UFurSplines()
@@ -147,7 +151,11 @@ void EmptyLinkFunctionForGeneratedCodeFurSplines() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurSplines, 817836058);
+	IMPLEMENT_CLASS(UFurSplines, 3165477188);
+	template<> GFUR_API UClass* StaticClass<UFurSplines>()
+	{
+		return UFurSplines::StaticClass();
+	}
 	static FCompiledInDefer Z_CompiledInDefer_UClass_UFurSplines(Z_Construct_UClass_UFurSplines, &UFurSplines::StaticClass, TEXT("/Script/GFur"), TEXT("UFurSplines"), false, nullptr, nullptr, nullptr);
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UFurSplines);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

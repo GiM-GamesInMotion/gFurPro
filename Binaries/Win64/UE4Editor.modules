@@ -2,7 +2,7 @@
 	"BuildId": "5660361",
 	"Modules": 
 	{
-		"GFur": "UE4Editor-GFur.dll",
-		"GFurEditor": "UE4Editor-GFurEditor.dll"
+		"GFur": "UE4Editor-GFur-0001.dll",
+		"GFurEditor": "UE4Editor-GFurEditor-0001.dll"
 	}
 }

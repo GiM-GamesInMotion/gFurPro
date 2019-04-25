@@ -221,7 +221,7 @@ void FFurData::GenerateSplineMap(const FPositionVertexBuffer& InPositions)
 
 		for (uint32 i = 0; i < SourceVertexCount; i++)
 		{
-			const float Epsilon = 0.01f;
+			const float Epsilon = 0.1f;
 			const float EpsilonSquared = Epsilon * Epsilon;
 			FVector p = InPositions.VertexPosition(i);
 			int32 BeginX = FMath::Max(FMath::FloorToInt((p.X - Epsilon - MinX) * FactorWidth), 0);
@@ -229,6 +229,8 @@ void FFurData::GenerateSplineMap(const FPositionVertexBuffer& InPositions)
 			int32 EndX = FMath::Min(FMath::FloorToInt((p.X + Epsilon - MinX) * FactorWidth), Size - 1);
 			int32 EndY = FMath::Min(FMath::FloorToInt((p.Y + Epsilon - MinY) * FactorHeight), Size - 1);
 			SplineMap[i] = -1;
+			float ClosestDistanceSquared = FLT_MAX;
+			int32 ClosestIndex = -1;
 			for (int32 Y = BeginY; Y <= EndY; Y++)
 			{
 				for (int32 X = BeginX; X <= EndX; X++)
@@ -239,33 +241,35 @@ void FFurData::GenerateSplineMap(const FPositionVertexBuffer& InPositions)
 						while (Idx != -1)
 						{
 							FVector s = FurSplinesUsed->GetFirstControlPoint(Idx);
-							if (FVector::DistSquared(s, p) <= EpsilonSquared)
+							float DistanceSquared = FVector::DistSquared(s, p);
+							if (DistanceSquared <= EpsilonSquared)
 							{
 								FVector s2 = FurSplinesUsed->GetLastControlPoint(Idx);
 								if (FVector::DotProduct(s2 - s, Normals[i]) > 0.0f || MinFurLength > 0.0f)
 								{
-									float SizeSquared = (s2 - s).SizeSquared();
-									if (SizeSquared < MinLenSquared)
-										MinLenSquared = SizeSquared;
-									if (SizeSquared > MaxLenSquared)
-										MaxLenSquared = SizeSquared;
-									SplineMap[i] = Idx;
-									ValidVertexCount++;
+									if (DistanceSquared < ClosestDistanceSquared)
+									{
+										ClosestDistanceSquared = DistanceSquared;
+										ClosestIndex = Idx;
+									}
 								}
-								else
-								{
-									SplineMap[i] = -1;
-								}
-								break;
 							}
 							Idx = NextIndex[Idx];
 						}
-						if (Idx == -1)
-						{
-							SplineMap[i] = -1;
-						}
 					}
 				}
+			}
+			SplineMap[i] = ClosestIndex;
+			if (ClosestIndex != -1)
+			{
+				FVector s = FurSplinesUsed->GetFirstControlPoint(ClosestIndex);
+				FVector s2 = FurSplinesUsed->GetLastControlPoint(ClosestIndex);
+				float SizeSquared = (s2 - s).SizeSquared();
+				if (SizeSquared < MinLenSquared)
+					MinLenSquared = SizeSquared;
+				if (SizeSquared > MaxLenSquared)
+					MaxLenSquared = SizeSquared;
+				ValidVertexCount++;
 			}
 		}
 		CurrentMinFurLength = FMath::Sqrt(MinLenSquared) * FurLength;

@@ -184,6 +184,8 @@ public:
 	virtual int32 GetMaterialIndex(FName MaterialSlotName) const override;
 	virtual TArray<FName> GetMaterialSlotNames() const override;
 	virtual bool IsMaterialSlotNameValid(FName MaterialSlotName) const override;
+	virtual void SetMaterial(int32 ElementIndex, UMaterialInterface* Material) override;
+	virtual void SetMaterialByName(FName MaterialSlotName, class UMaterialInterface* Material) override;
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
 	virtual bool GetMaterialStreamingData(int32 MaterialIndex, FPrimitiveMaterialInfo& MaterialData) const override;
 	virtual void GetStreamingTextureInfo(FStreamingTextureLevelContext& LevelContext, TArray<FStreamingTexturePrimitiveInfo>& OutStreamingTextures) const override;

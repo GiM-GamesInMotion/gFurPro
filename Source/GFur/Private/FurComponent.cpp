@@ -25,7 +25,7 @@
 class FFurSceneProxy : public FPrimitiveSceneProxy
 {
 public:
-	FFurSceneProxy(UGFurComponent* InComponent, const TArray<FFurData*>& InFurData, const TArray<FFurLod>& InFurLods, const TArray<UMaterialInstanceDynamic*>& InFurMaterials, const TArray<FFurMorphObject*>& InMorphObjects, bool InCastShadows, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel)
+	FFurSceneProxy(UGFurComponent* InComponent, const TArray<FFurData*>& InFurData, const TArray<FFurLod>& InFurLods, const TArray<UMaterialInstanceDynamic*>& InFurMaterials, const TArray<UMaterialInterface*>& InOverrideMaterials, const TArray<FFurMorphObject*>& InMorphObjects, bool InCastShadows, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel)
 		: FPrimitiveSceneProxy(InComponent)
 		, FurComponent(InComponent)
 		, FurData(InFurData)
@@ -35,6 +35,13 @@ public:
 		, CastShadows(InCastShadows)
 	{
 		bAlwaysHasVelocity = true;
+
+		for (int i = 0; i < InOverrideMaterials.Num() && i < FurMaterials.Num(); i++)
+		{
+			UMaterialInstanceDynamic* DynamicMaterial = Cast<UMaterialInstanceDynamic>(InOverrideMaterials[i]);
+			if (DynamicMaterial)
+				FurMaterials[i] = DynamicMaterial;
+		}
 
 		for (int i = 0; i < InFurData.Num(); i++)
 		{
@@ -358,6 +365,59 @@ bool UGFurComponent::IsMaterialSlotNameValid(FName MaterialSlotName) const
 	return GetMaterialIndex(MaterialSlotName) >= 0;
 }
 
+void UGFurComponent::SetMaterial(int32 ElementIndex, UMaterialInterface* Material)
+{
+	if (ElementIndex >= 0)
+	{
+		if (OverrideMaterials.IsValidIndex(ElementIndex) && (OverrideMaterials[ElementIndex] == Material))
+		{
+			// Do nothing, the material is already set
+		}
+		else
+		{
+			// Grow the array if the new index is too large
+			if (OverrideMaterials.Num() <= ElementIndex)
+			{
+				OverrideMaterials.AddZeroed(ElementIndex + 1 - OverrideMaterials.Num());
+			}
+
+			// Check if we are setting a dynamic instance of the original material, or replacing a nullptr material  (if not we should dirty the material parameter name cache)
+			if (Material != nullptr)
+			{
+				UMaterialInstanceDynamic* DynamicMaterial = Cast<UMaterialInstanceDynamic>(Material);
+				if ((DynamicMaterial != nullptr && DynamicMaterial->Parent != OverrideMaterials[ElementIndex]) || OverrideMaterials[ElementIndex] == nullptr)
+				{
+					// Mark cached material parameter names dirty
+					MarkCachedMaterialParameterNameIndicesDirty();
+				}
+			}
+
+			// Set the material and invalidate things
+			OverrideMaterials[ElementIndex] = Material;
+			MarkRenderStateDirty();
+			if (Material)
+			{
+				Material->AddToCluster(this, true);
+			}
+
+			FBodyInstance* BodyInst = GetBodyInstance();
+			if (BodyInst && BodyInst->IsValidBodyInstance())
+			{
+				BodyInst->UpdatePhysicalMaterials();
+			}
+		}
+	}
+}
+
+void UGFurComponent::SetMaterialByName(FName MaterialSlotName, class UMaterialInterface* Material)
+{
+	int32 MaterialIndex = GetMaterialIndex(MaterialSlotName);
+	if (MaterialIndex < 0)
+		return;
+
+	SetMaterial(MaterialIndex, Material);
+}
+
 void UGFurComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const
 {
 	if (SkeletalGrowMesh)
@@ -474,7 +534,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 
 			FurData = FurArray;
 
-			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
+			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, OverrideMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
 		}
 		else if (StaticGrowMesh && StaticGrowMesh->RenderData)
 		{
@@ -487,7 +547,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			}
 
 			FurData = FurArray;
-			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
+			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, OverrideMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
 		}
 	}
 	return nullptr;

@@ -517,7 +517,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			bool UseMorphTargets = MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->MorphTargets.Num() > 0;
 
 			{
-				auto Data = FFurSkinData::CreateFurData(LayerCount, 0, this);
+				auto Data = FFurSkinData::CreateFurData(FMath::Max(LayerCount, 1), 0, this);
 				FurArray.Add(Data);
 				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data) : NULL);
 				if (UseMorphTargets)
@@ -525,7 +525,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			}
 			for (FFurLod& lod : LODs)
 			{
-				auto Data = FFurSkinData::CreateFurData(lod.LayerCount, FMath::Min(NumLods - 1, lod.Lod), this);
+				auto Data = FFurSkinData::CreateFurData(FMath::Max(lod.LayerCount, 1), FMath::Min(NumLods - 1, lod.Lod), this);
 				if (UseMorphTargets)
 					CreateMorphRemapTable(lod.Lod);
 				FurArray.Add(Data);
@@ -538,11 +538,11 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 		}
 		else if (StaticGrowMesh && StaticGrowMesh->RenderData)
 		{
-			FurArray.Add(FFurStaticData::CreateFurData(LayerCount, 0, this));
+			FurArray.Add(FFurStaticData::CreateFurData(FMath::Max(LayerCount, 1), 0, this));
 			MorphObjects.Add(NULL);
 			for (FFurLod& lod : LODs)
 			{
-				FurArray.Add(FFurStaticData::CreateFurData(lod.LayerCount, FMath::Min(StaticGrowMesh->RenderData->LODResources.Num() - 1, lod.Lod), this));
+				FurArray.Add(FFurStaticData::CreateFurData(FMath::Max(lod.LayerCount, 1), FMath::Min(StaticGrowMesh->RenderData->LODResources.Num() - 1, lod.Lod), this));
 				MorphObjects.Add(NULL);
 			}
 

@@ -1028,23 +1028,6 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 
 	if (Build == BuildType::Full)
 	{
-		// calc MaxVertexBoneDistance
-		const auto& RefPose = SkeletalMesh->RefSkeleton.GetRawRefBonePose();
-		float MaxDistSq = 0.0f;
-		for (uint32 i = 0; i < SourceVertexCount; i++)
-		{
-			const auto* WeightInfo = SourceSkinWeights.GetSkinWeightPtr<bExtraBoneInfluencesT>(i);
-			for (uint32 b = 0; b < VertexType::NumInfluences; b++)
-			{
-				if (WeightInfo->InfluenceWeights[b] == 0)
-					break;
-				float distSq = FVector::DistSquared(SourcePositions.VertexPosition(i), RefPose[WeightInfo->InfluenceBones[b]].GetTranslation());
-				if (distSq > MaxDistSq)
-					MaxDistSq = distSq;
-			}
-		}
-		MaxVertexBoneDistance = sqrtf(MaxDistSq);
-
 		UnpackNormals<TangentBasisTypeT>(SourceVertices);
 	}
 	if (Build >= BuildType::Splines)
@@ -1062,6 +1045,7 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 
 	VertexType* Vertices = VertexBuffer.Lock<VertexType>(NewVertexCount);
 	uint32 SectionVertexOffset = 0;
+	float MaxDistSq = 0.0f;
 	for (int32 SectionIndex = 0; SectionIndex < LodRenderData.RenderSections.Num(); SectionIndex++)
 	{
 		const auto& SourceSection = LodRenderData.RenderSections[SectionIndex];
@@ -1070,11 +1054,30 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 		FurSection.MinVertexIndex = SectionVertexOffset;
 
 		uint32 VertCount = GenerateFurVertices(SourceSection.BaseVertexIndex, SourceSection.BaseVertexIndex + SourceSection.NumVertices, Vertices + SectionVertexOffset, VertexBlitter);
+		if (Build == BuildType::Full)
+		{
+			const auto& RefPose = SkeletalMesh->RefSkeleton.GetRawRefBonePose();
+			for (uint32 i = 0; i < VertCount; i++)
+			{
+				uint32 VertexIndex = SectionVertexOffset + i;
+				for (uint32 b = 0; b < VertexType::NumInfluences; b++)
+				{
+					if (Vertices[VertexIndex].InfluenceWeights[b] == 0)
+						break;
+					uint32 BoneIndex = SourceSection.BoneMap[Vertices[VertexIndex].InfluenceBones[b]];
+					float distSq = FVector::DistSquared(Vertices[VertexIndex].Position, RefPose[BoneIndex].GetTranslation());
+					if (distSq > MaxDistSq)
+						MaxDistSq = distSq;
+				}
+			}
+		}
 		SectionVertexOffset += VertCount * FurLayerCount;
 
 		FurSection.MaxVertexIndex = SectionVertexOffset - 1;
 	}
 	VertexBuffer.Unlock();
+	if (Build == BuildType::Full)
+		MaxVertexBoneDistance = sqrtf(MaxDistSq);
 
 	if (Build >= BuildType::Splines || FurLayerCount != OldFurLayerCount || RemoveFacesWithoutSplines != OldRemoveFacesWithoutSplines)
 	{

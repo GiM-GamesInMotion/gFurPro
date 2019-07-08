@@ -534,17 +534,6 @@ inline void FFurStaticData::BuildFur(const FStaticMeshLODResources& LodRenderDat
 
 	if (Build == BuildType::Full)
 	{
-		// calc MaxVertexBoneDistance
-		float MaxDistSq = 0;
-		for (uint32 i = 0; i < SourcePositions.GetNumVertices(); i++)
-		{
-			const auto& Position = SourcePositions.VertexPosition(i);
-			float d = Position.SizeSquared();
-			if (d > MaxDistSq)
-				MaxDistSq = d;
-		}
-		MaxVertexBoneDistance = sqrtf(MaxDistSq);
-
 		UnpackNormals<TangentBasisTypeT>(SourceVertices);
 	}
 	if (Build >= BuildType::Splines)
@@ -558,7 +547,21 @@ inline void FFurStaticData::BuildFur(const FStaticMeshLODResources& LodRenderDat
 		;
 
 	VertexType* Vertices = VertexBuffer.Lock<VertexType>(NewVertexCount);
-	GenerateFurVertices(0, SourceVertexCount, Vertices, VertexBlitter);
+	{
+		uint32 VertexCount = GenerateFurVertices(0, SourceVertexCount, Vertices, VertexBlitter);
+		if (Build == BuildType::Full)
+		{
+			float MaxDistSq = 0;
+			for (uint32 i = 0; i < VertexCount; i++)
+			{
+				const auto& Position = Vertices[i].Position;
+				float d = Position.SizeSquared();
+				if (d > MaxDistSq)
+					MaxDistSq = d;
+			}
+			MaxVertexBoneDistance = sqrtf(MaxDistSq);
+		}
+	}
 	VertexBuffer.Unlock();
 
 	if (Build >= BuildType::Splines || FurLayerCount != OldFurLayerCount || RemoveFacesWithoutSplines != OldRemoveFacesWithoutSplines)

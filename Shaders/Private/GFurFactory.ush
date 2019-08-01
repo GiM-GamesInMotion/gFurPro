@@ -12,8 +12,6 @@
 #define GFUR_PHYSICS 0
 #endif
 
-float4x4 PreviousLocalToWorld;
-
 #ifndef GPUSKIN_APEX_CLOTH
 #define GPUSKIN_APEX_CLOTH 0
 #endif
@@ -220,7 +218,7 @@ FMaterialVertexParameters GetMaterialVertexParameters(FVertexFactoryInput Input,
 	Result.PreSkinnedNormal = Input.TangentZ.xyz;
 
 	// Assumes no instacing
-	Result.PrevFrameLocalToWorld = PreviousLocalToWorld;
+	Result.PrevFrameLocalToWorld = Primitive.PreviousLocalToWorld;
 
 #if NUM_MATERIAL_TEXCOORDS_VERTEX
 	for(int CoordinateIndex = 0; CoordinateIndex < NUM_MATERIAL_TEXCOORDS_VERTEX; CoordinateIndex++)
@@ -399,7 +397,7 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 	FBoneMatrix BlendMatrix = CalcPreviousBoneMatrix( Input );
 	Position = mul( BlendMatrix, float4(Position, 1) );
 
-	Position = mul(float4(Position, 1), PreviousLocalToWorld).xyz;
+	Position = mul(float4(Position, 1), Primitive.PreviousLocalToWorld).xyz;
 #if GPUSKIN_APEX_CLOTH
 	if( IsSimulatedVertex(Input) )
 	{
@@ -410,7 +408,7 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 
 #if NUM_MATERIAL_TEXCOORDS_VERTEX >= 2
 
-	float3x3 LocalToWorld = PreviousLocalToWorld;
+	float3x3 LocalToWorld = Primitive.PreviousLocalToWorld;
 
 	// Remove scaling.
 	half3 InvScale = Primitive.InvNonUniformScaleAndDeterminantSign.xyz;

@@ -7,8 +7,6 @@
 #define GFUR_PHYSICS 0
 #endif
 
-float4x4 PreviousLocalToWorld;
-
 float FurOffsetPower;
 
 float3 FurLinearOffset;
@@ -274,6 +272,7 @@ float4 VertexFactoryGetWorldPosition(FPositionOnlyVertexFactoryInput Input)
 // @return previous translated world position
 float4 VertexFactoryGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
+	float4x4 PreviousLocalToWorld = GetPrimitiveData(Intermediates.PrimitiveId).PreviousLocalToWorld;
 	float4x4 PreviousLocalToWorldTranslated = PreviousLocalToWorld;
 	PreviousLocalToWorldTranslated[3][0] += ResolvedView.PrevPreViewTranslation.x;
 	PreviousLocalToWorldTranslated[3][1] += ResolvedView.PrevPreViewTranslation.y;

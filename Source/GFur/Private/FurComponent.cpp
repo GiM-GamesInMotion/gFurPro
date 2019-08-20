@@ -118,9 +118,10 @@ public:
 		if (NewLodLevel != CurrentFurLodLevel)
 		{
 			CurrentFurLodLevel = NewLodLevel;
-			CurrentMeshLodLevel = FurData[CurrentFurLodLevel]->GetLod();
+			int32 Lod = FMath::Min(CurrentFurLodLevel, FurData.Num() - 1);
+			CurrentMeshLodLevel = FurData[Lod]->GetLod();
 			SectionOffset = 0;
-			for (int i = 0; i < NewLodLevel; i++)
+			for (int i = 0; i < Lod; i++)
 				SectionOffset += FurData[i]->GetSections_RenderThread().Num();
 		}
 
@@ -655,7 +656,7 @@ void UGFurComponent::updateFur()
 	FFurSceneProxy* Scene = (FFurSceneProxy*)SceneProxy;
 	int32 FurLodLevel = Scene->GetCurrentFurLodLevel();
 
-	bool LodPhysicsEnabled = PhysicsEnabled && (FurLodLevel == 0 || LODs[FurLodLevel - 1].PhysicsEnabled);
+	bool LodPhysicsEnabled = PhysicsEnabled && (FurLodLevel == 0 || (FurLodLevel < LODs.Num() && LODs[FurLodLevel - 1].PhysicsEnabled));
 
 	float DeltaTime = fminf(LastDeltaTime, 1.0f);
 	float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData()->GetCurrentMaxFurLength() * ReferenceHairBias + Scene->GetFurData()->GetCurrentMinFurLength() * (1.0f - ReferenceHairBias));
@@ -890,7 +891,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 {
 	FFurSceneProxy* FurProxy = (FFurSceneProxy*)SceneProxy;
 
-	if (FurProxy)
+	if (FurProxy && FurProxy->GetCurrentFurLodLevel() != 0x7fffffff)
 	{
 		ERHIFeatureLevel::Type SceneFeatureLevel = GetWorld()->FeatureLevel;
 

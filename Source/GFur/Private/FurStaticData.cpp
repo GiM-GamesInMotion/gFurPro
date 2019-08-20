@@ -548,11 +548,11 @@ inline void FFurStaticData::BuildFur(const FStaticMeshLODResources& LodRenderDat
 
 	VertexType* Vertices = VertexBuffer.Lock<VertexType>(NewVertexCount);
 	{
-		uint32 VertexCount = GenerateFurVertices(0, SourceVertexCount, Vertices, VertexBlitter);
+		uint32 VertexCount2 = GenerateFurVertices(0, SourceVertexCount, Vertices, VertexBlitter);
 		if (Build == BuildType::Full)
 		{
 			float MaxDistSq = 0;
-			for (uint32 i = 0; i < VertexCount; i++)
+			for (uint32 i = 0; i < VertexCount2; i++)
 			{
 				const auto& Position = Vertices[i].Position;
 				float d = Position.SizeSquared();

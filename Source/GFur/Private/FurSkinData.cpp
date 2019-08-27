@@ -440,6 +440,8 @@ public:
 		: FFurSkinVertexFactoryBase<true, true, true>(InFeatureLevel)
 	{
 	}
+
+	using FFurSkinVertexFactoryBase<true, true, true>::Init;
 };
 
 class FPhysicsExtraInfluencesFurSkinVertexFactory : public FFurSkinVertexFactoryBase<false, true, true>
@@ -450,6 +452,8 @@ public:
 		: FFurSkinVertexFactoryBase<false, true, true>(InFeatureLevel)
 	{
 	}
+
+	using FFurSkinVertexFactoryBase<false, true, true>::Init;
 };
 
 class FMorphExtraInfluencesFurSkinVertexFactory : public FFurSkinVertexFactoryBase<true, false, true>
@@ -460,6 +464,8 @@ public:
 		: FFurSkinVertexFactoryBase<true, false, true>(InFeatureLevel)
 	{
 	}
+
+	using FFurSkinVertexFactoryBase<true, false, true>::Init;
 };
 
 class FExtraInfluencesFurSkinVertexFactory : public FFurSkinVertexFactoryBase<false, false, true>
@@ -470,6 +476,8 @@ public:
 		: FFurSkinVertexFactoryBase<false, false, true>(InFeatureLevel)
 	{
 	}
+
+	using FFurSkinVertexFactoryBase<false, false, true>::Init;
 };
 
 class FMorphPhysicsFurSkinVertexFactory : public FFurSkinVertexFactoryBase<true, true, false>
@@ -480,6 +488,8 @@ public:
 		: FFurSkinVertexFactoryBase<true, true, false>(InFeatureLevel)
 	{
 	}
+
+	using FFurSkinVertexFactoryBase<true, true, false>::Init;
 };
 
 class FPhysicsFurSkinVertexFactory : public FFurSkinVertexFactoryBase<false, true, false>
@@ -490,6 +500,8 @@ public:
 		: FFurSkinVertexFactoryBase<false, true, false>(InFeatureLevel)
 	{
 	}
+
+	using FFurSkinVertexFactoryBase<false, true, false>::Init;
 };
 
 class FMorphFurSkinVertexFactory : public FFurSkinVertexFactoryBase<true, false, false>
@@ -500,6 +512,8 @@ public:
 		: FFurSkinVertexFactoryBase<true, false, false>(InFeatureLevel)
 	{
 	}
+
+	using FFurSkinVertexFactoryBase<true, false, false>::Init;
 };
 
 class FFurSkinVertexFactory : public FFurSkinVertexFactoryBase<false, false, false>
@@ -510,6 +524,8 @@ public:
 		: FFurSkinVertexFactoryBase<false, false, false>(InFeatureLevel)
 	{
 	}
+
+	using FFurSkinVertexFactoryBase<false, false, false>::Init;
 };
 
 IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphPhysicsExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);

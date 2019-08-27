@@ -251,6 +251,8 @@ public:
 		: FFurStaticVertexFactoryBase<true>(InFeatureLevel)
 	{
 	}
+
+	using FFurStaticVertexFactoryBase<true>::Init;
 };
 
 class FFurStaticVertexFactory : public FFurStaticVertexFactoryBase<false>
@@ -261,6 +263,8 @@ public:
 		: FFurStaticVertexFactoryBase<false>(InFeatureLevel)
 	{
 	}
+
+	using FFurStaticVertexFactoryBase<false>::Init;
 };
 
 IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush", true, false, true, true, false);

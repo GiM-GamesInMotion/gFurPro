@@ -278,6 +278,8 @@ UGFurComponent::UGFurComponent(const FObjectInitializer& ObjectInitializer)
 	CastShadow = false;
 	PrimaryComponentTick.bCanEverTick = true;
 
+	StreamingDistanceMultiplier = 1.0f;
+
 	LastDeltaTime = 1.0f;
 
 	SetCollisionProfileName(UCollisionProfile::BlockAllDynamic_ProfileName);
@@ -467,9 +469,9 @@ bool UGFurComponent::GetMaterialStreamingData(int32 MaterialIndex, FPrimitiveMat
 	return MaterialData.IsValid();
 }
 
-void UGFurComponent::GetStreamingTextureInfo(FStreamingTextureLevelContext& LevelContext, TArray<FStreamingTexturePrimitiveInfo>& OutStreamingTextures) const
+void UGFurComponent::GetStreamingRenderAssetInfo(FStreamingTextureLevelContext& LevelContext, TArray<FStreamingRenderAssetPrimitiveInfo>& OutStreamingRenderAssets) const
 {
-	GetStreamingTextureInfoInner(LevelContext, nullptr, GetComponentTransform().GetMaximumAxisScale(), OutStreamingTextures);
+	GetStreamingTextureInfoInner(LevelContext, nullptr, GetComponentTransform().GetMaximumAxisScale() * StreamingDistanceMultiplier, OutStreamingRenderAssets);
 }
 
 int32 UGFurComponent::GetNumMaterials() const

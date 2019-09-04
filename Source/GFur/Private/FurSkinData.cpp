@@ -77,7 +77,7 @@ public:
 		const class FSceneInterface* Scene,
 		const class FSceneView* View,
 		const class FMeshMaterialShader* Shader,
-		bool bShaderRequiresPositionOnlyStream,
+		const EVertexInputStreamType InputStreamType,
 		ERHIFeatureLevel::Type FeatureLevel,
 		const class FVertexFactory* VertexFactory,
 		const struct FMeshBatchElement& BatchElement,
@@ -149,7 +149,7 @@ public:
 		}
 
 		// if FeatureLevel < ERHIFeatureLevel::ES3_1
-		FUniformBufferRHIParamRef GetUniformBuffer() const
+		FUniformBufferRHIRef GetUniformBuffer() const
 		{
 			return UniformBuffer;
 		}
@@ -755,7 +755,7 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::GetElementShaderBindings(
 	const class FSceneInterface* Scene,
 	const class FSceneView* View,
 	const class FMeshMaterialShader* Shader,
-	bool bShaderRequiresPositionOnlyStream,
+	const EVertexInputStreamType InputStreamType,
 	ERHIFeatureLevel::Type FeatureLevel,
 	const class FVertexFactory* VertexFactory,
 	const struct FMeshBatchElement& BatchElement,
@@ -777,14 +777,14 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::GetElementShaderBindings(
 
 		if (BoneMatrices.IsBound())
 		{
-			FShaderResourceViewRHIParamRef CurrentData = ShaderData.GetBoneBufferForReading(false).VertexBufferSRV;
+			auto CurrentData = ShaderData.GetBoneBufferForReading(false).VertexBufferSRV;
 			ShaderBindings.Add(BoneMatrices, CurrentData);
 		}
 		if (PreviousBoneMatrices.IsBound())
 		{
 			// todo: Maybe a check for PreviousData!=CurrentData would save some performance (when objects don't have velocty yet) but removing the bool also might save performance
 
-			FShaderResourceViewRHIParamRef PreviousData = ShaderData.GetBoneBufferForReading(true).VertexBufferSRV;
+			auto PreviousData = ShaderData.GetBoneBufferForReading(true).VertexBufferSRV;
 			ShaderBindings.Add(PreviousBoneMatrices, PreviousData);
 		}
 
@@ -792,12 +792,12 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::GetElementShaderBindings(
 		{
 			if (BoneFurOffsets.IsBound())
 			{
-				FShaderResourceViewRHIParamRef CurrentData = ShaderData.GetBoneFurOffsetsBufferForReading(false).VertexBufferSRV;
+				auto CurrentData = ShaderData.GetBoneFurOffsetsBufferForReading(false).VertexBufferSRV;
 				ShaderBindings.Add(BoneFurOffsets, CurrentData);
 			}
 			if (PreviousBoneFurOffsets.IsBound())
 			{
-				FShaderResourceViewRHIParamRef PreviousData = ShaderData.GetBoneFurOffsetsBufferForReading(true).VertexBufferSRV;
+				auto PreviousData = ShaderData.GetBoneFurOffsetsBufferForReading(true).VertexBufferSRV;
 				ShaderBindings.Add(PreviousBoneFurOffsets, PreviousData);
 			}
 		}

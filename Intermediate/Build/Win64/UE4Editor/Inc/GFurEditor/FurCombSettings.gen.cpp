@@ -93,6 +93,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_MetaData[] = {
 		{ "Category", "Comb" },
+		{ "Comment", "/** Toggles visualization of the spline guides.*/" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Toggles visualization of the spline guides." },
 	};
@@ -105,6 +106,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData[] = {
 		{ "Category", "Comb" },
+		{ "Comment", "/** Mirrors the grooming along the Z axis of the mesh.*/" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Mirrors the grooming along the Z axis of the mesh." },
 	};
@@ -117,6 +119,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData[] = {
 		{ "Category", "Comb" },
+		{ "Comment", "/** Mirrors the grooming along the Y axis of the mesh.*/" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Mirrors the grooming along the Y axis of the mesh." },
 	};
@@ -129,6 +132,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData[] = {
 		{ "Category", "Comb" },
+		{ "Comment", "/** Mirrors the grooming along the X axis of the mesh.*/" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Mirrors the grooming along the X axis of the mesh." },
 	};
@@ -141,6 +145,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData[] = {
 		{ "Category", "Comb" },
+		{ "Comment", "/** If the brush should affect the fur even if it's not moved.*/" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "If the brush should affect the fur even if it's not moved." },
 	};
@@ -155,6 +160,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "Category", "Comb" },
 		{ "ClampMax", "1.0" },
 		{ "ClampMin", "-1.0" },
+		{ "Comment", "/** Affects the distance at which the effect is applied or faded out in both directions from the \"Effect Height\" point. -1 = extremely short, mostly at exact location defined by \"Effect Height\", 0 smooth distribution which fades out in both directions from \"Effect Height\", 1 affects the whole spline same way, achieving sort of linear effect.*/" },
 		{ "DisplayName", "Effect Distribution" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Affects the distance at which the effect is applied or faded out in both directions from the \"Effect Height\" point. -1 = extremely short, mostly at exact location defined by \"Effect Height\", 0 smooth distribution which fades out in both directions from \"Effect Height\", 1 affects the whole spline same way, achieving sort of linear effect." },
@@ -168,6 +174,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "Category", "Comb" },
 		{ "ClampMax", "1.0" },
 		{ "ClampMin", "0.0" },
+		{ "Comment", "/** Height of fur spline at which the brush effect is applied. 0=root, 1=tip */" },
 		{ "DisplayName", "Effect Height" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Height of fur spline at which the brush effect is applied. 0=root, 1=tip" },
@@ -181,6 +188,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "Category", "Comb" },
 		{ "ClampMax", "1.0" },
 		{ "ClampMin", "0.0" },
+		{ "Comment", "/** Amount of falloff to apply (0.0 - 1.0) */" },
 		{ "DisplayName", "Falloff" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Amount of falloff to apply (0.0 - 1.0)" },
@@ -194,6 +202,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "Category", "Comb" },
 		{ "ClampMax", "1000.0" },
 		{ "ClampMin", "0.0" },
+		{ "Comment", "/** Strength of the brush (0.0 - 1.0) */" },
 		{ "DisplayName", "Strength" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Strength of the brush (0.0 - 1.0)" },
@@ -207,6 +216,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "Category", "Comb" },
 		{ "ClampMax", "1000000.0" },
 		{ "ClampMin", "0.01" },
+		{ "Comment", "/** Radius of the Brush used for Painting */" },
 		{ "DisplayName", "Radius" },
 		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
 		{ "ToolTip", "Radius of the Brush used for Painting" },
@@ -254,7 +264,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurCombSettings, 161486101);
+	IMPLEMENT_CLASS(UFurCombSettings, 3103070688);
 	template<> GFUREDITOR_API UClass* StaticClass<UFurCombSettings>()
 	{
 		return UFurCombSettings::StaticClass();

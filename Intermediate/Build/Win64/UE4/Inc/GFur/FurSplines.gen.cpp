@@ -100,6 +100,7 @@ void EmptyLinkFunctionForGeneratedCodeFurSplines() {}
 	const UE4CodeGen_Private::FIntPropertyParams Z_Construct_UClass_UFurSplines_Statics::NewProp_Count_Inner = { "Count", nullptr, (EPropertyFlags)0x0000000000000000, UE4CodeGen_Private::EPropertyGenFlags::Int, RF_Public|RF_Transient|RF_MarkAsNative, 1, 0, METADATA_PARAMS(nullptr, 0) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurSplines_Statics::NewProp_Index_MetaData[] = {
+		{ "Comment", "// Old - don't use\n" },
 		{ "ModuleRelativePath", "Public/FurSplines.h" },
 		{ "ToolTip", "Old - don't use" },
 	};
@@ -151,7 +152,7 @@ void EmptyLinkFunctionForGeneratedCodeFurSplines() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurSplines, 3165477188);
+	IMPLEMENT_CLASS(UFurSplines, 2389362597);
 	template<> GFUR_API UClass* StaticClass<UFurSplines>()
 	{
 		return UFurSplines::StaticClass();

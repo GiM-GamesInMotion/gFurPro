@@ -167,19 +167,3 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 		}
 	}
 }
-
-#if WITH_EDITORONLY_DATA
-
-FMorphTargetDelta* UMorphTarget::GetMorphTargetDelta(int32 LODIndex, int32& OutNumDeltas)
-{
-	if (LODIndex < MorphLODModels.Num())
-	{
-		FMorphTargetLODModel& MorphModel = MorphLODModels[LODIndex];
-		OutNumDeltas = MorphModel.Vertices.Num();
-		return MorphModel.Vertices.GetData();
-	}
-
-	return NULL;
-}
-
-#endif // WITH_EDITORONLY_DATA

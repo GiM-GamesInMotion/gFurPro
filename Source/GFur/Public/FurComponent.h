@@ -175,6 +175,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
 	float NoiseStrength;
 
+	/**
+	 * Allows adjusting the desired streaming distance of streaming textures that uses UV 0.
+	 * 1.0 is the default, whereas a higher value makes the textures stream in sooner from far away.
+	 * A lower value (0.0-1.0) makes the textures stream in later (you have to be closer).
+	 * Value can be < 0 (from legcay content, or code changes)
+	 */
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category=SkeletalMesh)
+	float StreamingDistanceMultiplier;
+
 	const TArray<int32>& GetFurSplineMap() const;
 	const TArray<FVector>& GetVertexNormals() const;
 
@@ -188,7 +197,7 @@ public:
 	virtual void SetMaterialByName(FName MaterialSlotName, class UMaterialInterface* Material) override;
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials = false) const override;
 	virtual bool GetMaterialStreamingData(int32 MaterialIndex, FPrimitiveMaterialInfo& MaterialData) const override;
-	virtual void GetStreamingTextureInfo(FStreamingTextureLevelContext& LevelContext, TArray<FStreamingTexturePrimitiveInfo>& OutStreamingTextures) const override;
+	virtual void GetStreamingRenderAssetInfo(FStreamingTextureLevelContext& LevelContext, TArray<FStreamingRenderAssetPrimitiveInfo>& OutStreamingRenderAssets) const override;
 	virtual int32 GetNumMaterials() const override;
 
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;

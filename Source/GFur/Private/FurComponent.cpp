@@ -906,7 +906,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 					Sections[SectionIdx].BoneMap, Discontinuous, SceneFeatureLevel);
 			}
 			if (MasterPoseComponent.IsValid() && FurProxy->GetMorphObject())
-				FurProxy->GetMorphObject()->Update_RenderThread(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables);
+				FurProxy->GetMorphObject()->Update_RenderThread(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables, FurProxy->GetCurrentMeshLodLevel());
 		}
 		else if (StaticGrowMesh)
 		{

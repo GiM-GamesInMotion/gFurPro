@@ -38,7 +38,7 @@ public:
 	FFurMorphObject(FFurSkinData* InFurData);
 	~FFurMorphObject();
 
-	void Update_RenderThread(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTable);
+	void Update_RenderThread(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTable, int InMeshLod);
 
 	FVertexBuffer* GetVertexBuffer() { return &VertexBuffer; }
 

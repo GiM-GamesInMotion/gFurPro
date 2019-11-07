@@ -971,6 +971,8 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 	const auto& Vertices = LodModel.StaticVertexBuffers.StaticMeshVertexBuffer;
 
 	MorphRemapTable.AddUninitialized(MasterPositions.GetNumVertices());
+	for (int i = 0, c = MasterPositions.GetNumVertices(); i < c; i++)
+		MorphRemapTable[i] = -1;
 
 	uint32 SkinWeightSize;
 	if (MasterSkinWeights.HasExtraBoneInfluences() && SkinWeights.HasExtraBoneInfluences())
@@ -988,7 +990,6 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 			{
 				for (uint32 i = MasterSection.BaseVertexIndex; i < MasterSection.BaseVertexIndex + MasterSection.NumVertices; i++)
 				{
-					MorphRemapTable[i] = -1;
 					const auto& MasterPosition = MasterPositions.VertexPosition(i);
 					const auto& MasterSkinWeight = MasterSkinWeights.GetSkinWeightPtr<true>(i);
 					const auto& MasterTangentX = MasterVertices.VertexTangentX(i);

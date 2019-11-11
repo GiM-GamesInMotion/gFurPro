@@ -111,7 +111,10 @@ FFurData::FFurData()
 FFurData::~FFurData()
 {
 	if (FurSplinesUsed != FurSplinesAssigned)
-		FurSplinesUsed->ConditionalBeginDestroy();
+	{
+		if (FurSplinesUsed->IsValidLowLevel())
+			FurSplinesUsed->ConditionalBeginDestroy();
+	}
 
 	VertexBuffer.ReleaseResource();
 	IndexBuffer.ReleaseResource();

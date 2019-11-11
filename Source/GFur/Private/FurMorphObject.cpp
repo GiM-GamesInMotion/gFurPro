@@ -46,14 +46,13 @@ FFurMorphObject::~FFurMorphObject()
 		VertexBuffer.ReleaseResource();
 }
 
-void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTables)
+void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTables, int InMeshLod)
 {
 	int32 NumFurVertices = FurData->GetNumVertices_RenderThread();
 	int32 NumVertices = NumFurVertices / FurData->GetFurLayerCount();
 	if (NumVertices > 0)
 	{
 		int32 NumLayers = FurData->GetFurLayerCount();
-		int32 LODIndex = FurData->GetLod();
 
 		uint32 Size = NumVertices * sizeof(FMorphGPUSkinVertex);
 
@@ -65,7 +64,7 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 
 		FMemory::Memzero(&Buffer[0], sizeof(FMorphGPUSkinVertex) * NumVertices);
 
-		const auto& MorphRemapTable = InMorphRemapTables[LODIndex];
+		const auto& MorphRemapTable = InMorphRemapTables[InMeshLod];
 
 		// iterate over all active morph targets and accumulate their vertex deltas
 		for (int32 AnimIdx = 0; AnimIdx < ActiveMorphTargets.Num(); AnimIdx++)
@@ -80,7 +79,7 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 
 			// Get deltas
 			int32 NumDeltas;
-			FMorphTargetDelta* Deltas = MorphTarget.MorphTarget->GetMorphTargetDelta(LODIndex, NumDeltas);
+			FMorphTargetDelta* Deltas = MorphTarget.MorphTarget->GetMorphTargetDelta(InMeshLod, NumDeltas);
 
 			// iterate over the vertices that this lod model has changed
 			for (int32 MorphVertIdx = 0; MorphVertIdx < NumDeltas; MorphVertIdx++)

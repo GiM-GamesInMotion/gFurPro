@@ -102,7 +102,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	{
 		((UFurCombSettings*)Obj)->bShowSplines = 1;
 	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines = { "bShowSplines", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_MetaData)) };
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines = { "bShowSplines", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData[] = {
 		{ "Category", "Comb" },
@@ -115,7 +115,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	{
 		((UFurCombSettings*)Obj)->bMirrorZ = 1;
 	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ = { "bMirrorZ", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData)) };
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ = { "bMirrorZ", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData[] = {
 		{ "Category", "Comb" },
@@ -128,7 +128,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	{
 		((UFurCombSettings*)Obj)->bMirrorY = 1;
 	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY = { "bMirrorY", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData)) };
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY = { "bMirrorY", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData[] = {
 		{ "Category", "Comb" },
@@ -141,7 +141,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	{
 		((UFurCombSettings*)Obj)->bMirrorX = 1;
 	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX = { "bMirrorX", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData)) };
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX = { "bMirrorX", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData[] = {
 		{ "Category", "Comb" },
@@ -154,7 +154,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 	{
 		((UFurCombSettings*)Obj)->bEnableFlow = 1;
 	}
-	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow = { "bEnableFlow", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData)) };
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow = { "bEnableFlow", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UFurCombSettings), &Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_SetBit, METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData[] = {
 		{ "Category", "Comb" },
@@ -168,7 +168,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "UIMin", "-1.0" },
 	};
 #endif
-	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread = { "ApplySpread", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, ApplySpread), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData)) };
+	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread = { "ApplySpread", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, ApplySpread), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight_MetaData[] = {
 		{ "Category", "Comb" },
@@ -182,7 +182,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "UIMin", "0.0" },
 	};
 #endif
-	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight = { "ApplyHeight", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, ApplyHeight), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight_MetaData)) };
+	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight = { "ApplyHeight", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, ApplyHeight), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount_MetaData[] = {
 		{ "Category", "Comb" },
@@ -196,7 +196,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "UIMin", "0.0" },
 	};
 #endif
-	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount = { "FalloffAmount", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, FalloffAmount), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount_MetaData)) };
+	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount = { "FalloffAmount", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, FalloffAmount), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Strength_MetaData[] = {
 		{ "Category", "Comb" },
@@ -210,7 +210,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "UIMin", "0.0" },
 	};
 #endif
-	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Strength = { "Strength", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, Strength), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Strength_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Strength_MetaData)) };
+	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Strength = { "Strength", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, Strength), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Strength_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Strength_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData[] = {
 		{ "Category", "Comb" },
@@ -224,7 +224,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		{ "UIMin", "0.01" },
 	};
 #endif
-	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius = { "Radius", nullptr, (EPropertyFlags)0x0020080000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, Radius), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData)) };
+	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius = { "Radius", nullptr, (EPropertyFlags)0x0020080000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, Radius), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_Radius_MetaData)) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_UFurCombSettings_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bShowSplines,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorZ,
@@ -248,12 +248,12 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		nullptr,
 		Z_Construct_UClass_UFurCombSettings_Statics::PropPointers,
 		nullptr,
-		ARRAY_COUNT(DependentSingletons),
+		UE_ARRAY_COUNT(DependentSingletons),
 		0,
-		ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::PropPointers),
+		UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::PropPointers),
 		0,
 		0x001000A0u,
-		METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::Class_MetaDataParams, ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::Class_MetaDataParams))
+		METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::Class_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::Class_MetaDataParams))
 	};
 	UClass* Z_Construct_UClass_UFurCombSettings()
 	{
@@ -264,7 +264,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurCombSettings, 3103070688);
+	IMPLEMENT_CLASS(UFurCombSettings, 3833338696);
 	template<> GFUREDITOR_API UClass* StaticClass<UFurCombSettings>()
 	{
 		return UFurCombSettings::StaticClass();

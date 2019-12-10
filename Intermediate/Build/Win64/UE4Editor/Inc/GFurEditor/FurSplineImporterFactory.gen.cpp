@@ -55,12 +55,12 @@ void EmptyLinkFunctionForGeneratedCodeFurSplineImporterFactory() {}
 		nullptr,
 		nullptr,
 		nullptr,
-		ARRAY_COUNT(DependentSingletons),
+		UE_ARRAY_COUNT(DependentSingletons),
 		0,
 		0,
 		0,
 		0x000000A0u,
-		METADATA_PARAMS(Z_Construct_UClass_UFurSplineImporterFactory_Statics::Class_MetaDataParams, ARRAY_COUNT(Z_Construct_UClass_UFurSplineImporterFactory_Statics::Class_MetaDataParams))
+		METADATA_PARAMS(Z_Construct_UClass_UFurSplineImporterFactory_Statics::Class_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UClass_UFurSplineImporterFactory_Statics::Class_MetaDataParams))
 	};
 	UClass* Z_Construct_UClass_UFurSplineImporterFactory()
 	{
@@ -71,7 +71,7 @@ void EmptyLinkFunctionForGeneratedCodeFurSplineImporterFactory() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurSplineImporterFactory, 1471226);
+	IMPLEMENT_CLASS(UFurSplineImporterFactory, 4047482690);
 	template<> GFUREDITOR_API UClass* StaticClass<UFurSplineImporterFactory>()
 	{
 		return UFurSplineImporterFactory::StaticClass();

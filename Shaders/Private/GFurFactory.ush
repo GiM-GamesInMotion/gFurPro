@@ -309,7 +309,7 @@ FBoneMatrix GetBoneMatrix(int Index)
 	float4 C = BoneMatrices[Index * 3 + 2];
 	return FBoneMatrix(A,B,C);
 #else
-	return Bones.BoneMatrices[Index];
+	return BonesFur.BoneMatrices[Index];
 #endif
 }
 
@@ -338,7 +338,7 @@ FBoneMatrix GetPreviousBoneMatrix(int Index)
 	float4 C = PreviousBoneMatrices[Index * 3 + 2];
 	return FBoneMatrix(A,B,C);
 #else
-	return Bones.BoneMatrices[Index];
+	return BonesFur.BoneMatrices[Index];
 #endif
 }
 

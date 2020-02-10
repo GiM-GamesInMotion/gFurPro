@@ -33,4 +33,7 @@ private:
 
 	TOptional<float> GetNewLength() const { return NewLength; }
 	TOptional<int32> GetNewControlPointCount() const { return NewControlPointCount; }
+
+	void ExportFurSplinesAssetWidget(FDetailWidgetRow& OutWidgetRow, IDetailLayoutBuilder* DetailBuilder);
+	void ExportFurSplines(IDetailLayoutBuilder* DetailBuilder) const;
 };

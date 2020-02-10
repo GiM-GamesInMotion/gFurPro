@@ -3,6 +3,7 @@
 
 #include "FurSplines.h"
 #include "FurComponent.h"
+#include "FurSplineExporter.h"
 
 #include "DetailLayoutBuilder.h"
 #include "DetailCategoryBuilder.h"
@@ -46,6 +47,7 @@ void FFurComponentCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailBu
 	{
 		DetailBuilder.AddPropertyToCategory(FurSplinesProperty);
 		CreateFurSplinesAssetWidget(FurMeshCategory.AddCustomRow(FurSplinesProperty->GetPropertyDisplayName(), false), &DetailBuilder);
+		ExportFurSplinesAssetWidget(FurMeshCategory.AddCustomRow(FurSplinesProperty->GetPropertyDisplayName(), false), &DetailBuilder);
 	}
 
 	DetailBuilder.EditCategory("gFur Shell Settings");
@@ -308,6 +310,49 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, UStati
 		}
 	}
 	FurSplines->Vertices.SetNum(Cnt);
+}
+
+void FFurComponentCustomization::ExportFurSplinesAssetWidget(FDetailWidgetRow& OutWidgetRow, IDetailLayoutBuilder* DetailBuilder)
+{
+	OutWidgetRow
+	.WholeRowContent()
+	[
+		SNew(SButton)
+		.OnClicked_Lambda([this, DetailBuilder]()
+			{
+				ExportFurSplines(DetailBuilder);
+				return FReply::Handled();
+			})
+		.Text(LOCTEXT("ExportSplines", "Export Splines"))
+		.HAlign(HAlign_Center)
+	];
+}
+
+void FFurComponentCustomization::ExportFurSplines(IDetailLayoutBuilder* DetailBuilder) const
+{
+	UGFurComponent* FurComponent = nullptr;
+	if (!FindFurComponent(DetailBuilder, FurComponent) || !FurComponent)
+		return;
+	UFurSplines* FurSplines = FurComponent->FurSplines;
+	if (!FurSplines)
+		return;
+
+	// Initialize SaveAssetDialog config
+	FSaveAssetDialogConfig SaveAssetDialogConfig;
+	SaveAssetDialogConfig.DialogTitleOverride = LOCTEXT("ExportFurSplines", "Export Fur Splines");
+//	SaveAssetDialogConfig.DefaultPath = DefaultPath;
+	SaveAssetDialogConfig.DefaultAssetName = "FurSplines";
+	SaveAssetDialogConfig.ExistingAssetPolicy = ESaveAssetDialogExistingAssetPolicy::AllowButWarn;
+
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	FString SaveObjectPath = ContentBrowserModule.Get().CreateModalSaveAssetDialog(SaveAssetDialogConfig);
+	if (!SaveObjectPath.IsEmpty())
+	{
+		const FString PackageName = FPackageName::ObjectPathToPackageName(SaveObjectPath);
+		FString Filename;
+		if (FPackageName::TryConvertLongPackageNameToFilename(PackageName, Filename, ".abc"))
+			::ExportFurSplines(FurSplines, Filename);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

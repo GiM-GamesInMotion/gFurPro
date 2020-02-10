@@ -870,16 +870,16 @@ void FFurSkinData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFacto
 		if (bUseHighPrecisionTangentBasis)
 		{
 			if (bUseFullPrecisionUVs)
-				vf->Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer, InMorphVertexBuffer, s.NumBones);
+				vf->template Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer, InMorphVertexBuffer, s.NumBones);
 			else
-				vf->Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::Default>(&VertexBuffer, InMorphVertexBuffer, s.NumBones);
+				vf->template Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::Default>(&VertexBuffer, InMorphVertexBuffer, s.NumBones);
 		}
 		else
 		{
 			if (bUseFullPrecisionUVs)
-				vf->Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer, InMorphVertexBuffer, s.NumBones);
+				vf->template Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer, InMorphVertexBuffer, s.NumBones);
 			else
-				vf->Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::Default>(&VertexBuffer, InMorphVertexBuffer, s.NumBones);
+				vf->template Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::Default>(&VertexBuffer, InMorphVertexBuffer, s.NumBones);
 		}
 		BeginInitResource(vf);
 		VertexFactories.Add(vf);

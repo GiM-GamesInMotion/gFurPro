@@ -227,12 +227,12 @@ UFurSplineAbcImporterFactory::UFurSplineAbcImporterFactory(const FObjectInitiali
 	//	AutoPriority = 0x7fffffff;
 	//	ImportPriority = 0x7fffffff;
 
-	Formats.Add(TEXT("abc;Alembic fur splines"));
+	Formats.Add(TEXT("abc;Alembic gFur splines"));
 }
 
 FText UFurSplineAbcImporterFactory::GetToolTip() const
 {
-	return FText::FromString("Splines for fur");
+	return FText::FromString("Splines for gFur");
 }
 
 bool UFurSplineAbcImporterFactory::FactoryCanImport(const FString& Filename)

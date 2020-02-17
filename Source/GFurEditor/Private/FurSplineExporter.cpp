@@ -31,7 +31,7 @@ PRAGMA_DEFAULT_VISIBILITY_END
 #include "Windows/HideWindowsPlatformTypes.h"
 #endif
 
-void ExportFurSplines(UFurSplines* FurSplines, const FString& filename)
+void ExportFurSplines(const FString& filename, const TArray<FVector>& Points, int32 ControlPointCount)
 {
 	std::string path(TCHAR_TO_UTF8(*filename));
 
@@ -40,14 +40,13 @@ void ExportFurSplines(UFurSplines* FurSplines, const FString& filename)
 	Alembic::AbcGeom::OCurves Curves(Archive.getTop(), "splines");
 	Alembic::AbcGeom::OCurvesSchema& Schema = Curves.getSchema();
 
-	int32 ControlPointCount = FurSplines->ControlPointCount;
-	int32 NumSplines = FurSplines->Vertices.Num() / ControlPointCount;
+	int32 NumSplines = Points.Num() / ControlPointCount;
 	TArray<int32> NumVerticesData;
 	NumVerticesData.AddUninitialized(NumSplines);
 	for (int32 i = 0; i < NumSplines; i++)
 		NumVerticesData[i] = ControlPointCount;
 
-	Alembic::Abc::P3fArraySample Positions((Alembic::Abc::P3fArraySample::value_type*)&FurSplines->Vertices[0], FurSplines->Vertices.Num());
+	Alembic::Abc::P3fArraySample Positions((Alembic::Abc::P3fArraySample::value_type*)&Points[0], Points.Num());
 	Alembic::Abc::Int32ArraySample NumVertices((Alembic::Abc::Int32ArraySample::value_type*)&NumVerticesData[0], NumVerticesData.Num());
 	Alembic::AbcGeom::OCurvesSchema::Sample Sample(Positions, NumVertices);
 

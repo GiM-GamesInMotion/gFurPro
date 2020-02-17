@@ -19,6 +19,7 @@
 #include "PropertyCustomizationHelpers.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBox.h"
+#include "Widgets/Layout/SUniformGridPanel.h"
 #include "ScopedTransaction.h"
 #include "IContentBrowserSingleton.h"
 #include "ContentBrowserModule.h"
@@ -27,8 +28,95 @@
 #include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
 #include "Runtime/Engine/Public/ComponentRecreateRenderStateContext.h"
 #include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 
 #define LOCTEXT_NAMESPACE "GFurEditor"
+
+void SGFurExportOptions::Construct(const FArguments& InArgs)
+{
+	WidgetWindow = InArgs._WidgetWindow;
+
+	this->ChildSlot
+	[
+		SNew(SVerticalBox)
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(2)
+		[
+			SNew(SBorder)
+			.Padding(FMargin(3))
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(STextBlock)
+					.Font(FEditorStyle::GetFontStyle("CurveEd.LabelFont"))
+					.Text(LOCTEXT("Export_CurrentFileTitle", "Current File: "))
+				]
+				+ SHorizontalBox::Slot()
+				.Padding(5, 0, 0, 0)
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Font(FEditorStyle::GetFontStyle("CurveEd.InfoFont"))
+					.Text(InArgs._FullPath)
+				]
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.Padding(2)
+		.MaxHeight(20.0f)
+		[
+			SNew(SNumericEntryBox<float>)
+			.MinValue(0.0f)
+			.MaxValue(1000.0f)
+			.MinSliderValue(0.1f)
+			.MaxSliderValue(10.0f)
+			.Delta(0.1f)
+			.AllowSpin(true)
+			.Value(this, &SGFurExportOptions::GetSplineDensity)
+				.OnValueChanged_Lambda([this](float InValue) {
+				SplineDensity = InValue;
+			})
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.HAlign(HAlign_Right)
+		.Padding(2)
+		[
+			SNew(SUniformGridPanel)
+			.SlotPadding(2)
+			+ SUniformGridPanel::Slot(0, 0)
+			[
+				SAssignNew(ImportButton, SButton)
+				.HAlign(HAlign_Center)
+				.Text(LOCTEXT("GFurExportOptionWindow_Export", "Export"))
+				.IsEnabled(this, &SGFurExportOptions::CanExport)
+				.OnClicked(this, &SGFurExportOptions::OnExport)
+			]
+			+ SUniformGridPanel::Slot(1, 0)
+			[
+				SNew(SButton)
+				.HAlign(HAlign_Center)
+				.Text(LOCTEXT("SGFurExportOptions_Cancel", "Cancel"))
+				.ToolTipText(LOCTEXT("SGFurExportOptions_Cancel_ToolTip", "Cancels exporting gFur Splines"))
+				.OnClicked(this, &SGFurExportOptions::OnCancel)
+			]
+		]
+	];
+}
+
+bool SGFurExportOptions::CanExport()  const
+{
+	return true;
+}
 
 TSharedRef<IDetailCustomization> FFurComponentCustomization::MakeInstance()
 {
@@ -336,12 +424,16 @@ void FFurComponentCustomization::ExportFurSplines(IDetailLayoutBuilder* DetailBu
 	UFurSplines* FurSplines = FurComponent->FurSplines;
 	if (!FurSplines)
 		return;
+	USkeletalMesh* SkeletalGrowMesh = FurComponent->SkeletalGrowMesh;
+	UStaticMesh* StaticGrowMesh = FurComponent->StaticGrowMesh;
+	if (!SkeletalGrowMesh && !StaticGrowMesh)
+		return;
 
 	// Initialize SaveAssetDialog config
 	FSaveAssetDialogConfig SaveAssetDialogConfig;
-	SaveAssetDialogConfig.DialogTitleOverride = LOCTEXT("ExportFurSplines", "Export Fur Splines");
+	SaveAssetDialogConfig.DialogTitleOverride = LOCTEXT("ExportFurSplines", "Export gFur Splines");
 //	SaveAssetDialogConfig.DefaultPath = DefaultPath;
-	SaveAssetDialogConfig.DefaultAssetName = "FurSplines";
+	SaveAssetDialogConfig.DefaultAssetName = "gFurSplines";
 	SaveAssetDialogConfig.ExistingAssetPolicy = ESaveAssetDialogExistingAssetPolicy::AllowButWarn;
 
 	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
@@ -351,8 +443,319 @@ void FFurComponentCustomization::ExportFurSplines(IDetailLayoutBuilder* DetailBu
 		const FString PackageName = FPackageName::ObjectPathToPackageName(SaveObjectPath);
 		FString Filename;
 		if (FPackageName::TryConvertLongPackageNameToFilename(PackageName, Filename, ".abc"))
-			::ExportFurSplines(FurSplines, Filename);
+		{
+			TSharedPtr<SGFurExportOptions> Options;
+			ShowExportOptionsWindow(Options, Filename);
+
+			if (!Options->ShouldExport())
+			{
+				return;
+			}
+
+			float CountFactor = Options->GetSplineDensity().GetValue();
+			if (SkeletalGrowMesh)
+				ExportHairSplines(Filename, FurSplines, SkeletalGrowMesh, FurComponent->MinFurLength, CountFactor);
+			else if (StaticGrowMesh)
+				ExportHairSplines(Filename, FurSplines, StaticGrowMesh, FurComponent->MinFurLength, CountFactor);
+		}
 	}
+}
+
+void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFurSplines* FurSplines, USkeletalMesh* Mesh, float MinFurLength, float CountFactor)
+{
+	auto* SkeletalMeshResource = Mesh->GetResourceForRendering();
+	check(SkeletalMeshResource);
+
+	TArray<FVector> Points;
+	Points.Append(FurSplines->Vertices);
+
+	int32 ControlPointCount = FurSplines->ControlPointCount;
+	check(ControlPointCount >= 2);
+
+	const auto& LodRenderData = SkeletalMeshResource->LODRenderData[0];
+	const auto& SourcePositions = LodRenderData.StaticVertexBuffers.PositionVertexBuffer;
+
+	TArray<int32> SplineMap;
+	GenerateSplineMap(SplineMap, FurSplines, SourcePositions, MinFurLength);
+
+	TArray<uint32> SourceIndices;
+	LodRenderData.MultiSizeIndexContainer.GetIndexBuffer(SourceIndices);
+
+	float CountRemainder = 0.0f;
+	for (const auto& RenderSection : LodRenderData.RenderSections)
+	{
+		for (uint32 t = 0; t < RenderSection.NumTriangles; ++t)
+		{
+			uint32 Idx[3];
+			Idx[0] = SourceIndices[RenderSection.BaseIndex + t * 3];
+			Idx[1] = SourceIndices[RenderSection.BaseIndex + t * 3 + 1];
+			Idx[2] = SourceIndices[RenderSection.BaseIndex + t * 3 + 2];
+			int32 SplineIndices[3];
+			SplineIndices[0] = SplineMap[Idx[0]];
+			SplineIndices[1] = SplineMap[Idx[1]];
+			SplineIndices[2] = SplineMap[Idx[2]];
+
+			if (SplineIndices[0] >= 0 && SplineIndices[1] >= 0 && SplineIndices[2] >= 0)
+			{
+				FVector Vertices[3];
+				Vertices[0] = SourcePositions.VertexPosition(Idx[0]);
+				Vertices[1] = SourcePositions.VertexPosition(Idx[1]);
+				Vertices[2] = SourcePositions.VertexPosition(Idx[2]);
+				GenerateInterpolatedSplines(Points, Vertices, SplineIndices, ControlPointCount, CountRemainder, CountFactor);
+			}
+		}
+	}
+
+	::ExportFurSplines(Filename, Points, ControlPointCount);
+}
+
+void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFurSplines* FurSplines, UStaticMesh* Mesh, float MinFurLength, float CountFactor)
+{
+	auto* StaticMeshResource = Mesh->RenderData.Get();
+	check(StaticMeshResource);
+	const FStaticMeshLODResources& LodRenderData = StaticMeshResource->LODResources[0];
+
+	TArray<FVector> Points;
+	Points.Append(FurSplines->Vertices);
+
+	int32 ControlPointCount = FurSplines->ControlPointCount;
+	check(ControlPointCount >= 2);
+
+	const auto& SourcePositions = LodRenderData.VertexBuffers.PositionVertexBuffer;
+
+	TArray<int32> SplineMap;
+	GenerateSplineMap(SplineMap, FurSplines, SourcePositions, MinFurLength);
+
+	TArray<uint32> SourceIndices;
+	LodRenderData.IndexBuffer.GetCopy(SourceIndices);
+
+	float CountRemainder = 0.0f;
+	for (const auto& RenderSection : LodRenderData.Sections)
+	{
+		for (uint32 t = 0; t < RenderSection.NumTriangles; ++t)
+		{
+			uint32 Idx[3];
+			Idx[0] = SourceIndices[RenderSection.FirstIndex + t * 3];
+			Idx[1] = SourceIndices[RenderSection.FirstIndex + t * 3 + 1];
+			Idx[2] = SourceIndices[RenderSection.FirstIndex + t * 3 + 2];
+			int32 SplineIndices[3];
+			SplineIndices[0] = SplineMap[Idx[0]];
+			SplineIndices[1] = SplineMap[Idx[1]];
+			SplineIndices[2] = SplineMap[Idx[2]];
+
+			if (SplineIndices[0] >= 0 && SplineIndices[1] >= 0 && SplineIndices[2] >= 0)
+			{
+				FVector Vertices[3];
+				Vertices[0] = SourcePositions.VertexPosition(Idx[0]);
+				Vertices[1] = SourcePositions.VertexPosition(Idx[1]);
+				Vertices[2] = SourcePositions.VertexPosition(Idx[2]);
+				GenerateInterpolatedSplines(Points, Vertices, SplineIndices, ControlPointCount, CountRemainder, CountFactor);
+			}
+		}
+	}
+
+	::ExportFurSplines(Filename, Points, ControlPointCount);
+}
+
+void FFurComponentCustomization::GenerateInterpolatedSplines(TArray<FVector>& Points, FVector* Vertices, int32* SplineIndices, int32 ControlPointCount,
+	float& CountRemainder, float CountFactor)
+{
+	FVector u = Vertices[1] - Vertices[0];
+	FVector v = Vertices[2] - Vertices[0];
+	FVector n = FVector::CrossProduct(u, v);
+
+	float fCount = n.Size() * CountFactor + CountRemainder;
+	int32 Count = (int32)fCount;
+	CountRemainder = fCount - Count;
+
+	u.Normalize();
+	n.Normalize();
+	if (!n.IsNormalized())
+		return;
+	FMatrix matHelper(u, FVector::CrossProduct(u, n), n, Vertices[0]);
+	FMatrix mat = matHelper.InverseFast();
+
+	FVector4 p[3];
+	p[0] = mat.TransformPosition(Vertices[0]);
+	p[1] = mat.TransformPosition(Vertices[1]);
+	p[2] = mat.TransformPosition(Vertices[2]);
+
+	FVector2D min, max;
+	min.X = FMath::Min3(p[0].X, p[1].X, p[2].X);
+	min.Y = FMath::Min3(p[0].Y, p[1].Y, p[2].Y);
+	max.X = FMath::Max3(p[0].X, p[1].X, p[2].X);
+	max.Y = FMath::Max3(p[0].Y, p[1].Y, p[2].Y);
+
+	while (Count > 0)
+	{
+		FVector q;
+		q.X = FMath::FRandRange(min.X, max.X);
+		q.Y = FMath::FRandRange(min.Y, max.Y);
+		q.Z = 0;
+
+		FVector b = FMath::GetBaryCentric2D(q, p[0], p[1], p[2]);
+		if (b.X >= 0.0f && b.Y >= 0.0f && b.Z >= 0.0f)
+		{
+			GenerateInterpolatedSpline(Points, b, SplineIndices, ControlPointCount);
+			Count--;
+		}
+	}
+}
+
+void FFurComponentCustomization::GenerateInterpolatedSpline(TArray<FVector>& Points, const FVector& BarycentricCoords, int32* SplineIndices, int32 ControlPointCount)
+{
+	Points.AddUninitialized(ControlPointCount);
+	FVector* p = &Points[Points.Num() - ControlPointCount];
+
+	for (int32 ControlPointIndex = 0; ControlPointIndex < ControlPointCount; ControlPointIndex++)
+	{
+		FVector v0 = Points[SplineIndices[0] * ControlPointCount + ControlPointIndex] * BarycentricCoords.X;
+		FVector v1 = Points[SplineIndices[1] * ControlPointCount + ControlPointIndex] * BarycentricCoords.Y;
+		FVector v2 = Points[SplineIndices[2] * ControlPointCount + ControlPointIndex] * BarycentricCoords.Z;
+		p[ControlPointIndex] = v0 + v1 + v2;
+	}
+}
+
+void FFurComponentCustomization::GenerateSplineMap(TArray<int32>& SplineMap, UFurSplines* FurSplines, const FPositionVertexBuffer& InPositions, float MinFurLength)
+{
+	uint32 SourceVertexCount = InPositions.GetNumVertices();
+	int32 SplineCount = FurSplines->SplineCount();
+
+	uint32 ValidVertexCount = 0;
+	float MinLenSquared = FLT_MAX;
+	float MaxLenSquared = -FLT_MAX;
+	SplineMap.AddUninitialized(SourceVertexCount);
+
+	const int32 Size = 64;
+	TArray<int32> Cells;
+	TArray<int32> NextIndex;
+	Cells.AddUninitialized(Size * Size);
+	for (int32 i = 0; i < Size * Size; i++)
+		Cells[i] = -1;
+	NextIndex.AddUninitialized(SplineCount);
+
+	float MinX = FLT_MAX;
+	float MinY = FLT_MAX;
+	float MaxX = -FLT_MAX;
+	float MaxY = -FLT_MAX;
+	for (int32 i = 0; i < SplineCount; i++)
+	{
+		FVector p = FurSplines->GetFirstControlPoint(i);
+		if (p.X < MinX)
+			MinX = p.X;
+		if (p.Y < MinY)
+			MinY = p.Y;
+		if (p.X > MaxX)
+			MaxX = p.X;
+		if (p.Y > MaxY)
+			MaxY = p.Y;
+	}
+	MinX -= 1.0f;
+	MinY -= 1.0f;
+	MaxX += 1.0f;
+	MaxY += 1.0f;
+	float FactorWidth = Size / (MaxX - MinX);
+	float FactorHeight = Size / (MaxY - MinY);
+
+	for (int32 i = 0; i < SplineCount; i++)
+	{
+		FVector p = FurSplines->GetFirstControlPoint(i);
+		uint32 X = FMath::FloorToInt((p.X - MinX) * FactorWidth);
+		uint32 Y = FMath::FloorToInt((p.Y - MinY) * FactorHeight);
+		check(X < Size && Y < Size);
+		int32 Idx = Cells[Y * Size + X];
+		if (Idx == -1)
+		{
+			Cells[Y * Size + X] = i;
+			NextIndex[i] = -1;
+		}
+		else
+		{
+			while (NextIndex[Idx] != -1)
+				Idx = NextIndex[Idx];
+			NextIndex[Idx] = i;
+			NextIndex[i] = -1;
+		}
+	}
+
+
+	for (uint32 i = 0; i < SourceVertexCount; i++)
+	{
+		const float Epsilon = 0.1f;
+		const float EpsilonSquared = Epsilon * Epsilon;
+		FVector p = InPositions.VertexPosition(i);
+		int32 BeginX = FMath::Max(FMath::FloorToInt((p.X - Epsilon - MinX) * FactorWidth), 0);
+		int32 BeginY = FMath::Max(FMath::FloorToInt((p.Y - Epsilon - MinY) * FactorHeight), 0);
+		int32 EndX = FMath::Min(FMath::FloorToInt((p.X + Epsilon - MinX) * FactorWidth), Size - 1);
+		int32 EndY = FMath::Min(FMath::FloorToInt((p.Y + Epsilon - MinY) * FactorHeight), Size - 1);
+		SplineMap[i] = -1;
+		float ClosestDistanceSquared = FLT_MAX;
+		int32 ClosestIndex = -1;
+		for (int32 Y = BeginY; Y <= EndY; Y++)
+		{
+			for (int32 X = BeginX; X <= EndX; X++)
+			{
+				if (X < Size && Y < Size)
+				{
+					int32 Idx = Cells[Y * Size + X];
+					while (Idx != -1)
+					{
+						FVector s = FurSplines->GetFirstControlPoint(Idx);
+						float DistanceSquared = FVector::DistSquared(s, p);
+						if (DistanceSquared <= EpsilonSquared)
+						{
+							FVector s2 = FurSplines->GetLastControlPoint(Idx);
+							if (MinFurLength > 0.0f)
+							{
+								if (DistanceSquared < ClosestDistanceSquared)
+								{
+									ClosestDistanceSquared = DistanceSquared;
+									ClosestIndex = Idx;
+								}
+							}
+						}
+						Idx = NextIndex[Idx];
+					}
+				}
+			}
+		}
+		SplineMap[i] = ClosestIndex;
+		if (ClosestIndex != -1)
+		{
+			FVector s = FurSplines->GetFirstControlPoint(ClosestIndex);
+			FVector s2 = FurSplines->GetLastControlPoint(ClosestIndex);
+			float SizeSquared = (s2 - s).SizeSquared();
+			if (SizeSquared < MinLenSquared)
+				MinLenSquared = SizeSquared;
+			if (SizeSquared > MaxLenSquared)
+				MaxLenSquared = SizeSquared;
+			ValidVertexCount++;
+		}
+	}
+}
+
+void FFurComponentCustomization::ShowExportOptionsWindow(TSharedPtr<SGFurExportOptions>& Options, FString FilePath) const
+{
+	TSharedRef<SWindow> Window = SNew(SWindow)
+		.Title(LOCTEXT("gFurExportWindowTitle", "gFur Spline Export Options"))
+		.SizingRule(ESizingRule::Autosized);
+
+	Window->SetContent
+	(
+		SAssignNew(Options, SGFurExportOptions).WidgetWindow(Window)
+		.WidgetWindow(Window)
+		.FullPath(FText::FromString(FilePath))
+	);
+
+	TSharedPtr<SWindow> ParentWindow;
+
+	if (FModuleManager::Get().IsModuleLoaded("MainFrame"))
+	{
+		IMainFrameModule& MainFrame = FModuleManager::LoadModuleChecked<IMainFrameModule>("MainFrame");
+		ParentWindow = MainFrame.GetParentWindow();
+	}
+
+	FSlateApplication::Get().AddModalWindow(Window, ParentWindow, false);
 }
 
 #undef LOCTEXT_NAMESPACE

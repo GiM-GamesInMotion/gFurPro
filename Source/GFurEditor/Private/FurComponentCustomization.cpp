@@ -705,13 +705,10 @@ void FFurComponentCustomization::GenerateSplineMap(TArray<int32>& SplineMap, UFu
 						if (DistanceSquared <= EpsilonSquared)
 						{
 							FVector s2 = FurSplines->GetLastControlPoint(Idx);
-							if (MinFurLength > 0.0f)
+							if (DistanceSquared < ClosestDistanceSquared)
 							{
-								if (DistanceSquared < ClosestDistanceSquared)
-								{
-									ClosestDistanceSquared = DistanceSquared;
-									ClosestIndex = Idx;
-								}
+								ClosestDistanceSquared = DistanceSquared;
+								ClosestIndex = Idx;
 							}
 						}
 						Idx = NextIndex[Idx];

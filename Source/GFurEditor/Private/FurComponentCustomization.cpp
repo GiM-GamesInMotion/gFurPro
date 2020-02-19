@@ -607,12 +607,24 @@ void FFurComponentCustomization::GenerateInterpolatedSpline(TArray<FVector>& Poi
 	Points.AddUninitialized(ControlPointCount);
 	FVector* p = &Points[Points.Num() - ControlPointCount];
 
-	for (int32 ControlPointIndex = 0; ControlPointIndex < ControlPointCount; ControlPointIndex++)
+	FVector v0 = Points[SplineIndices[0] * ControlPointCount];
+	FVector v1 = Points[SplineIndices[1] * ControlPointCount];
+	FVector v2 = Points[SplineIndices[2] * ControlPointCount];
+	p[0] = v0 * BarycentricCoords.X + v1 * BarycentricCoords.Y + v2 * BarycentricCoords.Z;
+	for (int32 ControlPointIndex = 1; ControlPointIndex < ControlPointCount; ControlPointIndex++)
 	{
-		FVector v0 = Points[SplineIndices[0] * ControlPointCount + ControlPointIndex] * BarycentricCoords.X;
-		FVector v1 = Points[SplineIndices[1] * ControlPointCount + ControlPointIndex] * BarycentricCoords.Y;
-		FVector v2 = Points[SplineIndices[2] * ControlPointCount + ControlPointIndex] * BarycentricCoords.Z;
-		p[ControlPointIndex] = v0 + v1 + v2;
+		FVector u0 = Points[SplineIndices[0] * ControlPointCount + ControlPointIndex];
+		FVector u1 = Points[SplineIndices[1] * ControlPointCount + ControlPointIndex];
+		FVector u2 = Points[SplineIndices[2] * ControlPointCount + ControlPointIndex];
+		float d0 = (v0 - u0).Size();
+		float d1 = (v1 - u1).Size();
+		float d2 = (v2 - u2).Size();
+		float d = d0 * BarycentricCoords.X + d1 * BarycentricCoords.Y + d2 * BarycentricCoords.Z;
+		FVector q = u0 * BarycentricCoords.X + u1 * BarycentricCoords.Y + u2 * BarycentricCoords.Z;
+		FVector b = p[ControlPointIndex - 1];
+		FVector f = q - b;
+		f.Normalize();
+		p[ControlPointIndex] = b + f * d;
 	}
 }
 

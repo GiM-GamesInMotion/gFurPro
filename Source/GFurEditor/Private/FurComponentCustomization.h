@@ -81,7 +81,7 @@ private:
 	TSharedPtr< SButton > ImportButton;
 	bool			bShouldExport;
 	TSharedPtr<IDetailsView> DetailsView;
-	float SplineDensity = 0.1f;
+	float SplineDensity = 0.5f;
 };
 
 class FFurComponentCustomization : public IDetailCustomization

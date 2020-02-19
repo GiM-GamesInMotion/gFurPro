@@ -31,24 +31,50 @@ PRAGMA_DEFAULT_VISIBILITY_END
 #include "Windows/HideWindowsPlatformTypes.h"
 #endif
 
-void ExportFurSplines(const FString& filename, const TArray<FVector>& Points, int32 ControlPointCount)
+void SetGeometry(Alembic::AbcGeom::OCurvesSchema& Schema, const FVector* Points, int32 NumPoints, int32 NumSplines, int32 NumControlPoints)
+{
+	TArray<int32> NumVerticesData;
+	NumVerticesData.AddUninitialized(NumSplines);
+	for (int32 i = 0; i < NumSplines; i++)
+		NumVerticesData[i] = NumControlPoints;
+
+	Alembic::Abc::P3fArraySample Positions((Alembic::Abc::P3fArraySample::value_type*)Points, NumPoints);
+	Alembic::Abc::Int32ArraySample NumVertices((Alembic::Abc::Int32ArraySample::value_type*) & NumVerticesData[0], NumVerticesData.Num());
+	Alembic::AbcGeom::OCurvesSchema::Sample Sample(Positions, NumVertices);
+
+	Schema.set(Sample);
+}
+
+void SetGroomProperties(Alembic::AbcGeom::OCurvesSchema& Schema)
+{
+	Alembic::Abc::OCompoundProperty Properties = Schema.getArbGeomParams();
+
+	Alembic::AbcGeom::OBoolGeomParam Params(Properties, "groom_guide", false, Alembic::AbcGeom::kConstantScope, 1);
+
+	Alembic::Abc::BoolArraySample::value_type value = true;
+	Alembic::Abc::BoolArraySample GroomGuide(&value, 1);
+
+	Alembic::AbcGeom::OBoolGeomParam::Sample Sample(GroomGuide, Alembic::AbcGeom::kConstantScope);
+
+	Params.set(Sample);
+}
+
+void ExportFurSplines(const FString& filename, const TArray<FVector>& Points, int32 ControlPointCount, int32 GroomSplineCount)
 {
 	std::string path(TCHAR_TO_UTF8(*filename));
 
 	Alembic::Abc::OArchive Archive(Alembic::AbcCoreHDF5::WriteArchive(), path);
 
-	Alembic::AbcGeom::OCurves Curves(Archive.getTop(), "splines");
-	Alembic::AbcGeom::OCurvesSchema& Schema = Curves.getSchema();
+	Alembic::AbcGeom::OCurves GroomCurves(Archive.getTop(), "groom_splines");
+	Alembic::AbcGeom::OCurvesSchema& GroomSchema = GroomCurves.getSchema();
+
+	SetGeometry(GroomSchema, &Points[0], GroomSplineCount * ControlPointCount, GroomSplineCount, ControlPointCount);
 
 	int32 NumSplines = Points.Num() / ControlPointCount;
-	TArray<int32> NumVerticesData;
-	NumVerticesData.AddUninitialized(NumSplines);
-	for (int32 i = 0; i < NumSplines; i++)
-		NumVerticesData[i] = ControlPointCount;
+	int32 NumStrandSplines = NumSplines - GroomSplineCount;
 
-	Alembic::Abc::P3fArraySample Positions((Alembic::Abc::P3fArraySample::value_type*)&Points[0], Points.Num());
-	Alembic::Abc::Int32ArraySample NumVertices((Alembic::Abc::Int32ArraySample::value_type*)&NumVerticesData[0], NumVerticesData.Num());
-	Alembic::AbcGeom::OCurvesSchema::Sample Sample(Positions, NumVertices);
+	Alembic::AbcGeom::OCurves StrandCurves(Archive.getTop(), "strand_splines");
+	Alembic::AbcGeom::OCurvesSchema& StrandSchema = StrandCurves.getSchema();
 
-	Schema.set(Sample);
+	SetGeometry(StrandSchema, &Points[GroomSplineCount * ControlPointCount], NumStrandSplines * ControlPointCount, NumStrandSplines, ControlPointCount);
 }

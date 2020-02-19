@@ -472,6 +472,8 @@ void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFur
 	int32 ControlPointCount = FurSplines->ControlPointCount;
 	check(ControlPointCount >= 2);
 
+	int32 GroomSplineCount = Points.Num() / ControlPointCount;
+
 	const auto& LodRenderData = SkeletalMeshResource->LODRenderData[0];
 	const auto& SourcePositions = LodRenderData.StaticVertexBuffers.PositionVertexBuffer;
 
@@ -506,7 +508,7 @@ void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFur
 		}
 	}
 
-	::ExportFurSplines(Filename, Points, ControlPointCount);
+	::ExportFurSplines(Filename, Points, ControlPointCount, GroomSplineCount);
 }
 
 void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFurSplines* FurSplines, UStaticMesh* Mesh, float MinFurLength, float CountFactor)
@@ -520,6 +522,8 @@ void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFur
 
 	int32 ControlPointCount = FurSplines->ControlPointCount;
 	check(ControlPointCount >= 2);
+
+	int32 GroomSplineCount = Points.Num() / ControlPointCount;
 
 	const auto& SourcePositions = LodRenderData.VertexBuffers.PositionVertexBuffer;
 
@@ -554,7 +558,7 @@ void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFur
 		}
 	}
 
-	::ExportFurSplines(Filename, Points, ControlPointCount);
+	::ExportFurSplines(Filename, Points, ControlPointCount, GroomSplineCount);
 }
 
 void FFurComponentCustomization::GenerateInterpolatedSplines(TArray<FVector>& Points, FVector* Vertices, int32* SplineIndices, int32 ControlPointCount,
@@ -607,24 +611,36 @@ void FFurComponentCustomization::GenerateInterpolatedSpline(TArray<FVector>& Poi
 	Points.AddUninitialized(ControlPointCount);
 	FVector* p = &Points[Points.Num() - ControlPointCount];
 
-	FVector v0 = Points[SplineIndices[0] * ControlPointCount];
-	FVector v1 = Points[SplineIndices[1] * ControlPointCount];
-	FVector v2 = Points[SplineIndices[2] * ControlPointCount];
-	p[0] = v0 * BarycentricCoords.X + v1 * BarycentricCoords.Y + v2 * BarycentricCoords.Z;
+	int32 Indices[3] = { SplineIndices[0] * ControlPointCount, SplineIndices[1] * ControlPointCount, SplineIndices[2] * ControlPointCount };
+
+	FVector PrevPoint;
+	{
+		FVector v0 = Points[Indices[0]];
+		FVector v1 = Points[Indices[1]];
+		FVector v2 = Points[Indices[2]];
+		p[0] = PrevPoint = v0 * BarycentricCoords.X + v1 * BarycentricCoords.Y + v2 * BarycentricCoords.Z;
+	}
+
 	for (int32 ControlPointIndex = 1; ControlPointIndex < ControlPointCount; ControlPointIndex++)
 	{
-		FVector u0 = Points[SplineIndices[0] * ControlPointCount + ControlPointIndex];
-		FVector u1 = Points[SplineIndices[1] * ControlPointCount + ControlPointIndex];
-		FVector u2 = Points[SplineIndices[2] * ControlPointCount + ControlPointIndex];
+		int32 PrevControlPointIndex = ControlPointIndex - 1;
+		FVector u0 = Points[Indices[0] + PrevControlPointIndex];
+		FVector u1 = Points[Indices[1] + PrevControlPointIndex];
+		FVector u2 = Points[Indices[2] + PrevControlPointIndex];
+		FVector v0 = Points[Indices[0] + ControlPointIndex];
+		FVector v1 = Points[Indices[1] + ControlPointIndex];
+		FVector v2 = Points[Indices[2] + ControlPointIndex];
 		float d0 = (v0 - u0).Size();
 		float d1 = (v1 - u1).Size();
 		float d2 = (v2 - u2).Size();
 		float d = d0 * BarycentricCoords.X + d1 * BarycentricCoords.Y + d2 * BarycentricCoords.Z;
-		FVector q = u0 * BarycentricCoords.X + u1 * BarycentricCoords.Y + u2 * BarycentricCoords.Z;
-		FVector b = p[ControlPointIndex - 1];
-		FVector f = q - b;
-		f.Normalize();
-		p[ControlPointIndex] = b + f * d;
+
+		FVector NewPoint = v0 * BarycentricCoords.X + v1 * BarycentricCoords.Y + v2 * BarycentricCoords.Z;
+		FVector dir = NewPoint - PrevPoint;
+		dir.Normalize();
+		p[ControlPointIndex] = p[PrevControlPointIndex] + dir * d;
+
+		PrevPoint = NewPoint;
 	}
 }
 

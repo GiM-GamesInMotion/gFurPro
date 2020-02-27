@@ -163,7 +163,7 @@ public:
 						Mesh.ReverseCulling = IsLocalToWorldDeterminantNegative();
 						Mesh.Type = PT_TriangleList;
 						Mesh.DepthPriorityGroup = SDPG_World;
-						Mesh.bCanApplyViewModeOverrides = false;
+						Mesh.bCanApplyViewModeOverrides = true;
 						Collector.AddMesh(ViewIndex, Mesh);
 					}
 				}
@@ -217,6 +217,7 @@ public:
 		Result.bShadowRelevance = CastShadows;
 		Result.bDynamicRelevance = true;
 		//Material->GetRelevance(GetScene().GetFeatureLevel()).SetPrimitiveViewRelevance(Result);
+		Result.bVelocityRelevance = IsMovable() && Result.bOpaqueRelevance && Result.bRenderInMainPass;
 		return Result;
 	}
 

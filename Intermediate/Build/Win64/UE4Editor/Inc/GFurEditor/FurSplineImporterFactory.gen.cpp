@@ -1,4 +1,4 @@
-// Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
+// Copyright Epic Games, Inc. All Rights Reserved.
 /*===========================================================================
 	Generated code exported from UnrealHeaderTool.
 	DO NOT modify this manually! Edit the corresponding .h files instead!
@@ -71,7 +71,7 @@ void EmptyLinkFunctionForGeneratedCodeFurSplineImporterFactory() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurSplineImporterFactory, 4047482690);
+	IMPLEMENT_CLASS(UFurSplineImporterFactory, 1205763100);
 	template<> GFUREDITOR_API UClass* StaticClass<UFurSplineImporterFactory>()
 	{
 		return UFurSplineImporterFactory::StaticClass();

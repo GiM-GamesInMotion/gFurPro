@@ -13,6 +13,80 @@ static FCriticalSection FurSkinDataCS;
 
 unsigned int MaxGPUSkinBones = 256;
 
+
+inline uint8 FSkinWeightDataVertexBuffer::GetBoneWeight(uint32 VertexWeightOffset, uint32 VertexInfluenceCount, uint32 InfluenceIndex) const
+{
+	if (InfluenceIndex < VertexInfluenceCount)
+	{
+		uint8* BoneData = Data + VertexWeightOffset;
+		uint32 BoneWeightOffset = GetBoneIndexByteSize() * VertexInfluenceCount;
+		return BoneData[BoneWeightOffset + InfluenceIndex];
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+inline uint32 FSkinWeightDataVertexBuffer::GetBoneIndex(uint32 VertexWeightOffset, uint32 VertexInfluenceCount, uint32 InfluenceIndex) const
+{
+	if (InfluenceIndex < VertexInfluenceCount)
+	{
+		uint8* BoneData = Data + VertexWeightOffset;
+		if (Use16BitBoneIndex())
+		{
+			FBoneIndex16* BoneIndex16Ptr = (FBoneIndex16*)BoneData;
+			return BoneIndex16Ptr[InfluenceIndex];
+		}
+		else
+		{
+			return BoneData[InfluenceIndex];
+		}
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+inline uint32 FSkinWeightVertexBuffer::GetBoneIndex(uint32 VertexIndex, uint32 InfluenceIndex) const
+{
+	uint32 VertexWeightOffset = 0;
+	uint32 VertexInfluenceCount = 0;
+	GetVertexInfluenceOffsetCount(VertexIndex, VertexWeightOffset, VertexInfluenceCount);
+	return DataVertexBuffer.GetBoneIndex(VertexWeightOffset, VertexInfluenceCount, InfluenceIndex);
+}
+
+inline uint8 FSkinWeightVertexBuffer::GetBoneWeight(uint32 VertexIndex, uint32 InfluenceIndex) const
+{
+	uint32 VertexWeightOffset = 0;
+	uint32 VertexInfluenceCount = 0;
+	GetVertexInfluenceOffsetCount(VertexIndex, VertexWeightOffset, VertexInfluenceCount);
+	return DataVertexBuffer.GetBoneWeight(VertexWeightOffset, VertexInfluenceCount, InfluenceIndex);
+}
+
+inline void FSkinWeightVertexBuffer::GetVertexInfluenceOffsetCount(uint32 VertexIndex, uint32& VertexWeightOffset, uint32& VertexInfluenceCount) const
+{
+	if (GetVariableBonesPerVertex())
+	{
+		LookupVertexBuffer.GetWeightOffsetAndInfluenceCount(VertexIndex, VertexWeightOffset, VertexInfluenceCount);
+	}
+	else
+	{
+		VertexWeightOffset = GetConstantInfluencesVertexStride() * VertexIndex;
+		VertexInfluenceCount = GetMaxBoneInfluences();
+	}
+}
+
+inline void FSkinWeightLookupVertexBuffer::GetWeightOffsetAndInfluenceCount(uint32 VertexIndex, uint32& OutWeightOffset, uint32& OutInfluenceCount) const
+{
+	uint32 Offset = VertexIndex * 4;
+	uint32 DataUInt32 = *((uint32*)(&Data[Offset]));
+	OutWeightOffset = DataUInt32 >> 8;
+	OutInfluenceCount = DataUInt32 & 0xff;
+}
+
+
 /** Fur Skin Vertex Blitter */
 template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT, bool bExtraBoneInfluencesT>
 class FFurSkinVertexBlitter : public FFurStaticVertexBlitter<TangentBasisTypeT, UVTypeT>
@@ -26,12 +100,12 @@ public:
 	{
 		FFurStaticVertexBlitter<TangentBasisTypeT, UVTypeT>::Blit(OutVertex, InVertexIndex);
 
-		const auto* WeightInfo = SkinWeights.GetSkinWeightPtr<bExtraBoneInfluencesT>(InVertexIndex);
+//		const auto* WeightInfo = SkinWeights.GetSkinWeightPtr<bExtraBoneInfluencesT>(InVertexIndex);
 		const int32 NumInfluences = FFurSkinVertex<TangentBasisTypeT, UVTypeT, bExtraBoneInfluencesT>::NumInfluences;
 		for (int32 ib = 0; ib < NumInfluences; ib++)
 		{
-			OutVertex.InfluenceBones[ib] = WeightInfo->InfluenceBones[ib];
-			OutVertex.InfluenceWeights[ib] = WeightInfo->InfluenceWeights[ib];
+			OutVertex.InfluenceBones[ib] = SkinWeights.GetBoneIndex(InVertexIndex, ib);
+			OutVertex.InfluenceWeights[ib] = SkinWeights.GetBoneWeight(InVertexIndex, ib);
 		}
 	}
 
@@ -43,8 +117,9 @@ private:
 template <bool Physics>
 class FFurSkinVertexFactoryShaderParameters : public FVertexFactoryShaderParameters
 {
+	DECLARE_INLINE_TYPE_LAYOUT(FFurSkinVertexFactoryShaderParameters<Physics>, NonVirtual);
 public:
-	void Bind(const FShaderParameterMap& ParameterMap) override
+	void Bind(const FShaderParameterMap& ParameterMap)
 	{
 		MeshOriginParameter.Bind(ParameterMap, TEXT("MeshOrigin"));
 		MeshExtensionParameter.Bind(ParameterMap, TEXT("MeshExtension"));
@@ -57,7 +132,7 @@ public:
 	}
 
 
-	void Serialize(FArchive& Ar) override
+	void Serialize(FArchive& Ar)
 	{
 		Ar << MeshOriginParameter;
 		Ar << MeshExtensionParameter;
@@ -73,7 +148,7 @@ public:
 	/**
 	* Set any shader data specific to this vertex factory
 	*/
-	virtual void GetElementShaderBindings(
+	void GetElementShaderBindings(
 		const class FSceneInterface* Scene,
 		const class FSceneView* View,
 		const class FMeshMaterialShader* Shader,
@@ -82,19 +157,19 @@ public:
 		const class FVertexFactory* VertexFactory,
 		const struct FMeshBatchElement& BatchElement,
 		class FMeshDrawSingleShaderBindings& ShaderBindings,
-		FVertexInputStreamArray& VertexStreams) const override;
+		FVertexInputStreamArray& VertexStreams) const;
 
-	uint32 GetSize() const override { return sizeof(*this); }
+	uint32 GetSize() const { return sizeof(*this); }
 
 private:
-	FShaderParameter MeshOriginParameter;
-	FShaderParameter MeshExtensionParameter;
-	FShaderParameter FurOffsetPowerParameter;
-	FShaderParameter MaxPhysicsOffsetLengthParameter;
-	FShaderResourceParameter BoneMatrices;
-	FShaderResourceParameter PreviousBoneMatrices;
-	FShaderResourceParameter BoneFurOffsets;
-	FShaderResourceParameter PreviousBoneFurOffsets;
+	LAYOUT_FIELD(FShaderParameter, MeshOriginParameter);
+	LAYOUT_FIELD(FShaderParameter, MeshExtensionParameter);
+	LAYOUT_FIELD(FShaderParameter, FurOffsetPowerParameter);
+	LAYOUT_FIELD(FShaderParameter, MaxPhysicsOffsetLengthParameter);
+	LAYOUT_FIELD(FShaderResourceParameter, BoneMatrices);
+	LAYOUT_FIELD(FShaderResourceParameter, PreviousBoneMatrices);
+	LAYOUT_FIELD(FShaderResourceParameter, BoneFurOffsets);
+	LAYOUT_FIELD(FShaderResourceParameter, PreviousBoneFurOffsets);
 };
 
 /** Vertex Factory */
@@ -327,14 +402,12 @@ public:
 	}
 
 
-	static bool ShouldCache(EShaderPlatform Platform,
-		const class FMaterial* Material,
-		const class FShaderType* ShaderType)
+	static bool ShouldCache(const FVertexFactoryShaderPermutationParameters& Parameters)
 	{
 		return (Material->IsUsedWithSkeletalMesh() || Material->IsSpecialEngineMaterial());
 	}
 
-	static void ModifyCompilationEnvironment(const FVertexFactoryType*, EShaderPlatform Platform, const FMaterial* Material, FShaderCompilerEnvironment& OutEnvironment)
+	static void ModifyCompilationEnvironment(const FVertexFactoryShaderPermutationParameters& Parameters, FShaderCompilerEnvironment& OutEnvironment)
 	{
 //		Super::ModifyCompilationEnvironment(Platform, Material, OutEnvironment);
 		if (MorphTargets)
@@ -345,9 +418,13 @@ public:
 			OutEnvironment.SetDefine(TEXT("GPUSKIN_USE_EXTRA_INFLUENCES"), TEXT("1"));
 	}
 
-	static bool ShouldCompilePermutation(EShaderPlatform Platform, const class FMaterial* Material, const FShaderType* ShaderType)
+	static bool ShouldCompilePermutation(const FVertexFactoryShaderPermutationParameters& Parameters)
 	{
-		return (Material->IsUsedWithSkeletalMesh() || Material->IsSpecialEngineMaterial()) || (MorphTargets ? Material->IsUsedWithMorphTargets() : false);
+		if (Parameters.MaterialParameters.bIsUsedWithSkeletalMesh)
+			return true;
+		if (Parameters.MaterialParameters.bIsSpecialEngineMaterial)
+			return true;
+		return (MorphTargets ? Parameters.MaterialParameters.bIsUsedWithMorphTargets : false);
 	}
 
 	void SetData(const FDataType& InData)
@@ -535,6 +612,15 @@ public:
 
 	using FFurSkinVertexFactoryBase<false, false, false>::Init;
 };
+
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FMorphPhysicsExtraInfluencesFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<true>);
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FPhysicsExtraInfluencesFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<true>);
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FMorphExtraInfluencesFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<false>);
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FExtraInfluencesFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<false>);
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FMorphPhysicsFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<true>);
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FPhysicsFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<true>);
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FMorphFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<false>);
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<false>);
 
 IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphPhysicsExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
 IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
@@ -762,49 +848,44 @@ void FFurSkinVertexFactoryShaderParameters<Physics>::GetElementShaderBindings(
 	class FMeshDrawSingleShaderBindings& ShaderBindings,
 	FVertexInputStreamArray& VertexStreams) const
 {
-	FRHIVertexShader* ShaderRHI = Shader->GetVertexShader();
+	FFurSkinVertexFactory::FShaderDataType& ShaderData = ((FFurSkinVertexFactory*)VertexFactory)->ShaderData;
 
-	if (ShaderRHI)
-	{
-		FFurSkinVertexFactory::FShaderDataType& ShaderData = ((FFurSkinVertexFactory*)VertexFactory)->ShaderData;
-
-		ShaderBindings.Add(MeshOriginParameter, ShaderData.MeshOrigin);
-		ShaderBindings.Add(MeshExtensionParameter, ShaderData.MeshExtension);
-		ShaderBindings.Add(FurOffsetPowerParameter, ShaderData.FurOffsetPower);
-		ShaderBindings.Add(MaxPhysicsOffsetLengthParameter, ShaderData.MaxPhysicsOffsetLength);
+	ShaderBindings.Add(MeshOriginParameter, ShaderData.MeshOrigin);
+	ShaderBindings.Add(MeshExtensionParameter, ShaderData.MeshExtension);
+	ShaderBindings.Add(FurOffsetPowerParameter, ShaderData.FurOffsetPower);
+	ShaderBindings.Add(MaxPhysicsOffsetLengthParameter, ShaderData.MaxPhysicsOffsetLength);
 
 //		const auto FeatureLevel = View.GetFeatureLevel();
 
-		if (BoneMatrices.IsBound())
-		{
-			auto CurrentData = ShaderData.GetBoneBufferForReading(false).VertexBufferSRV;
-			ShaderBindings.Add(BoneMatrices, CurrentData);
-		}
-		if (PreviousBoneMatrices.IsBound())
-		{
-			// todo: Maybe a check for PreviousData!=CurrentData would save some performance (when objects don't have velocty yet) but removing the bool also might save performance
+	if (BoneMatrices.IsBound())
+	{
+		auto CurrentData = ShaderData.GetBoneBufferForReading(false).VertexBufferSRV;
+		ShaderBindings.Add(BoneMatrices, CurrentData);
+	}
+	if (PreviousBoneMatrices.IsBound())
+	{
+		// todo: Maybe a check for PreviousData!=CurrentData would save some performance (when objects don't have velocty yet) but removing the bool also might save performance
 
-			auto PreviousData = ShaderData.GetBoneBufferForReading(true).VertexBufferSRV;
-			ShaderBindings.Add(PreviousBoneMatrices, PreviousData);
-		}
+		auto PreviousData = ShaderData.GetBoneBufferForReading(true).VertexBufferSRV;
+		ShaderBindings.Add(PreviousBoneMatrices, PreviousData);
+	}
 
-		if (Physics)
+	if (Physics)
+	{
+		if (BoneFurOffsets.IsBound())
 		{
-			if (BoneFurOffsets.IsBound())
-			{
-				auto CurrentData = ShaderData.GetBoneFurOffsetsBufferForReading(false).VertexBufferSRV;
-				ShaderBindings.Add(BoneFurOffsets, CurrentData);
-			}
-			if (PreviousBoneFurOffsets.IsBound())
-			{
-				auto PreviousData = ShaderData.GetBoneFurOffsetsBufferForReading(true).VertexBufferSRV;
-				ShaderBindings.Add(PreviousBoneFurOffsets, PreviousData);
-			}
+			auto CurrentData = ShaderData.GetBoneFurOffsetsBufferForReading(false).VertexBufferSRV;
+			ShaderBindings.Add(BoneFurOffsets, CurrentData);
 		}
-		else
+		if (PreviousBoneFurOffsets.IsBound())
 		{
-			ShaderBindings.Add(Shader->GetUniformBufferParameter<FBoneMatricesUniformShaderParameters>(), ShaderData.GetUniformBuffer());
+			auto PreviousData = ShaderData.GetBoneFurOffsetsBufferForReading(true).VertexBufferSRV;
+			ShaderBindings.Add(PreviousBoneFurOffsets, PreviousData);
 		}
+	}
+	else
+	{
+		ShaderBindings.Add(Shader->GetUniformBufferParameter<FBoneMatricesUniformShaderParameters>(), ShaderData.GetUniformBuffer());
 	}
 }
 
@@ -1033,7 +1114,7 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT>
 inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderData, BuildType Build)
 {
-	if (LodRenderData.SkinWeightVertexBuffer.HasExtraBoneInfluences())
+	if (LodRenderData.SkinWeightVertexBuffer.GetMaxBoneInfluences() > 4)
 		BuildFur<TangentBasisTypeT, UVTypeT, true>(LodRenderData, Build);
 	else
 		BuildFur<TangentBasisTypeT, UVTypeT, false>(LodRenderData, Build);
@@ -1215,7 +1296,7 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT>
 inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderData, const TArray<uint32>& InVertexSet)
 {
-	if (LodRenderData.SkinWeightVertexBuffer.HasExtraBoneInfluences())
+	if (LodRenderData.SkinWeightVertexBuffer.GetMaxBoneInfluences() > 4)
 		BuildFur<TangentBasisTypeT, UVTypeT, true>(LodRenderData, InVertexSet);
 	else
 		BuildFur<TangentBasisTypeT, UVTypeT, false>(LodRenderData, InVertexSet);

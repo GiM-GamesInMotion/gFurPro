@@ -12,8 +12,9 @@ static FCriticalSection FurStaticDataCS;
 /** Vertex Factory Shader Parameters */
 class FFurStaticVertexFactoryShaderParameters : public FVertexFactoryShaderParameters
 {
+	DECLARE_INLINE_TYPE_LAYOUT(FFurStaticVertexFactoryShaderParameters, NonVirtual);
 public:
-	void Bind(const FShaderParameterMap& ParameterMap) override
+	void Bind(const FShaderParameterMap& ParameterMap)
 	{
 		MeshOriginParameter.Bind(ParameterMap, TEXT("MeshOrigin"));
 		MeshExtensionParameter.Bind(ParameterMap, TEXT("MeshExtension"));
@@ -27,7 +28,7 @@ public:
 	}
 
 
-	void Serialize(FArchive& Ar) override
+	void Serialize(FArchive& Ar)
 	{
 		Ar << MeshOriginParameter;
 		Ar << MeshExtensionParameter;
@@ -44,7 +45,7 @@ public:
 	/**
 	* Set any shader data specific to this vertex factory
 	*/
-	virtual void GetElementShaderBindings(
+	void GetElementShaderBindings(
 		const class FSceneInterface* Scene,
 		const class FSceneView* View,
 		const class FMeshMaterialShader* Shader,
@@ -53,20 +54,20 @@ public:
 		const class FVertexFactory* VertexFactory,
 		const struct FMeshBatchElement& BatchElement,
 		class FMeshDrawSingleShaderBindings& ShaderBindings,
-		FVertexInputStreamArray& VertexStreams) const override;
+		FVertexInputStreamArray& VertexStreams) const;
 
-	uint32 GetSize() const override { return sizeof(*this); }
+	uint32 GetSize() const { return sizeof(*this); }
 
 private:
-	FShaderParameter MeshOriginParameter;
-	FShaderParameter MeshExtensionParameter;
-	FShaderParameter FurOffsetPowerParameter;
-	FShaderParameter FurLinearOffsetParameter;
-	FShaderParameter FurPositionParameter;
-	FShaderParameter FurAngularOffsetParameter;
-	FShaderParameter PreviousFurLinearOffsetParameter;
-	FShaderParameter PreviousFurPositionParameter;
-	FShaderParameter PreviousFurAngularOffsetParameter;
+	LAYOUT_FIELD(FShaderParameter, MeshOriginParameter);
+	LAYOUT_FIELD(FShaderParameter, MeshExtensionParameter);
+	LAYOUT_FIELD(FShaderParameter, FurOffsetPowerParameter);
+	LAYOUT_FIELD(FShaderParameter, FurLinearOffsetParameter);
+	LAYOUT_FIELD(FShaderParameter, FurPositionParameter);
+	LAYOUT_FIELD(FShaderParameter, FurAngularOffsetParameter);
+	LAYOUT_FIELD(FShaderParameter, PreviousFurLinearOffsetParameter);
+	LAYOUT_FIELD(FShaderParameter, PreviousFurPositionParameter);
+	LAYOUT_FIELD(FShaderParameter, PreviousFurAngularOffsetParameter);
 };
 
 /** Vertex Factory */
@@ -157,21 +158,19 @@ public:
 	}
 
 
-	static bool ShouldCache(EShaderPlatform Platform,
-		const class FMaterial* Material,
-		const class FShaderType* ShaderType)
+	static bool ShouldCache(const FVertexFactoryShaderPermutationParameters& Parameters)
 	{
 		return true;
 	}
 
-	static void ModifyCompilationEnvironment(const FVertexFactoryType*, EShaderPlatform Platform, const FMaterial* Material, FShaderCompilerEnvironment& OutEnvironment)
+	static void ModifyCompilationEnvironment(const FVertexFactoryShaderPermutationParameters& Parameters, FShaderCompilerEnvironment& OutEnvironment)
 	{
 //		Super::ModifyCompilationEnvironment(Platform, Material, OutEnvironment);
 		if (Physics)
 			OutEnvironment.SetDefine(TEXT("GFUR_PHYSICS"), TEXT("1"));
 	}
 
-	static bool ShouldCompilePermutation(EShaderPlatform Platform, const class FMaterial* Material, const FShaderType* ShaderType)
+	static bool ShouldCompilePermutation(const FVertexFactoryShaderPermutationParameters& Parameters)
 	{
 		return true;
 	}
@@ -272,6 +271,9 @@ public:
 	using FFurStaticVertexFactoryBase<false>::Init;
 };
 
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FPhysicsFurStaticVertexFactory, SF_Vertex, FFurStaticVertexFactoryShaderParameters);
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FFurStaticVertexFactory, SF_Vertex, FFurStaticVertexFactoryShaderParameters);
+
 IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush", true, false, true, true, false);
 IMPLEMENT_VERTEX_FACTORY_TYPE(FFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush", true, false, true, true, false);
 
@@ -292,31 +294,26 @@ void FFurStaticVertexFactoryShaderParameters::GetElementShaderBindings(
 	class FMeshDrawSingleShaderBindings& ShaderBindings,
 	FVertexInputStreamArray& VertexStreams) const
 {
-	FRHIVertexShader* ShaderRHI = Shader->GetVertexShader();
+	FFurStaticVertexFactory::FShaderDataType& ShaderData = ((FFurStaticVertexFactory*)VertexFactory)->ShaderData;
 
-	if (ShaderRHI)
+	ShaderBindings.Add(MeshOriginParameter, ShaderData.MeshOrigin);
+	ShaderBindings.Add(MeshExtensionParameter, ShaderData.MeshExtension);
+	ShaderBindings.Add(FurOffsetPowerParameter, ShaderData.FurOffsetPower);
+	ShaderBindings.Add(FurLinearOffsetParameter, ShaderData.FurLinearOffset);
+	ShaderBindings.Add(FurPositionParameter, ShaderData.FurPosition);
+	ShaderBindings.Add(FurAngularOffsetParameter, ShaderData.FurAngularOffset);
+
+	if (ShaderData.IsPreviousDataValid())
 	{
-		FFurStaticVertexFactory::FShaderDataType& ShaderData = ((FFurStaticVertexFactory*)VertexFactory)->ShaderData;
-
-		ShaderBindings.Add(MeshOriginParameter, ShaderData.MeshOrigin);
-		ShaderBindings.Add(MeshExtensionParameter, ShaderData.MeshExtension);
-		ShaderBindings.Add(FurOffsetPowerParameter, ShaderData.FurOffsetPower);
-		ShaderBindings.Add(FurLinearOffsetParameter, ShaderData.FurLinearOffset);
-		ShaderBindings.Add(FurPositionParameter, ShaderData.FurPosition);
-		ShaderBindings.Add(FurAngularOffsetParameter, ShaderData.FurAngularOffset);
-
-		if (ShaderData.IsPreviousDataValid())
-		{
-			ShaderBindings.Add(PreviousFurLinearOffsetParameter, ShaderData.PreviousFurLinearOffset);
-			ShaderBindings.Add(PreviousFurPositionParameter, ShaderData.PreviousFurPosition);
-			ShaderBindings.Add(PreviousFurAngularOffsetParameter, ShaderData.PreviousFurAngularOffset);
-		}
-		else
-		{
-			ShaderBindings.Add(PreviousFurLinearOffsetParameter, ShaderData.FurLinearOffset);
-			ShaderBindings.Add(PreviousFurPositionParameter, ShaderData.FurPosition);
-			ShaderBindings.Add(PreviousFurAngularOffsetParameter, ShaderData.FurAngularOffset);
-		}
+		ShaderBindings.Add(PreviousFurLinearOffsetParameter, ShaderData.PreviousFurLinearOffset);
+		ShaderBindings.Add(PreviousFurPositionParameter, ShaderData.PreviousFurPosition);
+		ShaderBindings.Add(PreviousFurAngularOffsetParameter, ShaderData.PreviousFurAngularOffset);
+	}
+	else
+	{
+		ShaderBindings.Add(PreviousFurLinearOffsetParameter, ShaderData.FurLinearOffset);
+		ShaderBindings.Add(PreviousFurPositionParameter, ShaderData.FurPosition);
+		ShaderBindings.Add(PreviousFurAngularOffsetParameter, ShaderData.FurAngularOffset);
 	}
 }
 

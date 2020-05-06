@@ -217,7 +217,7 @@ public:
 		Result.bShadowRelevance = CastShadows;
 		Result.bDynamicRelevance = true;
 		//Material->GetRelevance(GetScene().GetFeatureLevel()).SetPrimitiveViewRelevance(Result);
-		Result.bVelocityRelevance = IsMovable() && Result.bOpaqueRelevance && Result.bRenderInMainPass;
+		Result.bVelocityRelevance = IsMovable() && Result.bOpaque && Result.bRenderInMainPass;
 		return Result;
 	}
 
@@ -557,7 +557,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 }
 
 
-void UGFurComponent::CreateRenderState_Concurrent()
+void UGFurComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Context)
 {
 //	ERHIFeatureLevel::Type FeatureLevel = GetWorld()->FeatureLevel;
 //	if (FeatureLevel >= ERHIFeatureLevel::ES3_1)
@@ -576,7 +576,7 @@ void UGFurComponent::CreateRenderState_Concurrent()
 		}
 	}
 
-	Super::CreateRenderState_Concurrent();
+	Super::CreateRenderState_Concurrent(Context);
 
 	updateFur();
 }
@@ -975,12 +975,6 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 	for (int i = 0, c = MasterPositions.GetNumVertices(); i < c; i++)
 		MorphRemapTable[i] = -1;
 
-	uint32 SkinWeightSize;
-	if (MasterSkinWeights.HasExtraBoneInfluences() && SkinWeights.HasExtraBoneInfluences())
-		SkinWeightSize = sizeof(TSkinWeightInfo<true>);
-	else
-		SkinWeightSize = sizeof(TSkinWeightInfo<false>);
-
 	uint32 UVCount = FMath::Min(MasterVertices.GetNumTexCoords(), Vertices.GetNumTexCoords());
 
 	for (const auto& MasterSection : MasterLodModel.RenderSections)
@@ -992,7 +986,6 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 				for (uint32 i = MasterSection.BaseVertexIndex; i < MasterSection.BaseVertexIndex + MasterSection.NumVertices; i++)
 				{
 					const auto& MasterPosition = MasterPositions.VertexPosition(i);
-					const auto& MasterSkinWeight = MasterSkinWeights.GetSkinWeightPtr<true>(i);
 					const auto& MasterTangentX = MasterVertices.VertexTangentX(i);
 					const auto& MasterTangentY = MasterVertices.VertexTangentY(i);
 					const auto& MasterTangentZ = MasterVertices.VertexTangentZ(i);
@@ -1000,12 +993,10 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 
 					auto Compare = [&](uint32 Index) {
 						const auto& Position = Positions.VertexPosition(Index);
-						const auto& SkinWeight = SkinWeights.GetSkinWeightPtr<true>(Index);
 						const auto& TangentX = Vertices.VertexTangentX(Index);
 						const auto& TangentY = Vertices.VertexTangentY(Index);
 						const auto& TangentZ = Vertices.VertexTangentZ(Index);
-						if (MasterPosition == Position && memcmp(MasterSkinWeight, SkinWeight, SkinWeightSize) == 0
-							&& MasterTangentX == TangentX && MasterTangentY == TangentY && MasterTangentZ == TangentZ)
+						if (MasterPosition == Position && MasterTangentX == TangentX && MasterTangentY == TangentY && MasterTangentZ == TangentZ)
 						{
 							for (uint32 k = 0; k < UVCount; k++)
 							{

@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 2,
-	"VersionName": "2.1.5",
+	"VersionName": "2.1.6",
 	"FriendlyName": "GFur PRO",
 	"Description": "Shell based fur plugin.",
 	"Category": "Rendering",
@@ -23,6 +23,7 @@
 				"Win32",
 				"PS4",
 				"XboxOne"
+				"Android"
 			]
 		},
 		{

@@ -382,16 +382,16 @@ void FFurStaticData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFac
 		if (bUseHighPrecisionTangentBasis)
 		{
 			if (bUseFullPrecisionUVs)
-				vf->Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer);
+				vf->template Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer);
 			else
-				vf->Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::Default>(&VertexBuffer);
+				vf->template Init<EStaticMeshVertexTangentBasisType::HighPrecision, EStaticMeshVertexUVType::Default>(&VertexBuffer);
 		}
 		else
 		{
 			if (bUseFullPrecisionUVs)
-				vf->Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer);
+				vf->template Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::HighPrecision>(&VertexBuffer);
 			else
-				vf->Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::Default>(&VertexBuffer);
+				vf->template Init<EStaticMeshVertexTangentBasisType::Default, EStaticMeshVertexUVType::Default>(&VertexBuffer);
 		}
 		BeginInitResource(vf);
 		VertexFactories.Add(vf);

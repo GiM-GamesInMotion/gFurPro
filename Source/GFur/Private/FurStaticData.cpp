@@ -362,7 +362,7 @@ void FFurStaticData::DestroyFurData(const TArray<FFurData*>& InFurDataArray)
 
 	StartFurDataCleanupTask([]() {
 
-		FScopeLock lock(&FurStaticDataCS);
+		FScopeLock lock2(&FurStaticDataCS);
 
 		for (int32 i = FurStaticData.Num() - 1; i >= 0; i--)
 		{

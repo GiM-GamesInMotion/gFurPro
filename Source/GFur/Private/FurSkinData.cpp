@@ -850,7 +850,7 @@ void FFurSkinData::DestroyFurData(const TArray<FFurData*>& InFurDataArray)
 
 	StartFurDataCleanupTask([]() {
 
-		FScopeLock lock(&FurSkinDataCS);
+		FScopeLock lock2(&FurSkinDataCS);
 
 		for (int32 i = FurSkinData.Num() - 1; i >= 0; i--)
 		{

@@ -404,7 +404,7 @@ public:
 
 	static bool ShouldCache(const FVertexFactoryShaderPermutationParameters& Parameters)
 	{
-		return (Material->IsUsedWithSkeletalMesh() || Material->IsSpecialEngineMaterial());
+		return (Parameters.MaterialParameters.bIsUsedWithSkeletalMesh || Parameters.MaterialParameters.bIsSpecialEngineMaterial);
 	}
 
 	static void ModifyCompilationEnvironment(const FVertexFactoryShaderPermutationParameters& Parameters, FShaderCompilerEnvironment& OutEnvironment)

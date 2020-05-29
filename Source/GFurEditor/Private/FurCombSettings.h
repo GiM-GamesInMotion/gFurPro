@@ -20,6 +20,13 @@ public:
 	float GetRadius() const { return Radius; }
 	void SetRadius(float InRadius);
 
+	void SetConfigPrefix(const FString& InConfigPrefix) { ConfigPrefix = InConfigPrefix; }
+
+	void Load();
+	void DeleteFromConfig();
+
+	void CopyFrom(const UFurCombSettings* other);
+
 protected:
 	/** Radius of the Brush used for Painting */
 	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Radius", UIMin = "0.01", UIMax = "50.0", ClampMin = "0.01", ClampMax = "1000000.0"))
@@ -63,4 +70,7 @@ public:
 	/** Toggles visualization of the spline guides.*/
 	UPROPERTY(EditAnywhere, Category = Comb)
 	bool bShowSplines;
+
+private:
+	FString ConfigPrefix;
 };

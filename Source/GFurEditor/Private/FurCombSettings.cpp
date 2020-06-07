@@ -5,6 +5,8 @@
 
 #include "Misc/ConfigCacheIni.h"
 
+#include "SFurCombModeWidget.h"
+
 UFurCombSettings::UFurCombSettings(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer),
 	Radius(16.0f),
@@ -86,6 +88,27 @@ void UFurCombSettings::CopyFrom(const UFurCombSettings* other)
 	GConfig->SetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombShowSplines"), bShowSplines, GEditorPerProjectIni);
 }
 
+bool UFurCombSettings::Equals(const UFurCombSettings* other)
+{
+	bool b = true;
+	b &= Radius == other->Radius;
+	b &= Strength == other->Strength;
+	b &= FalloffAmount == other->FalloffAmount;
+	b &= ApplyHeight == other->ApplyHeight;
+	b &= ApplySpread == other->ApplySpread;
+	b &= bEnableFlow == other->bEnableFlow;
+	b &= bMirrorX == other->bMirrorX;
+	b &= bMirrorY == other->bMirrorY;
+	b &= bMirrorZ == other->bMirrorZ;
+	b &= bShowSplines == other->bShowSplines;
+	return b;
+}
+
+void UFurCombSettings::RegWidget(SFurCombModeWidget* InWidget)
+{
+	Widget = InWidget;
+}
+
 void UFurCombSettings::PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.Property && PropertyChangedEvent.ChangeType != EPropertyChangeType::Interactive)
@@ -110,5 +133,7 @@ void UFurCombSettings::PostEditChangeProperty(struct FPropertyChangedEvent& Prop
 			GConfig->SetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombMirrorZ"), bMirrorZ, GEditorPerProjectIni);
 		else if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UFurCombSettings, bShowSplines))
 			GConfig->SetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombShowSplines"), bShowSplines, GEditorPerProjectIni);
+		if (Widget)
+			Widget->UpdateSelectedPresset(this);
 	}
 }

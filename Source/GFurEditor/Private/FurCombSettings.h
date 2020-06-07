@@ -7,6 +7,8 @@
 #include "UObject/Object.h"
 #include "FurCombSettings.generated.h"
 
+class SFurCombModeWidget;
+
 UCLASS()
 class GFUREDITOR_API UFurCombSettings : public UObject
 {
@@ -26,6 +28,9 @@ public:
 	void DeleteFromConfig();
 
 	void CopyFrom(const UFurCombSettings* other);
+	bool Equals(const UFurCombSettings* other);
+
+	void RegWidget(SFurCombModeWidget* InWidget);
 
 protected:
 	/** Radius of the Brush used for Painting */
@@ -73,4 +78,5 @@ public:
 
 private:
 	FString ConfigPrefix;
+	SFurCombModeWidget* Widget = nullptr;
 };

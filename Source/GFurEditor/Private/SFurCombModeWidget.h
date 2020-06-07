@@ -20,6 +20,8 @@ public:
 	/** Slate widget construction */
 	void Construct(const FArguments& InArgs, FFurComb* InComb);
 
+	void UpdateSelectedPresset(UFurCombSettings* InSettings);
+
 protected:
 	/** Creates and sets up details view */
 	void CreateDetailsView();

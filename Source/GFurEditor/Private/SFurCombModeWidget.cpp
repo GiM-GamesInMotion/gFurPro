@@ -102,6 +102,22 @@ void SFurCombModeWidget::Construct(const FArguments& InArgs, FFurComb* InComb)
 			]
 		]
 	];
+
+	FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+	UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
+}
+
+void SFurCombModeWidget::UpdateSelectedPresset(UFurCombSettings* InSettings)
+{
+	for (int i = 0; i < PresetSettings.Num(); i++)
+	{
+		if (InSettings->Equals(PresetSettings[i]))
+		{
+			PresetComboBox->SetSelectedItem(PresetOptions[i]);
+			return;
+		}
+	}
+	PresetComboBox->ClearSelection();
 }
 
 void SFurCombModeWidget::CreateDetailsView()
@@ -138,6 +154,8 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			SettingsObjects.Empty();
 			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
 			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Length; })),
 			NAME_None, LOCTEXT("Mode.FurComb.Length", "Length"), LOCTEXT("Mode.FurComb.Length.Tooltip", "Length - makes the fur longer, holding shift while combing makes the fur shorter"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
@@ -148,6 +166,8 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			SettingsObjects.Empty();
 			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
 			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::AverageLength; })),
 			NAME_None, LOCTEXT("Mode.FurComb.AverageLength", "Average Length"), LOCTEXT("Mode.FurComb.Average.Tooltip", "Average Length - averages the length of fur in the combed area"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
@@ -158,6 +178,8 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			SettingsObjects.Empty();
 			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
 			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Bend; })),
 			NAME_None, LOCTEXT("Mode.FurComb.Blend", "Bend"), LOCTEXT("Mode.FurComb.Bend.Tooltip", "Bend - bends the fur along the brush stroke, using shift inverses the effect"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
@@ -168,6 +190,8 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			SettingsObjects.Empty();
 			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
 			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Clump; })),
 			NAME_None, LOCTEXT("Mode.FurComb.Clump", "Clump"), LOCTEXT("Mode.FurComb.Clump.Tooltip", "Clump - clumps the fur along the brush stroke, using shift inverses the effect"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
@@ -178,6 +202,8 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			SettingsObjects.Empty();
 			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
 			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Twist; })),
 			NAME_None, LOCTEXT("Mode.FurComb.Twist", "Twist"), LOCTEXT("Mode.FurComb.Twist.Tooltip", "Twist - twists the fur, shift inverts the effect"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
@@ -188,6 +214,8 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			SettingsObjects.Empty();
 			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
 			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Noise; })),
 			NAME_None, LOCTEXT("Mode.FurComb.Noise", "Noise"), LOCTEXT("Mode.FurComb.Noise.Tooltip", "Noise - adds noise to the fur, shift inverts the effect"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
@@ -198,6 +226,8 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			SettingsObjects.Empty();
 			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
 			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Relax; })),
 			NAME_None, LOCTEXT("Mode.FurComb.Relax", "Relax"), LOCTEXT("Mode.FurComb.Relax.Tooltip", "Relax - relaxes the fur towards being straight"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);
@@ -208,6 +238,8 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			SettingsObjects.Empty();
 			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
 			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::AddRemove; })),
 			NAME_None, LOCTEXT("Mode.FurComb.AddRemove", "AddRemove"), LOCTEXT("Mode.FurComb.AddRemove.Tooltip", "Add/Remove - adds fur, shift removes fur completely"),
 			ColorPaintIcon, EUserInterfaceActionType::ToggleButton);

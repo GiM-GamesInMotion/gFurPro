@@ -381,7 +381,7 @@ void FEdModeFurComb::Render(const FSceneView* View, FViewport* Viewport, FPrimit
 				FurComb->CombVR(Viewport, VREditorMode->GetHeadTransform().GetLocation(), LaserPointerStart, LaserPointerDirection, VRInteractor);
 			}
 		}
-		else if (FurComb->GetFurCombSettings()->bEnableFlow)
+		else if (FurComb->GetCurrentFurCombSettings()->bEnableFlow)
 		{
 			// Make sure the cursor is visible OR we're flood filling.  No point drawing a paint cue when there's no cursor.
 			if (Viewport->IsCursorVisible())

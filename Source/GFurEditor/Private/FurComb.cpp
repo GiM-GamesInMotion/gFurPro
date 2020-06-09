@@ -37,9 +37,26 @@ FFurComb::~FFurComb()
 
 void FFurComb::Init()
 {
+	static FString ConfigPrefixes[] = {
+		"Length_",
+		"AverageLength_",
+		"Bend_",
+		"Clump_",
+		"Twist_",
+		"Noise_",
+		"Relax_",
+		"AddRemove_",
+	};
+
 	/** Setup necessary data */
-	FurCombSettings = DuplicateObject<UFurCombSettings>(GetMutableDefault<UFurCombSettings>(), GetTransientPackage());
-	FurCombSettings->AddToRoot();
+	for (int i = 0; i < (int)EFurCombMode::Count; i++)
+	{
+//		FurCombSettings[i] = DuplicateObject<UFurCombSettings>(GetMutableDefault<UFurCombSettings>(), GetTransientPackage());
+//		FurCombSettings[i]->AddToRoot();
+		FurCombSettings[i] = NewObject<UFurCombSettings>();
+		FurCombSettings[i]->SetConfigPrefix(ConfigPrefixes[i]);
+		FurCombSettings[i]->Load();
+	}
 
 	FFurCombCommands::Register();
 	UICommandList = TSharedPtr<FUICommandList>(new FUICommandList());
@@ -67,7 +84,7 @@ TSharedPtr<FUICommandList> FFurComb::GetUICommandList()
 void FFurComb::Render(const FSceneView* View, FViewport* Viewport, FPrimitiveDrawInterface* PDI)
 {
 	/** Render viewport interactors */
-	if (GetFurCombSettings()->bShowSplines)
+	if (GetCurrentFurCombSettings()->bShowSplines)
 		RenderSplines(View, Viewport, PDI);
 	RenderInteractors(View, Viewport, PDI);
 }
@@ -97,9 +114,9 @@ void FFurComb::RegisterCommands(TSharedRef<FUICommandList> CommandList)
 	auto CombLambda = [this](float Multiplier)
 	{
 		const float CombChangeValue = 0.05f;
-		float CombRadius = GetFurCombSettings()->GetRadius();
+		float CombRadius = GetCurrentFurCombSettings()->GetRadius();
 		CombRadius *= (1.f + (CombChangeValue * Multiplier));
-		GetFurCombSettings()->SetRadius(CombRadius);
+		GetCurrentFurCombSettings()->SetRadius(CombRadius);
 	};
 	CommandList->MapAction(Commands.IncreaseCombSize, FExecuteAction::CreateLambda(CombLambda, 1.0f), FCanExecuteAction(), EUIActionRepeatMode::RepeatEnabled);
 	CommandList->MapAction(Commands.DecreaseCombSize, FExecuteAction::CreateLambda(CombLambda, -1.0f), FCanExecuteAction(), EUIActionRepeatMode::RepeatEnabled);
@@ -157,9 +174,9 @@ bool FFurComb::InputKey(FEditorViewportClient* InViewportClient, FViewport* InVi
 	auto CombLambda = [this](float Multiplier)
 	{
 		const float CombChangeValue = 0.05f;
-		float CombRadius = GetFurCombSettings()->GetRadius();
+		float CombRadius = GetCurrentFurCombSettings()->GetRadius();
 		CombRadius *= (1.f + (CombChangeValue * Multiplier));
-		GetFurCombSettings()->SetRadius(CombRadius);
+		GetCurrentFurCombSettings()->SetRadius(CombRadius);
 	};
 
 	if (InKey == EKeys::LeftBracket)
@@ -202,9 +219,9 @@ void FFurComb::AddReferencedObjects(FReferenceCollector& Collector)
 
 }
 
-UFurCombSettings* FFurComb::GetFurCombSettings()
+UFurCombSettings* FFurComb::GetCurrentFurCombSettings()
 {
-	return FurCombSettings;
+	return FurCombSettings[(int)Mode];
 }
 
 TSharedPtr<class SWidget> FFurComb::GetWidget()
@@ -249,7 +266,8 @@ void FFurComb::PostUndo()
 
 bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayOrigin, const FVector& InRayDirection, ECombAction CombAction, float StrengthScale)
 {
-	const float CombRadius = FurCombSettings->GetRadius();
+	UFurCombSettings* Settings = FurCombSettings[(int)Mode];
+	const float CombRadius = Settings->GetRadius();
 	// Fire out a ray to see if there is a *selected* component under the mouse cursor that can be painted.
 	// NOTE: We can't use a GWorld line check for this as that would ignore components that have collision disabled
 
@@ -311,7 +329,7 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 		const FVector CombVisualPosition = BestTraceResult.Location + BestTraceResult.Normal * VisualBiasDistance;
 
 		// NOTE: We square the comb strength to maximize slider precision in the low range
-		float CombStrength = FurCombSettings->Strength * FurCombSettings->Strength * StrengthScale;
+		float CombStrength = Settings->Strength * Settings->Strength * StrengthScale;
 		if (CombAction == ECombAction::Inverse)
 			CombStrength = -CombStrength;
 
@@ -365,12 +383,12 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 			Params.Normal = InverseComponentTransform.TransformVector(BestTraceResult.Normal);
 			Params.CombRadius = ComponentSpaceRadius;
 			Params.Strength = CombStrength;
-			Params.Falloff = FurCombSettings->FalloffAmount;
-			Params.ApplyHeight = FurCombSettings->ApplyHeight;
-			Params.ApplySpread = FurCombSettings->ApplySpread;
-			Params.MirrorX = FurCombSettings->bMirrorX;
-			Params.MirrorY = FurCombSettings->bMirrorY;
-			Params.MirrorZ = FurCombSettings->bMirrorZ;
+			Params.Falloff = Settings->FalloffAmount;
+			Params.ApplyHeight = Settings->ApplyHeight;
+			Params.ApplySpread = Settings->ApplySpread;
+			Params.MirrorX = Settings->bMirrorX;
+			Params.MirrorY = Settings->bMirrorY;
+			Params.MirrorZ = Settings->bMirrorZ;
 
 
 			if (Mode == EFurCombMode::AddRemove && Params.Strength > 0)
@@ -482,7 +500,7 @@ void FFurComb::RenderInteractors(const FSceneView* View, FViewport* Viewport, FP
 
 void FFurComb::RenderInteractorWidget(const FVector& InRayOrigin, const FVector& InRayDirection, FPrimitiveDrawInterface* PDI, ESceneDepthPriorityGroup DepthGroup /*= SDPG_World*/)
 {
-	const UFurCombSettings* CombSettings = GetFurCombSettings();
+	const UFurCombSettings* CombSettings = GetCurrentFurCombSettings();
 	const float CombRadius = CombSettings->GetRadius();
 
 	const FHitResult& HitResult = GetHitResult(InRayOrigin, InRayDirection);

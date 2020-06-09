@@ -38,6 +38,8 @@ enum class EFurCombMode
 	Noise,
 	Relax,
 	AddRemove,
+
+	Count
 };
 
 /** Class for combing fur */
@@ -91,7 +93,7 @@ public:
 	void AddReferencedObjects(FReferenceCollector& Collector);
 
 	/** Returns an instance of UPaintBrushSettings (base or derived) which contains the basic settings used for painting */
-	UFurCombSettings* GetFurCombSettings();
+	UFurCombSettings* GetCurrentFurCombSettings();
 
 	/** Returns an instance of UMeshPainterSettings used for specific types of painting */
 //	UMeshPaintSettings* GetPainterSettings();//TODO
@@ -178,7 +180,7 @@ private:
 	TSharedPtr<SFurCombModeWidget> Widget;
 
 	/** Fur Comb settings */
-	UFurCombSettings* FurCombSettings;
+	UFurCombSettings* FurCombSettings[(int)EFurCombMode::Count];
 
 	TArray<UGFurComponent*> FurComponents;
 

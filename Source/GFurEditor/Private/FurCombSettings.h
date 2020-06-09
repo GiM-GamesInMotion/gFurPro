@@ -7,6 +7,8 @@
 #include "UObject/Object.h"
 #include "FurCombSettings.generated.h"
 
+class SFurCombModeWidget;
+
 UCLASS()
 class GFUREDITOR_API UFurCombSettings : public UObject
 {
@@ -19,6 +21,16 @@ public:
 
 	float GetRadius() const { return Radius; }
 	void SetRadius(float InRadius);
+
+	void SetConfigPrefix(const FString& InConfigPrefix) { ConfigPrefix = InConfigPrefix; }
+
+	void Load();
+	void DeleteFromConfig();
+
+	void CopyFrom(const UFurCombSettings* other);
+	bool Equals(const UFurCombSettings* other);
+
+	void RegWidget(SFurCombModeWidget* InWidget);
 
 protected:
 	/** Radius of the Brush used for Painting */
@@ -63,4 +75,8 @@ public:
 	/** Toggles visualization of the spline guides.*/
 	UPROPERTY(EditAnywhere, Category = Comb)
 	bool bShowSplines;
+
+private:
+	FString ConfigPrefix;
+	SFurCombModeWidget* Widget = nullptr;
 };

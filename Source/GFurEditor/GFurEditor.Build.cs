@@ -14,7 +14,7 @@ public class GFurEditor : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "Slate", "InputCore", "RHI", "RenderCore",
 			"UnrealEd", "EditorStyle", "VREditor", "MeshPaint" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "SlateCore", "PropertyEditor", "LevelEditor", "ViewportInteraction", "AlembicLib" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "SlateCore", "PropertyEditor", "LevelEditor", "ViewportInteraction", "AlembicLib", "Projects" });
 
         PublicIncludePaths.Add(ModuleDirectory + "/Public");
 

@@ -115,6 +115,7 @@ public:
 				}
 			}
 		}
+		NewLodLevel = FMath::Min(NewLodLevel, FurData.Num() - 1);
 		if (NewLodLevel != CurrentFurLodLevel)
 		{
 			CurrentFurLodLevel = NewLodLevel;

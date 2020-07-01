@@ -258,6 +258,7 @@ void SFurCombModeWidget::LoadPresets()
 		PresetOptions.Add(PresetNamePtr);
 
 		UFurCombSettings* Settings = NewObject<UFurCombSettings>();
+		Settings->AddToRoot();
 		Settings->SetConfigPrefix(FString("Preset_") + PresetName);
 		Settings->Load();
 		PresetSettings.Add(Settings);
@@ -320,6 +321,7 @@ FReply SFurCombModeWidget::SavePreset()
 	PresetComboBox->SetSelectedItem(PresetNamePtr);
 
 	UFurCombSettings* Settings = NewObject<UFurCombSettings>();
+	Settings->AddToRoot();
 	Settings->SetConfigPrefix(FString("Preset_") + PresetName);
 	Settings->CopyFrom(FurComb->GetCurrentFurCombSettings());
 	PresetSettings.Add(Settings);

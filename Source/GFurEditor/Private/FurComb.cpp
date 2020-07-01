@@ -52,8 +52,8 @@ void FFurComb::Init()
 	for (int i = 0; i < (int)EFurCombMode::Count; i++)
 	{
 //		FurCombSettings[i] = DuplicateObject<UFurCombSettings>(GetMutableDefault<UFurCombSettings>(), GetTransientPackage());
-//		FurCombSettings[i]->AddToRoot();
 		FurCombSettings[i] = NewObject<UFurCombSettings>();
+		FurCombSettings[i]->AddToRoot();
 		FurCombSettings[i]->SetConfigPrefix(ConfigPrefixes[i]);
 		FurCombSettings[i]->Load();
 	}

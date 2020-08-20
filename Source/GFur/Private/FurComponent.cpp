@@ -137,6 +137,10 @@ public:
 				{
 					if (VisibilityMap & (1 << ViewIndex))
 					{
+						auto MorphObject = GetMorphObject();
+						if (MorphObject != nullptr && !MorphObject->GetVertexBuffer()->IsInitialized())
+							continue;
+
 						const FSceneView* View = Views[ViewIndex];
 
 						FMaterialRenderProxy* MaterialProxy = NULL;

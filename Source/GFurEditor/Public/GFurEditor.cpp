@@ -6,14 +6,33 @@
 #include "FurComponentCustomization.h"
 
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
+#include <Runtime/Projects/Private/PluginManager.h>
 
 #define LOCTEXT_NAMESPACE "GFurEditor"
 
 void FGFurEditorModule::StartupModule()
 {
+	StyleSet = MakeShareable(new FSlateStyleSet("gFurStyleSet"));
+
+//	StyleSet->SetContentRoot(FPaths::ProjectPluginsDir() / TEXT("Resources/Editor"));
+//	StyleSet->SetCoreContentRoot(FPaths::ProjectPluginsDir() / TEXT("Resources/Editor"));
+
+	FString Content = IPluginManager::Get().FindPlugin(TEXT("GFur"))->GetContentDir();
+
+	StyleSet->Set("gFur.Length", new FSlateImageBrush(Content / "../Resources/Editor/1LENGHT.png", FVector2D(80.0f, 80.0f)));
+	StyleSet->Set("gFur.AverageLength", new FSlateImageBrush(Content / "../Resources/Editor/2AVERAGE.LENGHT.png", FVector2D(80.0f, 80.0f)));
+	StyleSet->Set("gFur.Bend", new FSlateImageBrush(Content / "../Resources/Editor/3BEND.png", FVector2D(80.0f, 80.0f)));
+	StyleSet->Set("gFur.Clump", new FSlateImageBrush(Content / "../Resources/Editor/4.CLUMP.png", FVector2D(80.0f, 80.0f)));
+	StyleSet->Set("gFur.Twist", new FSlateImageBrush(Content / "../Resources/Editor/5TWIST.png", FVector2D(80.0f, 80.0f)));
+	StyleSet->Set("gFur.Noise", new FSlateImageBrush(Content / "../Resources/Editor/6Noise.png", FVector2D(80.0f, 80.0f)));
+	StyleSet->Set("gFur.Relax", new FSlateImageBrush(Content / "../Resources/Editor/7RELAX.png", FVector2D(80.0f, 80.0f)));
+	StyleSet->Set("gFur.AddRemove", new FSlateImageBrush(Content / "../Resources/Editor/8ADD.REMOVE.png", FVector2D(80.0f, 80.0f)));
+
+	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
+
 	//Custom detail views
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	EAssetTypeCategories::Type CreaturePackAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("FurSplinesAssetCategory")), LOCTEXT("FurSplinesAssetCategory", "Fur Splines"));
+	EAssetTypeCategories::Type CreaturePackAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("FurSplinesAssetCategory")), LOCTEXT("FurSplinesAssetCategory", "Spline Guides"));
 
 	AssetTools.RegisterAssetTypeActions(MakeShareable(new FFurSplinesTypeActions(CreaturePackAssetCategoryBit)));
 
@@ -38,6 +57,8 @@ void FGFurEditorModule::ShutdownModule()
 	{
 		PropertyModule->UnregisterCustomClassLayout("GFurComponent");
 	}
+
+	FSlateStyleRegistry::UnRegisterSlateStyle(*StyleSet.Get());
 }
 
 IMPLEMENT_MODULE(FGFurEditorModule, GFurEditor)

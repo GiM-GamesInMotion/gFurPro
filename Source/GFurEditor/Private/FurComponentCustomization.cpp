@@ -125,8 +125,31 @@ TSharedRef<IDetailCustomization> FFurComponentCustomization::MakeInstance()
 
 void FFurComponentCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
-	DetailBuilder.EditCategory("gFur Skeletal Mesh");
-	DetailBuilder.EditCategory("gFur Static Mesh");
+	UGFurComponent* FurComponent = nullptr;
+	bool skeletalMesh = true;
+	bool staticMesh = true;
+	if (FindFurComponent(&DetailBuilder, FurComponent) && FurComponent)
+	{
+		TArray<USceneComponent*> parents;
+		FurComponent->GetParentComponents(parents);
+		for (USceneComponent* Comp : parents)
+		{
+			if (Comp->IsA(USkeletalMeshComponent::StaticClass()))
+			{
+				skeletalMesh = true;
+				break;
+			}
+		}
+		staticMesh = !skeletalMesh;
+	}
+	USkeletalMesh* SkeletalGrowMesh = FurComponent->SkeletalGrowMesh;
+	UStaticMesh* StaticGrowMesh = FurComponent->StaticGrowMesh;
+	if (!SkeletalGrowMesh && !StaticGrowMesh)
+		return;
+
+
+	DetailBuilder.EditCategory("gFur Skeletal Mesh").SetCategoryVisibility(skeletalMesh);
+	DetailBuilder.EditCategory("gFur Static Mesh").SetCategoryVisibility(staticMesh);
 
 	auto& FurMeshCategory = DetailBuilder.EditCategory("gFur Guides");
 
@@ -284,7 +307,7 @@ void FFurComponentCustomization::GenerateNewFurSplines(IDetailLayoutBuilder* Det
 		FAssetRegistryModule::AssetCreated(FurSplines);
 		FurSplines->MarkPackageDirty();
 
-		FScopedTransaction CombTransaction(LOCTEXT("FurComponent_AssingFurSplines", "Assign Fur Splines"));
+		FScopedTransaction CombTransaction(LOCTEXT("FurComponent_AssingFurSplines", "Assign Spline Guides"));
 		FurComponent->Modify();
 		if (IsNew)
 		{

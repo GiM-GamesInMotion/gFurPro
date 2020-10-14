@@ -753,4 +753,7 @@ void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLo
 		}
 		k++;
 	}
+
+	Splines->ControlPointCount = ControlPointCount;
+	Splines->Version = 2;
 }

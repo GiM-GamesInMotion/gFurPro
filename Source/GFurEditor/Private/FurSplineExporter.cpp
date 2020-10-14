@@ -31,7 +31,7 @@ PRAGMA_DEFAULT_VISIBILITY_END
 #include "Windows/HideWindowsPlatformTypes.h"
 #endif
 
-void SetGeometry(Alembic::AbcGeom::OCurvesSchema& Schema, const FVector* Points, int32 NumPoints, int32 NumSplines, int32 NumControlPoints)
+void SetGeometry(Alembic::AbcGeom::OCurvesSchema& Schema, const FVector* Points, const FVector2D* UVs, int32 NumPoints, int32 NumSplines, int32 NumControlPoints)
 {
 	TArray<int32> NumVerticesData;
 	NumVerticesData.AddUninitialized(NumSplines);
@@ -40,41 +40,60 @@ void SetGeometry(Alembic::AbcGeom::OCurvesSchema& Schema, const FVector* Points,
 
 	Alembic::Abc::P3fArraySample Positions((Alembic::Abc::P3fArraySample::value_type*)Points, NumPoints);
 	Alembic::Abc::Int32ArraySample NumVertices((Alembic::Abc::Int32ArraySample::value_type*) & NumVerticesData[0], NumVerticesData.Num());
+	Alembic::Abc::v9::V2fArraySample UVsArray((Alembic::AbcGeom::OV2fGeomParam::value_type*)UVs, NumSplines);
 	Alembic::AbcGeom::OCurvesSchema::Sample Sample(Positions, NumVertices);
 
+	Alembic::AbcGeom::OV2fGeomParam::Sample UVsSample(UVsArray, Alembic::AbcGeom::v9::GeometryScope::kUniformScope);
+
 	Schema.set(Sample);
+
+	Alembic::AbcGeom::OV2fGeomParam param(Schema.getArbGeomParams(), "groom_root_uv", false, Alembic::AbcGeom::v9::GeometryScope::kUniformScope,
+		NumSplines);
+	param.set(UVsSample);
 }
 
 void SetGroomProperties(Alembic::AbcGeom::OCurvesSchema& Schema)
 {
 	Alembic::Abc::OCompoundProperty Properties = Schema.getArbGeomParams();
 
-	Alembic::AbcGeom::OBoolGeomParam Params(Properties, "groom_guide", false, Alembic::AbcGeom::kConstantScope, 1);
+	Alembic::AbcGeom::OInt16GeomParam Params(Properties, "groom_guide", false, Alembic::AbcGeom::kConstantScope, 1);
 
-	Alembic::Abc::BoolArraySample::value_type value = true;
-	Alembic::Abc::BoolArraySample GroomGuide(&value, 1);
+	Alembic::Abc::Int16ArraySample::value_type value = 1;
+	Alembic::Abc::Int16ArraySample GroomGuide(&value, 1);
 
-	Alembic::AbcGeom::OBoolGeomParam::Sample Sample(GroomGuide, Alembic::AbcGeom::kConstantScope);
+	Alembic::AbcGeom::OInt16GeomParam::Sample Sample(GroomGuide, Alembic::AbcGeom::kConstantScope);
 
 	Params.set(Sample);
 }
 
-void ExportFurSplines(const FString& filename, const TArray<FVector>& Points, int32 ControlPointCount, int32 GroomSplineCount)
+void ExportFurSplines(const FString& filename, const TArray<FVector>& Points, const TArray<FVector2D>& UVs, int32 ControlPointCount, int32 GroomSplineCount)
 {
-	std::string path(TCHAR_TO_UTF8(*filename));
+	TArray<FVector2D> UVs2;
+	UVs2.AddUninitialized(UVs.Num());
+	for (int i = 0; i < UVs.Num(); i++)
+	{
+		UVs2[i].X = UVs[i].X;
+		UVs2[i].Y = 1.0f - UVs[i].Y;
+	}
 
-	Alembic::Abc::OArchive Archive(Alembic::AbcCoreHDF5::WriteArchive(), path);
+	{
+		std::string path(TCHAR_TO_UTF8(*filename));
 
-	Alembic::AbcGeom::OCurves GroomCurves(Archive.getTop(), "groom_splines");
-	Alembic::AbcGeom::OCurvesSchema& GroomSchema = GroomCurves.getSchema();
+		Alembic::Abc::OArchive Archive(Alembic::AbcCoreHDF5::WriteArchive(), path);
 
-	SetGeometry(GroomSchema, &Points[0], GroomSplineCount * ControlPointCount, GroomSplineCount, ControlPointCount);
+		Alembic::AbcGeom::OCurves GroomCurves(Archive.getTop(), "groom_splines");
+		Alembic::AbcGeom::OCurvesSchema& GroomSchema = GroomCurves.getSchema();
 
-	int32 NumSplines = Points.Num() / ControlPointCount;
-	int32 NumStrandSplines = NumSplines - GroomSplineCount;
+		SetGeometry(GroomSchema, &Points[0], &UVs2[0], GroomSplineCount * ControlPointCount, GroomSplineCount, ControlPointCount);
+		SetGroomProperties(GroomSchema);
 
-	Alembic::AbcGeom::OCurves StrandCurves(Archive.getTop(), "strand_splines");
-	Alembic::AbcGeom::OCurvesSchema& StrandSchema = StrandCurves.getSchema();
+		int32 NumSplines = Points.Num() / ControlPointCount;
+		int32 NumStrandSplines = NumSplines - GroomSplineCount;
 
-	SetGeometry(StrandSchema, &Points[GroomSplineCount * ControlPointCount], NumStrandSplines * ControlPointCount, NumStrandSplines, ControlPointCount);
+		Alembic::AbcGeom::OCurves StrandCurves(Archive.getTop(), "strand_splines");
+		Alembic::AbcGeom::OCurvesSchema& StrandSchema = StrandCurves.getSchema();
+
+		SetGeometry(StrandSchema, &Points[GroomSplineCount * ControlPointCount], &UVs2[GroomSplineCount],
+			NumStrandSplines * ControlPointCount, NumStrandSplines, ControlPointCount);
+	}
 }

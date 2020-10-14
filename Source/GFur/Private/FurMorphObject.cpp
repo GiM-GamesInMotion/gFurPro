@@ -87,7 +87,7 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 				const FMorphTargetDelta& MorphVertex = Deltas[MorphVertIdx];
 
 				// @TODO FIXMELH : temp hack until we fix importing issue
-				if ((MorphVertex.SourceIdx < (uint32)NumVertices))
+				if (MorphVertex.SourceIdx < (uint32)MorphRemapTable.Num())
 				{
 					int RemappedIndex = MorphRemapTable[MorphVertex.SourceIdx];
 					if (RemappedIndex == -1)

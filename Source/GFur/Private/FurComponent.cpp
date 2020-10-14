@@ -115,6 +115,7 @@ public:
 				}
 			}
 		}
+		NewLodLevel = FMath::Min(NewLodLevel, FurData.Num() - 1);
 		if (NewLodLevel != CurrentFurLodLevel)
 		{
 			CurrentFurLodLevel = NewLodLevel;
@@ -136,6 +137,10 @@ public:
 				{
 					if (VisibilityMap & (1 << ViewIndex))
 					{
+						auto MorphObject = GetMorphObject();
+						if (MorphObject != nullptr && !MorphObject->GetVertexBuffer()->IsInitialized())
+							continue;
+
 						const FSceneView* View = Views[ViewIndex];
 
 						FMaterialRenderProxy* MaterialProxy = NULL;
@@ -270,10 +275,10 @@ UGFurComponent::UGFurComponent(const FObjectInitializer& ObjectInitializer)
 	Stiffness = 5.0f;
 	Damping = 5.0f;
 	MaxForce = 10.0f;
-	MaxForceTorqueFactor = 1.0f;
+	MaxForceTorqueFactor = 0.75f;
 	ConstantForce.Set(0, 0, -9.8f);
 	ReferenceHairBias = 0.8f;
-	HairLengthForceUniformity = 0.2f;
+	HairLengthForceUniformity = 0.75f;
 	MaxPhysicsOffsetLength = FLT_MAX;
 	NoiseStrength = 0.0f;
 	CastShadow = false;

@@ -224,7 +224,7 @@ void FFurData::GenerateSplineMap(const FPositionVertexBuffer& InPositions)
 
 		for (uint32 i = 0; i < SourceVertexCount; i++)
 		{
-			const float Epsilon = 0.1f;
+			const float Epsilon = FurSplinesUsed->Threshold;
 			const float EpsilonSquared = Epsilon * Epsilon;
 			FVector p = InPositions.VertexPosition(i);
 			int32 BeginX = FMath::Max(FMath::FloorToInt((p.X - Epsilon - MinX) * FactorWidth), 0);

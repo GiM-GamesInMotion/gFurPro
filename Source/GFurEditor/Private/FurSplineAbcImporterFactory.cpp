@@ -13,6 +13,9 @@
 #include "AssetRegistryModule.h"
 #include "PackageTools.h"
 #include "FurSplines.h"
+#include "Widgets/Input/SComboBox.h"
+#include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
+#include "Widgets/Input/SNumericEntryBox.h"
 
 #if PLATFORM_WINDOWS
 #include "Windows/AllowWindowsPlatformTypes.h"
@@ -31,6 +34,8 @@ PRAGMA_DEFAULT_VISIBILITY_END
 #if PLATFORM_WINDOWS
 #include "Windows/HideWindowsPlatformTypes.h"
 #endif
+
+#define LOCTEXT_NAMESPACE "GFurEditor"
 
 static void ParseObject(const Alembic::Abc::IObject& InObject, UFurSplines* Splines, const FMatrix& ParentMatrix, const FMatrix& ConversionMatrix, float Scale, bool bCheckGroomAttributes)
 {
@@ -181,7 +186,7 @@ static bool HasObjectCurves(const Alembic::Abc::IObject& InObject)
 	return false;
 }
 
-static bool ImportFurSplinesFromAlembic(const FString& Filename, UFurSplines* FurSplines)
+static bool ImportFurSplinesFromAlembic(const FString& Filename, UFurSplines* FurSplines, int InConversion)
 {
 	/** Factory used to generate objects*/
 	Alembic::AbcCoreFactory::IFactory Factory;
@@ -205,14 +210,161 @@ static bool ImportFurSplinesFromAlembic(const FString& Filename, UFurSplines* Fu
 		return NULL;
 
 //	FMatrix ConversionMatrix = FScaleMatrix::Make(ConversionSettings.Scale) * FRotationMatrix::Make(FQuat::MakeFromEuler(ConversionSettings.Rotation));
-	FMatrix ConversionMatrix = FMatrix::Identity;
+	FMatrix ConversionMatrix;
+	switch (InConversion)
+	{
+	case 0:
+	default:
+		ConversionMatrix = FMatrix::Identity;
+		break;
+	case 1:
+		ConversionMatrix = FMatrix(FPlane(1, 0, 0, 0), FPlane(0, 0, 1, 0), FPlane(0, 1, 0, 0), FPlane(0, 0, 0, 1));
+		break;
+	}
 	FMatrix ParentMatrix = FMatrix::Identity;
 	ParseObject(TopObject, FurSplines, ParentMatrix, ConversionMatrix, 1.0f, true);
 	FurSplines->ImportFilename = Filename;
+	FurSplines->ImportTransformation = InConversion;
 	FurSplines->Version = 1;
 	FurSplines->UpdateSplines();
 
 	return FurSplines->Vertices.Num() > 0;
+}
+
+void SGFurImportOptions::Construct(const FArguments& InArgs)
+{
+	WidgetWindow = InArgs._WidgetWindow;
+	PresetOptions.Reset();
+
+	PresetOptions.Add(MakeShared<int>(0));
+	PresetOptions.Add(MakeShared<int>(1));
+
+	this->ChildSlot
+	[
+		SNew(SVerticalBox)
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(2)
+		[
+			SNew(SBorder)
+			.Padding(FMargin(3))
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(STextBlock)
+					.Font(FEditorStyle::GetFontStyle("CurveEd.LabelFont"))
+					.Text(LOCTEXT("Import_CurrentFileTitle", "Current File: "))
+				]
+				+ SHorizontalBox::Slot()
+				.Padding(5, 0, 0, 0)
+				.AutoWidth()
+				.VAlign(VAlign_Center)
+				[
+					SNew(STextBlock)
+					.Font(FEditorStyle::GetFontStyle("CurveEd.InfoFont"))
+					.Text(InArgs._FullPath)
+				]
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.Padding(2)
+		.MaxHeight(20.0f)
+		[
+			SNew(SComboBox<TSharedPtr<int>>)
+			.OptionsSource(&PresetOptions)
+			.OnSelectionChanged_Lambda([this](const TSharedPtr<int>& InOption, ESelectInfo::Type type) {
+				if (type != ESelectInfo::Direct)
+					ConversionType = *InOption;
+			})
+			.OnGenerateWidget_Lambda([this](TSharedPtr<int> Item) -> TSharedRef<SWidget>
+			{
+				TSharedPtr<STextBlock> NewItem = SNew(STextBlock).Text(TextOption(*Item));
+				NewItem->SetMargin(FMargin(2));
+				return NewItem.ToSharedRef();
+			})
+			.Content()
+			[
+				SNew(STextBlock)
+				.Text_Lambda([this]() { return TextOption(ConversionType); })
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.Padding(2)
+		.MaxHeight(20.0f)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.Padding(2)
+			[
+				SNew(STextBlock)
+				.Text(LOCTEXT("Threshold", "Threshold"))
+				.ToolTipText(LOCTEXT("ThresholdToolTip", "Warning, too high value will assign splines to wrong vertices."))
+			]
+			+ SHorizontalBox::Slot()
+			.Padding(2)
+			[
+				SNew(SNumericEntryBox<float>)
+				.MinValue(0.0f)
+				.MaxValue(100.0f)
+				.MinSliderValue(0.0f)
+				.MaxSliderValue(10.0f)
+				.Delta(0.1f)
+				.AllowSpin(true)
+				.ToolTipText(LOCTEXT("ThresholdToolTip", "Warning, too high value will assign splines to wrong vertices."))
+				.Value_Lambda([this]() { return Threshold; })
+				.OnValueChanged_Lambda([this](float InValue) {
+					Threshold = InValue;
+				})
+			]
+		]
+
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.HAlign(HAlign_Right)
+		.Padding(2)
+		[
+			SNew(SUniformGridPanel)
+			.SlotPadding(2)
+			+ SUniformGridPanel::Slot(0, 0)
+			[
+				SAssignNew(ImportButton, SButton)
+				.HAlign(HAlign_Center)
+				.Text(LOCTEXT("GFurImportOptionWindow_Import", "Import"))
+				.IsEnabled(this, &SGFurImportOptions::CanImport)
+				.OnClicked(this, &SGFurImportOptions::OnImport)
+			]
+			+ SUniformGridPanel::Slot(1, 0)
+			[
+				SNew(SButton)
+				.HAlign(HAlign_Center)
+				.Text(LOCTEXT("SGFurImportOptions_Cancel", "Cancel"))
+				.ToolTipText(LOCTEXT("SGFurImportOptions_Cancel_ToolTip", "Cancels importing gFur Splines"))
+				.OnClicked(this, &SGFurImportOptions::OnCancel)
+			]
+		]
+	];
+}
+
+FText SGFurImportOptions::TextOption(int InOption)
+{
+	FText text;
+	switch (InOption)
+	{
+	case 0:
+	default:
+		text = FText::FromString("3ds Max / Blender");
+		break;
+	case 1:
+		text = FText::FromString("Maya");
+		break;
+	};
+	return text;
 }
 
 UFurSplineAbcImporterFactory::UFurSplineAbcImporterFactory(const FObjectInitializer& ObjectInitializer)
@@ -264,9 +416,23 @@ bool UFurSplineAbcImporterFactory::FactoryCanImport(const FString& Filename)
 
 UObject* UFurSplineAbcImporterFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
 {
+	TSharedPtr<SGFurImportOptions> Options;
+	ShowImportOptionsWindow(Options, Filename);
+
+	if (!Options->ShouldImport())
+	{
+		return NULL;
+	}
+
+	int ConversionType = Options->GetConversionType().GetValue();
+	float Threshold = Options->GetThreshold().GetValue();
+
 	UFurSplines* Result = NewObject<UFurSplines>(InParent, InName, Flags);
-	if (ImportFurSplinesFromAlembic(Filename, Result))
+	if (ImportFurSplinesFromAlembic(Filename, Result, ConversionType))
+	{
+		Result->Threshold = Threshold;
 		return Result;
+	}
 	return NULL;
 }
 
@@ -303,7 +469,7 @@ EReimportResult::Type UFurSplineAbcImporterFactory::Reimport(UObject* Obj)
 		Splines->Index.Reset();
 		Splines->Count.Reset();
 		Splines->Version = 1;
-		EReimportResult::Type r = ImportFurSplinesFromAlembic(Splines->ImportFilename, Splines) ? EReimportResult::Succeeded : EReimportResult::Failed;
+		EReimportResult::Type r = ImportFurSplinesFromAlembic(Splines->ImportFilename, Splines, Splines->ImportTransformation) ? EReimportResult::Succeeded : EReimportResult::Failed;
 		Splines->OnSplinesChanged.Broadcast();
 		return r;
 
@@ -314,4 +480,28 @@ EReimportResult::Type UFurSplineAbcImporterFactory::Reimport(UObject* Obj)
 int32 UFurSplineAbcImporterFactory::GetPriority() const
 {
 	return ImportPriority;
+}
+
+void UFurSplineAbcImporterFactory::ShowImportOptionsWindow(TSharedPtr<SGFurImportOptions>& Options, FString FilePath) const
+{
+	TSharedRef<SWindow> Window = SNew(SWindow)
+		.Title(LOCTEXT("gFurImportWindowTitle", "gFur Spline Import Options"))
+		.SizingRule(ESizingRule::Autosized);
+
+	Window->SetContent
+	(
+		SAssignNew(Options, SGFurImportOptions).WidgetWindow(Window)
+		.WidgetWindow(Window)
+		.FullPath(FText::FromString(FilePath))
+	);
+
+	TSharedPtr<SWindow> ParentWindow;
+
+	if (FModuleManager::Get().IsModuleLoaded("MainFrame"))
+	{
+		IMainFrameModule& MainFrame = FModuleManager::LoadModuleChecked<IMainFrameModule>("MainFrame");
+		ParentWindow = MainFrame.GetParentWindow();
+	}
+
+	FSlateApplication::Get().AddModalWindow(Window, ParentWindow, false);
 }

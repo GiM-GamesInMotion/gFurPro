@@ -6,7 +6,7 @@
 #include "IDetailRootObjectCustomization.h"
 #include "PropertyRestriction.h"
 #include "Widgets/SWidget.h"
-#include "Editor/PropertyEditor/Public/IDetailsView.h"
+#include "IDetailsView.h"
 
 class UFurSplines;
 class USkeletalMesh;

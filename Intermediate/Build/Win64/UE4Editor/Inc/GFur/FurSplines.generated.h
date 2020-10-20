@@ -36,7 +36,7 @@ public: \
 
 #define HostProject_Plugins_GFur_Source_GFur_Public_FurSplines_h_10_STANDARD_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
-	NO_API UFurSplines(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
+	NO_API UFurSplines(const FObjectInitializer& ObjectInitializer); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UFurSplines) \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UFurSplines); \
 DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplines); \
@@ -48,8 +48,6 @@ public:
 
 
 #define HostProject_Plugins_GFur_Source_GFur_Public_FurSplines_h_10_ENHANCED_CONSTRUCTORS \
-	/** Standard constructor, called after all reflected properties have been initialized */ \
-	NO_API UFurSplines(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()) : Super(ObjectInitializer) { }; \
 private: \
 	/** Private move- and copy-constructors, should never be used */ \
 	NO_API UFurSplines(UFurSplines&&); \
@@ -57,7 +55,7 @@ private: \
 public: \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UFurSplines); \
 DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplines); \
-	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UFurSplines)
+	DEFINE_DEFAULT_CONSTRUCTOR_CALL(UFurSplines)
 
 
 #define HostProject_Plugins_GFur_Source_GFur_Public_FurSplines_h_10_PRIVATE_PROPERTY_OFFSET

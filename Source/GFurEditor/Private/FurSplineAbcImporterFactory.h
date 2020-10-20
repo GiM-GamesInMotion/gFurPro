@@ -8,6 +8,90 @@
 
 class UFurSplines;
 
+class SGFurImportOptions : public SCompoundWidget
+{
+public:
+	SLATE_BEGIN_ARGS(SGFurImportOptions)
+		: _WidgetWindow()
+		{}
+
+		SLATE_ARGUMENT(TSharedPtr<SWindow>, WidgetWindow)
+		SLATE_ARGUMENT(FText, FullPath)
+	SLATE_END_ARGS()
+
+	TOptional<int> GetConversionType() const
+	{
+		return ConversionType;
+	}
+
+	TOptional<float> GetThreshold() const
+	{
+		return Threshold;
+	}
+
+public:
+	void Construct(const FArguments& InArgs);
+	virtual bool SupportsKeyboardFocus() const override { return true; }
+
+	FReply OnImport()
+	{
+		bShouldImport = true;
+		if (WidgetWindow.IsValid())
+		{
+			WidgetWindow.Pin()->RequestDestroyWindow();
+		}
+		return FReply::Handled();
+	}
+
+	FReply OnCancel()
+	{
+		bShouldImport = false;
+		if (WidgetWindow.IsValid())
+		{
+			WidgetWindow.Pin()->RequestDestroyWindow();
+		}
+		return FReply::Handled();
+	}
+
+	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent) override
+	{
+		if (InKeyEvent.GetKey() == EKeys::Escape)
+		{
+			return OnCancel();
+		}
+
+		return FReply::Unhandled();
+	}
+
+	bool ShouldImport() const
+	{
+		return bShouldImport;
+	}
+
+
+	SGFurImportOptions()
+	: bShouldImport(false)
+	{}
+
+private:
+	bool CanImport() const
+	{
+		return true;
+	}
+
+private:
+	TWeakPtr< SWindow > WidgetWindow;
+	TSharedPtr< SButton > ImportButton;
+	bool			bShouldImport;
+	TSharedPtr<IDetailsView> DetailsView;
+	TArray<TSharedPtr<int>> PresetOptions;
+	int ConversionType = 0;
+	float Threshold = 0.1f;
+
+	FText TextOption(int InOption);
+};
+
+
 UCLASS()
 class UFurSplineAbcImporterFactory : public UFactory, public FReimportHandler
 {
@@ -29,4 +113,7 @@ class UFurSplineAbcImporterFactory : public UFactory, public FReimportHandler
 protected:
 
 	static UObject* CreateNewAsset(UClass* AssetClass, const FString& TargetPath, const FString& DesiredName, EObjectFlags Flags);
+
+private:
+	void ShowImportOptionsWindow(TSharedPtr<SGFurImportOptions>& Options, FString FilePath) const;
 };

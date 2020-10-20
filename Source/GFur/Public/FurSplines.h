@@ -28,6 +28,14 @@ public:
 	UPROPERTY()
 	int32 Version;
 
+	UPROPERTY()
+	int32 ImportTransformation;
+
+	UPROPERTY()
+	float Threshold;
+
+	UFurSplines() : Threshold(0.1f) {}
+
 	int32 SplineCount() const { return Vertices.Num() / ControlPointCount; }
 	FVector GetFirstControlPoint(int32 SplineIndex) const { return Vertices[SplineIndex * ControlPointCount]; }
 	FVector GetLastControlPoint(int32 SplineIndex) const { return Vertices[SplineIndex * ControlPointCount + ControlPointCount - 1]; }

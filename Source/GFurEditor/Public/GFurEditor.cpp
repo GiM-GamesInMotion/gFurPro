@@ -14,8 +14,8 @@ void FGFurEditorModule::StartupModule()
 {
 	StyleSet = MakeShareable(new FSlateStyleSet("gFurStyleSet"));
 
-	//	StyleSet->SetContentRoot(FPaths::ProjectPluginsDir() / TEXT("Resources/Editor"));
-	//	StyleSet->SetCoreContentRoot(FPaths::ProjectPluginsDir() / TEXT("Resources/Editor"));
+//	StyleSet->SetContentRoot(FPaths::ProjectPluginsDir() / TEXT("Resources/Editor"));
+//	StyleSet->SetCoreContentRoot(FPaths::ProjectPluginsDir() / TEXT("Resources/Editor"));
 
 	FString Content = IPluginManager::Get().FindPlugin(TEXT("GFur"))->GetContentDir();
 
@@ -42,7 +42,7 @@ void FGFurEditorModule::StartupModule()
 
 	//Custom detail views
 	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	EAssetTypeCategories::Type CreaturePackAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("FurSplinesAssetCategory")), LOCTEXT("FurSplinesAssetCategory", "Fur Splines"));
+	EAssetTypeCategories::Type CreaturePackAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("FurSplinesAssetCategory")), LOCTEXT("FurSplinesAssetCategory", "Spline Guides"));
 
 	AssetTools.RegisterAssetTypeActions(MakeShareable(new FFurSplinesTypeActions(CreaturePackAssetCategoryBit)));
 

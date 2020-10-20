@@ -39,7 +39,7 @@ void SetGeometry(Alembic::AbcGeom::OCurvesSchema& Schema, const FVector* Points,
 		NumVerticesData[i] = NumControlPoints;
 
 	Alembic::Abc::P3fArraySample Positions((Alembic::Abc::P3fArraySample::value_type*)Points, NumPoints);
-	Alembic::Abc::Int32ArraySample NumVertices((Alembic::Abc::Int32ArraySample::value_type*) & NumVerticesData[0], NumVerticesData.Num());
+	Alembic::Abc::Int32ArraySample NumVertices((Alembic::Abc::Int32ArraySample::value_type*)&NumVerticesData[0], NumVerticesData.Num());
 	Alembic::Abc::v9::V2fArraySample UVsArray((Alembic::AbcGeom::OV2fGeomParam::value_type*)UVs, NumSplines);
 	Alembic::AbcGeom::OCurvesSchema::Sample Sample(Positions, NumVertices);
 

@@ -304,6 +304,7 @@ void SGFurImportOptions::Construct(const FArguments& InArgs)
 			[
 				SNew(STextBlock)
 				.Text(LOCTEXT("Threshold", "Threshold"))
+				.ToolTipText(LOCTEXT("ThresholdToolTip", "Warning, too high value will assign splines to wrong vertices."))
 			]
 			+ SHorizontalBox::Slot()
 			.Padding(2)
@@ -315,6 +316,7 @@ void SGFurImportOptions::Construct(const FArguments& InArgs)
 				.MaxSliderValue(10.0f)
 				.Delta(0.1f)
 				.AllowSpin(true)
+				.ToolTipText(LOCTEXT("ThresholdToolTip", "Warning, too high value will assign splines to wrong vertices."))
 				.Value_Lambda([this]() { return Threshold; })
 				.OnValueChanged_Lambda([this](float InValue) {
 					Threshold = InValue;

@@ -535,7 +535,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			{
 				auto Data = FFurSkinData::CreateFurData(FMath::Max(lod.LayerCount, 1), FMath::Min(NumLods - 1, lod.Lod), this);
 				if (UseMorphTargets)
-					CreateMorphRemapTable(lod.Lod);
+					CreateMorphRemapTable(FMath::Min(NumLods - 1, lod.Lod));
 				FurArray.Add(Data);
 				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data) : NULL);
 			}

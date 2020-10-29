@@ -223,6 +223,7 @@ public:
 		Result.bDynamicRelevance = true;
 		//Material->GetRelevance(GetScene().GetFeatureLevel()).SetPrimitiveViewRelevance(Result);
 		Result.bVelocityRelevance = IsMovable() && Result.bOpaque && Result.bRenderInMainPass;
+		Result.bRenderCustomDepth = ShouldRenderCustomDepth();
 		return Result;
 	}
 

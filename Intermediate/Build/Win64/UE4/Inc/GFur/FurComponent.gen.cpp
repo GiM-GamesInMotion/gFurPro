@@ -178,6 +178,11 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #endif
 		static const UE4CodeGen_Private::FFloatPropertyParams NewProp_StreamingDistanceMultiplier;
 #if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_DisableMorphTargets_MetaData[];
+#endif
+		static void NewProp_DisableMorphTargets_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_DisableMorphTargets;
+#if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_NoiseStrength_MetaData[];
 #endif
 		static const UE4CodeGen_Private::FFloatPropertyParams NewProp_NoiseStrength;
@@ -303,6 +308,17 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 	};
 #endif
 	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UGFurComponent_Statics::NewProp_StreamingDistanceMultiplier = { "StreamingDistanceMultiplier", nullptr, (EPropertyFlags)0x0010040000000005, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UGFurComponent, StreamingDistanceMultiplier), METADATA_PARAMS(Z_Construct_UClass_UGFurComponent_Statics::NewProp_StreamingDistanceMultiplier_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::NewProp_StreamingDistanceMultiplier_MetaData)) };
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_DisableMorphTargets_MetaData[] = {
+		{ "Category", "gFur Shell settings" },
+		{ "ModuleRelativePath", "Public/FurComponent.h" },
+	};
+#endif
+	void Z_Construct_UClass_UGFurComponent_Statics::NewProp_DisableMorphTargets_SetBit(void* Obj)
+	{
+		((UGFurComponent*)Obj)->DisableMorphTargets = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UClass_UGFurComponent_Statics::NewProp_DisableMorphTargets = { "DisableMorphTargets", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(UGFurComponent), &Z_Construct_UClass_UGFurComponent_Statics::NewProp_DisableMorphTargets_SetBit, METADATA_PARAMS(Z_Construct_UClass_UGFurComponent_Statics::NewProp_DisableMorphTargets_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::NewProp_DisableMorphTargets_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_NoiseStrength_MetaData[] = {
 		{ "Category", "gFur Shell settings" },
@@ -519,6 +535,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 	const UE4CodeGen_Private::FObjectPropertyParams Z_Construct_UClass_UGFurComponent_Statics::NewProp_SkeletalGrowMesh = { "SkeletalGrowMesh", nullptr, (EPropertyFlags)0x0010000000000005, UE4CodeGen_Private::EPropertyGenFlags::Object, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UGFurComponent, SkeletalGrowMesh), Z_Construct_UClass_USkeletalMesh_NoRegister, METADATA_PARAMS(Z_Construct_UClass_UGFurComponent_Statics::NewProp_SkeletalGrowMesh_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::NewProp_SkeletalGrowMesh_MetaData)) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UClass_UGFurComponent_Statics::PropPointers[] = {
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_StreamingDistanceMultiplier,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_DisableMorphTargets,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_NoiseStrength,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_MaxPhysicsOffsetLength,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UGFurComponent_Statics::NewProp_HairLengthForceUniformity,
@@ -573,7 +590,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 4104326664);
+	IMPLEMENT_CLASS(UGFurComponent, 4108244080);
 	template<> GFUR_API UClass* StaticClass<UGFurComponent>()
 	{
 		return UGFurComponent::StaticClass();

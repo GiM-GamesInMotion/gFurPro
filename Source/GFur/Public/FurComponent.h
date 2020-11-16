@@ -175,6 +175,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
 	float NoiseStrength;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
+	bool DisableMorphTargets;
+
 	/**
 	 * Allows adjusting the desired streaming distance of streaming textures that uses UV 0.
 	 * 1.0 is the default, whereas a higher value makes the textures stream in sooner from far away.

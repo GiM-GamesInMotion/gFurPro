@@ -523,7 +523,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			auto NumLods = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData.Num();
 			MorphRemapTables.SetNum(NumLods);
 
-			bool UseMorphTargets = MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->MorphTargets.Num() > 0;
+			bool UseMorphTargets = !DisableMorphTargets && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->MorphTargets.Num() > 0;
 
 			{
 				auto Data = FFurSkinData::CreateFurData(FMath::Max(LayerCount, 1), 0, this);
@@ -912,7 +912,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 				FurProxy->GetVertexFactory(SectionIdx)->UpdateSkeletonShaderData(ForceDistribution, MaxPhysicsOffsetLength, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,
 					Sections[SectionIdx].BoneMap, Discontinuous, SceneFeatureLevel);
 			}
-			if (MasterPoseComponent.IsValid() && FurProxy->GetMorphObject())
+			if (!DisableMorphTargets && MasterPoseComponent.IsValid() && FurProxy->GetMorphObject())
 				FurProxy->GetMorphObject()->Update_RenderThread(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables, FurProxy->GetCurrentMeshLodLevel());
 		}
 		else if (StaticGrowMesh)
@@ -983,19 +983,60 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 
 	uint32 UVCount = FMath::Min(MasterVertices.GetNumTexCoords(), Vertices.GetNumTexCoords());
 
+	FVector Min(FLT_MAX);
+	FVector Max(-FLT_MAX);
+	for (const auto& Section : LodModel.RenderSections)
+	{
+		for (uint32 i = Section.BaseVertexIndex; i < Section.BaseVertexIndex + Section.NumVertices; i++)
+		{
+			const auto& Position = Positions.VertexPosition(i);
+			if (Position.X < Min.X)
+				Min.X = Position.X;
+			if (Position.Y < Min.Y)
+				Min.Y = Position.Y;
+			if (Position.Z < Min.Z)
+				Min.Z = Position.Z;
+			if (Position.X > Max.X)
+				Max.X = Position.X;
+			if (Position.Y > Max.Y)
+				Max.Y = Position.Y;
+			if (Position.Z > Max.Z)
+				Max.Z = Position.Z;
+		}
+	}
+
+
+	auto Hash = [&Min, &Max](const FVector& Position) {
+		FVector V = (Position - Min) / (Max - Min);
+		return (uint16)(V.X * (64 * 1024) + V.Y * (64 * 1024) + V.Y * (64 * 1024));
+	};
+
+	TArray<FHashTable> HashTables;
+	for (const auto& Section : LodModel.RenderSections)
+	{
+		HashTables.Add(FHashTable(64 * 1024, Section.NumVertices));
+		FHashTable& hashTable = HashTables[HashTables.Num() - 1];
+		for (uint32 i = Section.BaseVertexIndex; i < Section.BaseVertexIndex + Section.NumVertices; i++)
+		{
+			const auto& Position = Positions.VertexPosition(i);
+			hashTable.Add(Hash(Position), i);
+		}
+	}
+
 	for (const auto& MasterSection : MasterLodModel.RenderSections)
 	{
-		for (const auto& Section : LodModel.RenderSections)
+		for (int32 SectionIndex = 0; SectionIndex < LodModel.RenderSections.Num(); SectionIndex++)
 		{
+			const auto& Section = LodModel.RenderSections[SectionIndex];
 			if (MasterSection.MaterialIndex == Section.MaterialIndex)
 			{
+				const FHashTable& hashTable = HashTables[SectionIndex];
 				for (uint32 i = MasterSection.BaseVertexIndex; i < MasterSection.BaseVertexIndex + MasterSection.NumVertices; i++)
 				{
 					const auto& MasterPosition = MasterPositions.VertexPosition(i);
 					const auto& MasterTangentX = MasterVertices.VertexTangentX(i);
 					const auto& MasterTangentY = MasterVertices.VertexTangentY(i);
 					const auto& MasterTangentZ = MasterVertices.VertexTangentZ(i);
-
 
 					auto Compare = [&](uint32 Index) {
 						const auto& Position = Positions.VertexPosition(Index);
@@ -1015,6 +1056,13 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 						return false;
 					};
 
+					for (uint32 Idx = hashTable.First(Hash(MasterPosition)); hashTable.IsValid(Idx); Idx = hashTable.Next(Idx))
+					{
+						if (Compare(Idx))
+							break;
+					}
+
+/*
 					bool Found = false;
 					for (uint32 j = FMath::Max(i, Section.BaseVertexIndex); j < Section.BaseVertexIndex + Section.NumVertices; j++)
 					{
@@ -1032,7 +1080,7 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 							if (Compare(j))
 								break;
 						}
-					}
+					}*/
 				}
 			}
 		}

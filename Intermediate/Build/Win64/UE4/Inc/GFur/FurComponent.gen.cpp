@@ -311,7 +311,9 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::NewProp_DisableMorphTargets_MetaData[] = {
 		{ "Category", "gFur Shell settings" },
+		{ "Comment", "/**\n\x09* Turns off support for Morph Targets\n\x09*/" },
 		{ "ModuleRelativePath", "Public/FurComponent.h" },
+		{ "ToolTip", "Turns off support for Morph Targets" },
 	};
 #endif
 	void Z_Construct_UClass_UGFurComponent_Statics::NewProp_DisableMorphTargets_SetBit(void* Obj)
@@ -590,7 +592,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 4108244080);
+	IMPLEMENT_CLASS(UGFurComponent, 1298870653);
 	template<> GFUR_API UClass* StaticClass<UGFurComponent>()
 	{
 		return UGFurComponent::StaticClass();

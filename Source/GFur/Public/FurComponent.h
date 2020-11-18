@@ -175,6 +175,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
 	float NoiseStrength;
 
+	/**
+	* Turns off support for Morph Targets
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
 	bool DisableMorphTargets;
 

@@ -284,6 +284,7 @@ UGFurComponent::UGFurComponent(const FObjectInitializer& ObjectInitializer)
 	NoiseStrength = 0.0f;
 	CastShadow = false;
 	PrimaryComponentTick.bCanEverTick = true;
+	DisableMorphTargets = false;
 
 	StreamingDistanceMultiplier = 1.0f;
 

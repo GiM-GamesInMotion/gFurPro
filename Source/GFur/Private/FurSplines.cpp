@@ -8,6 +8,7 @@
 UFurSplines::UFurSplines(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	Threshold = 0.1f;
 }
 
 void UFurSplines::PostLoad()

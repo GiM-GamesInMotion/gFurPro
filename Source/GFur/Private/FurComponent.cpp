@@ -539,7 +539,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 				if (!lod.DisableMorphTargets && UseMorphTargets)
 					CreateMorphRemapTable(FMath::Min(NumLods - 1, lod.Lod));
 				FurArray.Add(Data);
-				MorphObjects.Add(UseMorphTargets ? new FFurMorphObject(Data) : NULL);
+				MorphObjects.Add(!lod.DisableMorphTargets && UseMorphTargets ? new FFurMorphObject(Data) : NULL);
 			}
 
 			FurData = FurArray;

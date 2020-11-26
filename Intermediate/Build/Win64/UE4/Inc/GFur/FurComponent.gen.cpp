@@ -52,6 +52,11 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #endif
 		static void* NewStructOps();
 #if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_DisableMorphTargets_MetaData[];
+#endif
+		static void NewProp_DisableMorphTargets_SetBit(void* Obj);
+		static const UE4CodeGen_Private::FBoolPropertyParams NewProp_DisableMorphTargets;
+#if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_PhysicsEnabled_MetaData[];
 #endif
 		static void NewProp_PhysicsEnabled_SetBit(void* Obj);
@@ -81,6 +86,19 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 	{
 		return (UScriptStruct::ICppStructOps*)new UScriptStruct::TCppStructOps<FFurLod>();
 	}
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_DisableMorphTargets_MetaData[] = {
+		{ "Category", "LOD" },
+		{ "Comment", "/**\n\x09* Turns off support for Morph Targets\n\x09*/" },
+		{ "ModuleRelativePath", "Public/FurComponent.h" },
+		{ "ToolTip", "Turns off support for Morph Targets" },
+	};
+#endif
+	void Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_DisableMorphTargets_SetBit(void* Obj)
+	{
+		((FFurLod*)Obj)->DisableMorphTargets = 1;
+	}
+	const UE4CodeGen_Private::FBoolPropertyParams Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_DisableMorphTargets = { "DisableMorphTargets", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Bool | UE4CodeGen_Private::EPropertyGenFlags::NativeBool, RF_Public|RF_Transient|RF_MarkAsNative, 1, sizeof(bool), sizeof(FFurLod), &Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_DisableMorphTargets_SetBit, METADATA_PARAMS(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_DisableMorphTargets_MetaData, ARRAY_COUNT(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_DisableMorphTargets_MetaData)) };
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_PhysicsEnabled_MetaData[] = {
 		{ "Category", "LOD" },
@@ -126,6 +144,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 #endif
 	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_ScreenSize = { "ScreenSize", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(FFurLod, ScreenSize), METADATA_PARAMS(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_ScreenSize_MetaData, ARRAY_COUNT(Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_ScreenSize_MetaData)) };
 	const UE4CodeGen_Private::FPropertyParamsBase* const Z_Construct_UScriptStruct_FFurLod_Statics::PropPointers[] = {
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_DisableMorphTargets,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_PhysicsEnabled,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_Lod,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UScriptStruct_FFurLod_Statics::NewProp_LayerCount,
@@ -159,7 +178,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return ReturnStruct;
 	}
-	uint32 Get_Z_Construct_UScriptStruct_FFurLod_Hash() { return 2044775439U; }
+	uint32 Get_Z_Construct_UScriptStruct_FFurLod_Hash() { return 3247031507U; }
 	void UGFurComponent::StaticRegisterNativesUGFurComponent()
 	{
 	}

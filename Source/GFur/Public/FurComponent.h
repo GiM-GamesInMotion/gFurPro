@@ -33,6 +33,12 @@ struct FFurLod
 	*/
 	UPROPERTY(EditAnywhere, Category = "LOD")
 	bool PhysicsEnabled = true;
+
+	/**
+	* Turns off support for Morph Targets
+	*/
+	UPROPERTY(EditAnywhere, Category = "LOD")
+	bool DisableMorphTargets = false;
 };
 
 /** UFurComponent */

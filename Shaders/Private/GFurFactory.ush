@@ -410,16 +410,16 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 
 	float3x3 LocalToWorld = Primitive.PreviousLocalToWorld;
 
+	float3 FurOffset = Input.FurOffset;
+	FurOffset = mul(BlendMatrix, float4(FurOffset.xyz, 0)).xyz;
+	FurOffset = mul(FurOffset, LocalToWorld);
+
 	// Remove scaling.
 	half3 InvScale = Primitive.InvNonUniformScaleAndDeterminantSign.xyz;
 	LocalToWorld[0] *= InvScale.x;
 	LocalToWorld[1] *= InvScale.y;
 	LocalToWorld[2] *= InvScale.z;
 	float3 NormalVec = mul(Intermediates.TangentToLocal[2], LocalToWorld);
-
-	float3 FurOffset = Input.FurOffset;
-	FurOffset = mul(BlendMatrix, float4(FurOffset.xyz, 0)).xyz;
-	FurOffset = mul(FurOffset, LocalToWorld);
 
 #if GFUR_PHYSICS
 

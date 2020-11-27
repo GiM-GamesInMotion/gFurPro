@@ -586,16 +586,17 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 #if NUM_MATERIAL_TEXCOORDS_VERTEX >= 2
 
 	float3x3 LocalToWorld = GetLocalToWorld3x3();
+
+	float3 FurOffset = Input.FurOffset;
+	FurOffset = mul(Intermediates.BlendMatrix, float4(FurOffset.xyz, 0)).xyz;
+	FurOffset = mul(FurOffset, LocalToWorld);
+
 	// Remove scaling.
 	half3 InvScale = Primitive.InvNonUniformScaleAndDeterminantSign.xyz;
 	LocalToWorld[0] *= InvScale.x;
 	LocalToWorld[1] *= InvScale.y;
 	LocalToWorld[2] *= InvScale.z;
 	float3 NormalVec = mul(Intermediates.TangentToLocal[2], LocalToWorld);
-
-	float3 FurOffset = Input.FurOffset;
-	FurOffset = mul(Intermediates.BlendMatrix, float4(FurOffset.xyz, 0)).xyz;
-	FurOffset = mul(FurOffset, LocalToWorld);
 
 #if GFUR_PHYSICS
 

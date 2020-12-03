@@ -40,14 +40,14 @@ void SetGeometry(Alembic::AbcGeom::OCurvesSchema& Schema, const FVector* Points,
 
 	Alembic::Abc::P3fArraySample Positions((Alembic::Abc::P3fArraySample::value_type*)Points, NumPoints);
 	Alembic::Abc::Int32ArraySample NumVertices((Alembic::Abc::Int32ArraySample::value_type*)&NumVerticesData[0], NumVerticesData.Num());
-	Alembic::Abc::v9::V2fArraySample UVsArray((Alembic::AbcGeom::OV2fGeomParam::value_type*)UVs, NumSplines);
+	Alembic::Abc::V2fArraySample UVsArray((Alembic::AbcGeom::OV2fGeomParam::value_type*)UVs, NumSplines);
 	Alembic::AbcGeom::OCurvesSchema::Sample Sample(Positions, NumVertices);
 
-	Alembic::AbcGeom::OV2fGeomParam::Sample UVsSample(UVsArray, Alembic::AbcGeom::v9::GeometryScope::kUniformScope);
+	Alembic::AbcGeom::OV2fGeomParam::Sample UVsSample(UVsArray, Alembic::AbcGeom::GeometryScope::kUniformScope);
 
 	Schema.set(Sample);
 
-	Alembic::AbcGeom::OV2fGeomParam param(Schema.getArbGeomParams(), "groom_root_uv", false, Alembic::AbcGeom::v9::GeometryScope::kUniformScope,
+	Alembic::AbcGeom::OV2fGeomParam param(Schema.getArbGeomParams(), "groom_root_uv", false, Alembic::AbcGeom::GeometryScope::kUniformScope,
 		NumSplines);
 	param.set(UVsSample);
 }

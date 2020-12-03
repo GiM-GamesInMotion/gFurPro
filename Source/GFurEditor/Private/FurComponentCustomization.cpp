@@ -280,7 +280,7 @@ void FFurComponentCustomization::GenerateNewFurSplines(IDetailLayoutBuilder* Det
 		const FString PackageName = FPackageName::ObjectPathToPackageName(SaveObjectPath);
 		const FString ObjectName = FPackageName::ObjectPathToObjectName(SaveObjectPath);
 
-		UPackage *Package = CreatePackage(nullptr, *PackageName);
+		UPackage *Package = CreatePackage(*PackageName);
 
 		UFurSplines* FurSplines = FindObject<UFurSplines>(Package, *ObjectName, true);
 		bool IsNew;

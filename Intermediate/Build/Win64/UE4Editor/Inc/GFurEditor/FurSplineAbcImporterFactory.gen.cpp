@@ -71,7 +71,7 @@ void EmptyLinkFunctionForGeneratedCodeFurSplineAbcImporterFactory() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurSplineAbcImporterFactory, 1787767853);
+	IMPLEMENT_CLASS(UFurSplineAbcImporterFactory, 2368764857);
 	template<> GFUREDITOR_API UClass* StaticClass<UFurSplineAbcImporterFactory>()
 	{
 		return UFurSplineAbcImporterFactory::StaticClass();

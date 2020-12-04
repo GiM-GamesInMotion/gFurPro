@@ -36,6 +36,7 @@ enum class EFurCombMode
 	Clump,
 	Twist,
 	Noise,
+	Curl,
 	Relax,
 	AddRemove,
 
@@ -172,6 +173,7 @@ private:
 		const FVector& Dir;
 		const FVector& Normal;
 		float Strength;
+		float Height;
 	};
 
 	static const float MinLayerDist;
@@ -205,6 +207,7 @@ private:
 	void CombClump(UFurSplines* FurSplines, const CombParams& Params);
 	void CombTwist(UFurSplines* FurSplines, const CombParams& Params);
 	void CombNoise(UFurSplines* FurSplines, const CombParams& Params);
+	void CombCurl(UFurSplines* FurSplines, const CombParams& Params);
 	void CombRelax(UFurSplines* FurSplines, const CombParams& Params);
 
 	void CombAdd(UFurSplines* FurSplines, const class FPositionVertexBuffer& Positions, const TArray<FVector>& Normals);

@@ -218,6 +218,17 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			NAME_None, LOCTEXT("Mode.FurComb.Noise", "Noise"), LOCTEXT("Mode.FurComb.Noise.Tooltip", "Noise - adds noise to the fur, shift inverts the effect"),
 			FSlateIcon("gFurStyleSet", "gFur.Noise", "gFur.Noise.Small"), EUserInterfaceActionType::ToggleButton);
 
+		ModeSwitchButtons.AddToolBarButton(FUIAction(FExecuteAction::CreateLambda([=]() {
+			FurComb->SetMode(EFurCombMode::Curl);
+			SettingsObjects.Empty();
+			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
+			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
+		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Curl; })),
+			NAME_None, LOCTEXT("Mode.FurComb.Curl", "Curl"), LOCTEXT("Mode.FurComb.Curl.Tooltip", "Curl - TODO"),
+			FSlateIcon("gFurStyleSet", "gFur.Curl", "gFur.Curl.Small"), EUserInterfaceActionType::ToggleButton);
+
 		ModeSwitchButtons.AddToolBarButton(FUIAction(FExecuteAction::CreateLambda([=]()
 		{
 			FurComb->SetMode(EFurCombMode::Relax);

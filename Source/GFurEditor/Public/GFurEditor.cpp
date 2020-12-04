@@ -35,6 +35,8 @@ void FGFurEditorModule::StartupModule()
 	StyleSet->Set("gFur.Noise.Small", new FSlateImageBrush(Content / "../Resources/Editor/20/6Noise.png", FVector2D(20.0f, 20.0f)));
 	StyleSet->Set("gFur.Relax", new FSlateImageBrush(Content / "../Resources/Editor/40/7RELAX.png", FVector2D(40.0f, 40.0f)));
 	StyleSet->Set("gFur.Relax.Small", new FSlateImageBrush(Content / "../Resources/Editor/20/7RELAX.png", FVector2D(20.0f, 20.0f)));
+	StyleSet->Set("gFur.Curl", new FSlateImageBrush(Content / "../Resources/Editor/40/9Curl.png", FVector2D(40.0f, 40.0f)));
+	StyleSet->Set("gFur.Curl.Small", new FSlateImageBrush(Content / "../Resources/Editor/20/9Curl.png", FVector2D(20.0f, 20.0f)));
 	StyleSet->Set("gFur.AddRemove", new FSlateImageBrush(Content / "../Resources/Editor/40/8ADD.REMOVE.png", FVector2D(40.0f, 40.0f)));
 	StyleSet->Set("gFur.AddRemove.Small", new FSlateImageBrush(Content / "../Resources/Editor/20/8ADD.REMOVE.png", FVector2D(20.0f, 20.0f)));
 

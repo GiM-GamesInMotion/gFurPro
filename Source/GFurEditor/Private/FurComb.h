@@ -156,6 +156,7 @@ private:
 		float Falloff;
 		float ApplyHeight;
 		float ApplySpread;
+		float TwistCount;
 		bool MirrorX;
 		bool MirrorY;
 		bool MirrorZ;

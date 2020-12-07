@@ -46,4 +46,6 @@ protected:
 	void SelectPreset(const TSharedPtr<FString>& InOption);
 	FReply DeletePreset();
 	FReply SavePreset();
+
+	bool IsPropertyVisible(const FPropertyAndParent& p);
 };

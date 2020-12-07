@@ -52,6 +52,10 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #endif
 		static const UE4CodeGen_Private::FFloatPropertyParams NewProp_ApplySpread;
 #if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_TwistCount_MetaData[];
+#endif
+		static const UE4CodeGen_Private::FFloatPropertyParams NewProp_TwistCount;
+#if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam NewProp_bEnableFlow_MetaData[];
 #endif
 		static void NewProp_bEnableFlow_SetBit(void* Obj);
@@ -161,6 +165,20 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 #endif
 	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread = { "ApplySpread", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, ApplySpread), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread_MetaData)) };
 #if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_TwistCount_MetaData[] = {
+		{ "Category", "Comb" },
+		{ "ClampMax", "10.0" },
+		{ "ClampMin", "0.0" },
+		{ "Comment", "/** Affects the distance at which the effect is applied or faded out in both directions from the \"Effect Height\" point. -1 = extremely short, mostly at exact location defined by \"Effect Height\", 0 smooth distribution which fades out in both directions from \"Effect Height\", 1 affects the whole spline same way, achieving sort of linear effect.*/" },
+		{ "DisplayName", "Twist Count" },
+		{ "ModuleRelativePath", "Private/FurCombSettings.h" },
+		{ "ToolTip", "Affects the distance at which the effect is applied or faded out in both directions from the \"Effect Height\" point. -1 = extremely short, mostly at exact location defined by \"Effect Height\", 0 smooth distribution which fades out in both directions from \"Effect Height\", 1 affects the whole spline same way, achieving sort of linear effect." },
+		{ "UIMax", "1000.0" },
+		{ "UIMin", "0.0" },
+	};
+#endif
+	const UE4CodeGen_Private::FFloatPropertyParams Z_Construct_UClass_UFurCombSettings_Statics::NewProp_TwistCount = { "TwistCount", nullptr, (EPropertyFlags)0x0010000000000001, UE4CodeGen_Private::EPropertyGenFlags::Float, RF_Public|RF_Transient|RF_MarkAsNative, 1, STRUCT_OFFSET(UFurCombSettings, TwistCount), METADATA_PARAMS(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_TwistCount_MetaData, UE_ARRAY_COUNT(Z_Construct_UClass_UFurCombSettings_Statics::NewProp_TwistCount_MetaData)) };
+#if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow_MetaData[] = {
 		{ "Category", "Comb" },
 		{ "Comment", "/** If the brush should affect the fur even if it's not moved.*/" },
@@ -231,6 +249,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_FalloffAmount,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplyHeight,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_ApplySpread,
+		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_TwistCount,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bEnableFlow,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorX,
 		(const UE4CodeGen_Private::FPropertyParamsBase*)&Z_Construct_UClass_UFurCombSettings_Statics::NewProp_bMirrorY,
@@ -264,7 +283,7 @@ void EmptyLinkFunctionForGeneratedCodeFurCombSettings() {}
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UFurCombSettings, 2898775594);
+	IMPLEMENT_CLASS(UFurCombSettings, 2926847563);
 	template<> GFUREDITOR_API UClass* StaticClass<UFurCombSettings>()
 	{
 		return UFurCombSettings::StaticClass();

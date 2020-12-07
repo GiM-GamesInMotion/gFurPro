@@ -139,6 +139,7 @@ void SFurCombModeWidget::CreateDetailsView()
 
 	SettingsDetailsView = EditModule.CreateDetailView(DetailsViewArgs);
 //	SettingsDetailsView->SetRootObjectCustomizationInstance(MakeShareable(new FPaintModeSettingsRootObjectCustomization));
+	SettingsDetailsView->SetIsPropertyVisibleDelegate(FIsPropertyVisible::CreateRaw(this, &SFurCombModeWidget::IsPropertyVisible));
 	SettingsDetailsView->SetObjects(SettingsObjects);
 }
 
@@ -341,6 +342,11 @@ FReply SFurCombModeWidget::SavePreset()
 	GConfig->SetArray(TEXT("FurCombEdit"), TEXT("CombPresets"), PresetNames, GEditorPerProjectIni);
 
 	return FReply::Handled();
+}
+
+bool SFurCombModeWidget::IsPropertyVisible(const FPropertyAndParent& p)
+{
+	return FurComb->GetMode() == EFurCombMode::Curl || p.Property.GetNameCPP() != "TwistCount";
 }
 
 #undef LOCTEXT_NAMESPACE // "PaintModePainter"

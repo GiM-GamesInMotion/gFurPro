@@ -14,6 +14,7 @@ UFurCombSettings::UFurCombSettings(const FObjectInitializer& ObjectInitializer)
 	FalloffAmount(0.5f),
 	ApplyHeight(1.0f),
 	ApplySpread(0.0f),
+	TwistCount(2.0f),
 	bEnableFlow(true),
 	bMirrorX(false),
 	bMirrorY(false),
@@ -42,6 +43,7 @@ void UFurCombSettings::Load()
 	GConfig->GetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombFalloffAmount"), FalloffAmount, GEditorPerProjectIni);
 	GConfig->GetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombApplyHeight"), ApplyHeight, GEditorPerProjectIni);
 	GConfig->GetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombApplySpread"), ApplySpread, GEditorPerProjectIni);
+	GConfig->GetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombTwistCount"), TwistCount, GEditorPerProjectIni);
 	GConfig->GetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombEnableFlow"), bEnableFlow, GEditorPerProjectIni);
 	GConfig->GetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombMirrorX"), bMirrorX, GEditorPerProjectIni);
 	GConfig->GetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombMirrorY"), bMirrorY, GEditorPerProjectIni);
@@ -56,6 +58,7 @@ void UFurCombSettings::DeleteFromConfig()
 	GConfig->RemoveKey(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombFalloffAmount"), GEditorPerProjectIni);
 	GConfig->RemoveKey(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombApplyHeight"), GEditorPerProjectIni);
 	GConfig->RemoveKey(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombApplySpread"), GEditorPerProjectIni);
+	GConfig->RemoveKey(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombTwistCount"), GEditorPerProjectIni);
 	GConfig->RemoveKey(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombEnableFlow"), GEditorPerProjectIni);
 	GConfig->RemoveKey(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombMirrorX"), GEditorPerProjectIni);
 	GConfig->RemoveKey(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombMirrorY"), GEditorPerProjectIni);
@@ -70,6 +73,7 @@ void UFurCombSettings::CopyFrom(const UFurCombSettings* other)
 	FalloffAmount = other->FalloffAmount;
 	ApplyHeight = other->ApplyHeight;
 	ApplySpread = other->ApplySpread;
+	TwistCount = other->TwistCount;
 	bEnableFlow = other->bEnableFlow;
 	bMirrorX = other->bMirrorX;
 	bMirrorY = other->bMirrorY;
@@ -81,6 +85,7 @@ void UFurCombSettings::CopyFrom(const UFurCombSettings* other)
 	GConfig->SetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombFalloffAmount"), FalloffAmount, GEditorPerProjectIni);
 	GConfig->SetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombApplyHeight"), ApplyHeight, GEditorPerProjectIni);
 	GConfig->SetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombApplySpread"), ApplySpread, GEditorPerProjectIni);
+	GConfig->SetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombTwistCount"), TwistCount, GEditorPerProjectIni);
 	GConfig->SetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombEnableFlow"), bEnableFlow, GEditorPerProjectIni);
 	GConfig->SetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombMirrorX"), bMirrorX, GEditorPerProjectIni);
 	GConfig->SetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombMirrorY"), bMirrorY, GEditorPerProjectIni);
@@ -96,6 +101,7 @@ bool UFurCombSettings::Equals(const UFurCombSettings* other)
 	b &= FalloffAmount == other->FalloffAmount;
 	b &= ApplyHeight == other->ApplyHeight;
 	b &= ApplySpread == other->ApplySpread;
+	b &= TwistCount == other->TwistCount;
 	b &= bEnableFlow == other->bEnableFlow;
 	b &= bMirrorX == other->bMirrorX;
 	b &= bMirrorY == other->bMirrorY;
@@ -123,6 +129,8 @@ void UFurCombSettings::PostEditChangeProperty(struct FPropertyChangedEvent& Prop
 			GConfig->SetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombApplyHeight"), ApplyHeight, GEditorPerProjectIni);
 		else if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UFurCombSettings, ApplySpread))
 			GConfig->SetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombApplySpread"), ApplySpread, GEditorPerProjectIni);
+		else if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UFurCombSettings, TwistCount))
+			GConfig->SetFloat(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombTwistCount"), TwistCount, GEditorPerProjectIni);
 		else if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UFurCombSettings, bEnableFlow))
 			GConfig->SetBool(TEXT("FurCombEdit"), *(ConfigPrefix + "DefaultCombEnableFlow"), bEnableFlow, GEditorPerProjectIni);
 		else if (PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UFurCombSettings, bMirrorX))

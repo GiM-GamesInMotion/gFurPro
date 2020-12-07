@@ -387,6 +387,7 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 			Params.Falloff = Settings->FalloffAmount;
 			Params.ApplyHeight = Settings->ApplyHeight;
 			Params.ApplySpread = Settings->ApplySpread;
+			Params.TwistCount = Settings->TwistCount;
 			Params.MirrorX = Settings->bMirrorX;
 			Params.MirrorY = Settings->bMirrorY;
 			Params.MirrorZ = Settings->bMirrorZ;
@@ -861,13 +862,13 @@ void FFurComb::CombNoise(UFurSplines* FurSplines, const CombParams& Params)
 void FFurComb::CombCurl(UFurSplines* FurSplines, const CombParams& Params)
 {
 	Comb<true>(FurSplines, Params, [](const FPerSplineData& Data) {
-	}, [](const FPerSegmentData& Data) {
+	}, [&Params](const FPerSegmentData& Data) {
 		FVector v = FMath::Abs(Data.Normal.X) < 0.707f ? FVector(1, 0, 0) : FVector(0, 1, 0);
 		FVector u = FVector::CrossProduct(v, Data.Normal);
 		u.Normalize();
 		v = FVector::CrossProduct(Data.Normal, u);
 		float s, c;
-		FMath::SinCos(&s, &c, Data.Height * 4 * PI);
+		FMath::SinCos(&s, &c, Data.Height * Params.TwistCount * 2.0f * PI);
 		FVector BendDir = u * s + v * c;
 		return BendFur(Data.Dir, Data.Normal, BendDir * Data.Strength * 0.1f);
 	});

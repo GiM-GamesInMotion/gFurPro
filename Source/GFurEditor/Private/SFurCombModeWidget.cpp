@@ -227,7 +227,7 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
 			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Curl; })),
-			NAME_None, LOCTEXT("Mode.FurComb.Curl", "Curl"), LOCTEXT("Mode.FurComb.Curl.Tooltip", "Curl - TODO"),
+			NAME_None, LOCTEXT("Mode.FurComb.Curl", "Curl"), LOCTEXT("Mode.FurComb.Curl.Tooltip", "Curl - curls or twists single hair guide along it's pivot"),
 			FSlateIcon("gFurStyleSet", "gFur.Curl", "gFur.Curl.Small"), EUserInterfaceActionType::ToggleButton);
 
 		ModeSwitchButtons.AddToolBarButton(FUIAction(FExecuteAction::CreateLambda([=]()

@@ -139,6 +139,7 @@ void SFurCombModeWidget::CreateDetailsView()
 
 	SettingsDetailsView = EditModule.CreateDetailView(DetailsViewArgs);
 //	SettingsDetailsView->SetRootObjectCustomizationInstance(MakeShareable(new FPaintModeSettingsRootObjectCustomization));
+	SettingsDetailsView->SetIsPropertyVisibleDelegate(FIsPropertyVisible::CreateRaw(this, &SFurCombModeWidget::IsPropertyVisible));
 	SettingsDetailsView->SetObjects(SettingsObjects);
 }
 
@@ -217,6 +218,17 @@ TSharedPtr<SWidget> SFurCombModeWidget::CreateToolBarWidget()
 		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Noise; })),
 			NAME_None, LOCTEXT("Mode.FurComb.Noise", "Noise"), LOCTEXT("Mode.FurComb.Noise.Tooltip", "Noise - adds noise to the fur, shift inverts the effect"),
 			FSlateIcon("gFurStyleSet", "gFur.Noise", "gFur.Noise.Small"), EUserInterfaceActionType::ToggleButton);
+
+		ModeSwitchButtons.AddToolBarButton(FUIAction(FExecuteAction::CreateLambda([=]() {
+			FurComb->SetMode(EFurCombMode::Curl);
+			SettingsObjects.Empty();
+			SettingsObjects.Add(FurComb->GetCurrentFurCombSettings());
+			SettingsDetailsView->SetObjects(SettingsObjects);
+			FurComb->GetCurrentFurCombSettings()->RegWidget(this);
+			UpdateSelectedPresset(FurComb->GetCurrentFurCombSettings());
+		}), FCanExecuteAction(), FIsActionChecked::CreateLambda([=]() -> bool { return FurComb->GetMode() == EFurCombMode::Curl; })),
+			NAME_None, LOCTEXT("Mode.FurComb.Curl", "Curl"), LOCTEXT("Mode.FurComb.Curl.Tooltip", "Curl - curls or twists single hair guide along it's pivot"),
+			FSlateIcon("gFurStyleSet", "gFur.Curl", "gFur.Curl.Small"), EUserInterfaceActionType::ToggleButton);
 
 		ModeSwitchButtons.AddToolBarButton(FUIAction(FExecuteAction::CreateLambda([=]()
 		{
@@ -330,6 +342,11 @@ FReply SFurCombModeWidget::SavePreset()
 	GConfig->SetArray(TEXT("FurCombEdit"), TEXT("CombPresets"), PresetNames, GEditorPerProjectIni);
 
 	return FReply::Handled();
+}
+
+bool SFurCombModeWidget::IsPropertyVisible(const FPropertyAndParent& p)
+{
+	return FurComb->GetMode() == EFurCombMode::Curl || p.Property.GetNameCPP() != "TwistCount";
 }
 
 #undef LOCTEXT_NAMESPACE // "PaintModePainter"

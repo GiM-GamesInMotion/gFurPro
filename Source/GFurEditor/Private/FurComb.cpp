@@ -44,6 +44,7 @@ void FFurComb::Init()
 		"Clump_",
 		"Twist_",
 		"Noise_",
+		"Curl_",
 		"Relax_",
 		"AddRemove_",
 	};
@@ -386,6 +387,7 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 			Params.Falloff = Settings->FalloffAmount;
 			Params.ApplyHeight = Settings->ApplyHeight;
 			Params.ApplySpread = Settings->ApplySpread;
+			Params.TwistCount = Settings->TwistCount;
 			Params.MirrorX = Settings->bMirrorX;
 			Params.MirrorY = Settings->bMirrorY;
 			Params.MirrorZ = Settings->bMirrorZ;
@@ -459,6 +461,9 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 						break;
 					case EFurCombMode::Noise:
 						CombNoise(FurSplines, Params);
+						break;
+					case EFurCombMode::Curl:
+						CombCurl(FurSplines, Params);
 						break;
 					case EFurCombMode::Relax:
 						CombRelax(FurSplines, Params);
@@ -732,9 +737,9 @@ void FFurComb::Comb(UFurSplines* FurSplines, const CombParams& Params, const F& 
 		for (int32 i = Idx + 1, End = Idx + Cnt; i < End; i++)
 		{
 			float StrengtHeight = 1.0f;
+			float Height = (i - Idx) / (float)(Cnt - 1);
 			if (UseStrengthHeight)
 			{
-				float Height = (i - Idx) / (float)(Cnt - 1);
 				float Exp;
 				if (Params.ApplySpread >= 0)
 					Exp = 1.0f - Params.ApplySpread;
@@ -747,7 +752,7 @@ void FFurComb::Comb(UFurSplines* FurSplines, const CombParams& Params, const F& 
 			FVector Dir = Vertex - PrevVertexOld;
 			PrevVertexOld = Vertex;
 
-			Vertex = PrevVertexNew + FuncPerSegment(FPerSegmentData{ Dir, Normal, Strength * StrengtHeight });
+			Vertex = PrevVertexNew + FuncPerSegment(FPerSegmentData{ Dir, Normal, Strength * StrengtHeight, Height });
 			PrevVertexNew = Vertex;
 		}
 	}
@@ -851,6 +856,21 @@ void FFurComb::CombNoise(UFurSplines* FurSplines, const CombParams& Params)
 		BendDir.Z += FMath::Sin(Data.Normal.X * 42.0f) + FMath::Sin(Data.Normal.Y * 21.0f) + FMath::Sin(Data.Normal.Z * 74.0f);
 	}, [&BendDir](const FPerSegmentData& Data) {
 		return BendFur(Data.Dir, Data.Normal, BendDir * Data.Strength * 0.2f);
+	});
+}
+
+void FFurComb::CombCurl(UFurSplines* FurSplines, const CombParams& Params)
+{
+	Comb<true>(FurSplines, Params, [](const FPerSplineData& Data) {
+	}, [&Params](const FPerSegmentData& Data) {
+		FVector v = FMath::Abs(Data.Normal.X) < 0.707f ? FVector(1, 0, 0) : FVector(0, 1, 0);
+		FVector u = FVector::CrossProduct(v, Data.Normal);
+		u.Normalize();
+		v = FVector::CrossProduct(Data.Normal, u);
+		float s, c;
+		FMath::SinCos(&s, &c, Data.Height * Params.TwistCount * 2.0f * PI);
+		FVector BendDir = u * s + v * c;
+		return BendFur(Data.Dir, Data.Normal, BendDir * Data.Strength * 0.1f);
 	});
 }
 

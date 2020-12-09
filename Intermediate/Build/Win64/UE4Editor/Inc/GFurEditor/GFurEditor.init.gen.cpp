@@ -21,7 +21,7 @@ void EmptyLinkFunctionForGeneratedCodeGFurEditor_init() {}
 				nullptr,
 				0,
 				PKG_CompiledIn | 0x00000040,
-				0xC3D2A448,
+				0xE6434652,
 				0x3F92E947,
 				METADATA_PARAMS(nullptr, 0)
 			};

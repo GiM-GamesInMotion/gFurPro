@@ -93,6 +93,7 @@ struct FVertexFactoryInput
 #if FEATURE_LEVEL >= FEATURE_LEVEL_SM4 && ONEPASS_POINTLIGHT_SHADOW && USING_VERTEX_SHADER_LAYER
 	uint InstanceId	: SV_InstanceID;
 #endif
+	uint VertexId : SV_VertexID;
 };
 
 struct FVertexFactoryInterpolantsVSToPS

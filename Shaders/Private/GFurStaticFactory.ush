@@ -38,6 +38,7 @@ struct FVertexFactoryInput
 #if FEATURE_LEVEL >= FEATURE_LEVEL_ES3_1 && ((ONEPASS_POINTLIGHT_SHADOW && USING_VERTEX_SHADER_LAYER) || (MANUAL_VERTEX_FETCH && (USE_INSTANCING && !USE_INSTANCING_EMULATED)))
 	uint InstanceId	: SV_InstanceID;
 #endif
+	uint VertexId : SV_VertexID;
 };
 
 struct FVertexFactoryIntermediates

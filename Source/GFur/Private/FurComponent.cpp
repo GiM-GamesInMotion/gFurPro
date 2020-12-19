@@ -221,6 +221,7 @@ public:
 		Result.bDrawRelevance = IsShown(View);
 		Result.bShadowRelevance = CastShadows;
 		Result.bDynamicRelevance = true;
+		Result.bRenderInMainPass = ShouldRenderInMainPass();
 		//Material->GetRelevance(GetScene().GetFeatureLevel()).SetPrimitiveViewRelevance(Result);
 		Result.bVelocityRelevance = IsMovable() && Result.bOpaque && Result.bRenderInMainPass;
 		Result.bRenderCustomDepth = ShouldRenderCustomDepth();

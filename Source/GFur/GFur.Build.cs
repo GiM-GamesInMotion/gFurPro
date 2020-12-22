@@ -14,8 +14,9 @@ public class GFur : ModuleRules
 
 
         PrivateIncludePaths.Add(ModuleDirectory + "/Private");
-			
-		
+		PrivateIncludePaths.Add(EngineDirectory + "/Shaders/Shared");
+
+
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{

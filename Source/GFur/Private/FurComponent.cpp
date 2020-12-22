@@ -20,6 +20,10 @@
 #include "FurSkinData.h"
 #include "FurStaticData.h"
 
+#if RHI_RAYTRACING
+#include "RayTracingDefinitions.h"
+#include "RayTracingInstance.h"
+#endif
 
 /** Scene proxy */
 class FFurSceneProxy : public FPrimitiveSceneProxy
@@ -48,6 +52,37 @@ public:
 			bool LodPhysics = i > 0 ? InFurLods[i - 1].PhysicsEnabled : true;
 			InFurData[i]->CreateVertexFactories(VertexFactories, InMorphObjects[i] ? InMorphObjects[i]->GetVertexBuffer() : NULL, InPhysics && LodPhysics, InFeatureLevel);
 		}
+
+#if RHI_RAYTRACING
+		if (IsRayTracingEnabled())
+		{
+			ENQUEUE_RENDER_COMMAND(UpdateDataCommand)([this](FRHICommandListImmediate& RHICmdList) {
+				const auto& Sections = FurData[0]->GetSections();
+				for (int sectionIdx = 0; sectionIdx < Sections.Num(); sectionIdx++)
+				{
+					const FFurData::FSection& Section = Sections[sectionIdx];
+					FRayTracingGeometryInitializer Initializer;
+					Initializer.IndexBuffer = FurData[0]->GetIndexBuffer().IndexBufferRHI;
+					Initializer.TotalPrimitiveCount = Section.NumTriangles;
+					Initializer.GeometryType = RTGT_Triangles;
+					Initializer.bFastBuild = true;
+					Initializer.bAllowUpdate = true;
+
+					FRayTracingGeometrySegment Segment;
+					Segment.VertexBuffer = FurData[0]->GetVertexBuffer().VertexBufferRHI;
+					Segment.VertexBufferStride = FurData[0]->GetVertexBuffer().GetVertexSize();
+					Segment.FirstPrimitive = Section.BaseIndex;
+					Segment.NumPrimitives = Initializer.TotalPrimitiveCount;
+					Initializer.Segments.Add(Segment);
+
+					RayTracingGeometries.AddDefaulted();
+					FRayTracingGeometry& RayTracingGeometry = RayTracingGeometries[RayTracingGeometries.Num() - 1];
+					RayTracingGeometry.SetInitializer(Initializer);
+					RayTracingGeometry.InitResource();
+				}
+			});
+		}
+#endif
 	}
 
 	virtual ~FFurSceneProxy()
@@ -59,6 +94,10 @@ public:
 		}
 		for (auto* MorphObject : FurMorphObjects)
 			delete MorphObject;
+#if RHI_RAYTRACING
+		for (FRayTracingGeometry& RayTracingGeometry : RayTracingGeometries)
+			RayTracingGeometry.ReleaseResource();
+#endif
 	}
 
 	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views,
@@ -228,6 +267,53 @@ public:
 		return Result;
 	}
 
+#if RHI_RAYTRACING
+	virtual bool IsRayTracingRelevant() const override { return true; }
+	virtual void GetDynamicRayTracingInstances(FRayTracingMaterialGatheringContext& Context, TArray<FRayTracingInstance>& OutRayTracingInstances) override
+	{
+		const auto& Sections = FurData[0]->GetSections_RenderThread();
+		for (int sectionIdx = 0; sectionIdx < Sections.Num(); sectionIdx++)
+		{
+			const FFurData::FSection& Section = Sections[sectionIdx];
+			auto& RayTracingGeometry = RayTracingGeometries[sectionIdx];
+			if (RayTracingGeometry.RayTracingGeometryRHI.IsValid())
+			{
+				check(RayTracingGeometry.Initializer.IndexBuffer.IsValid());
+
+				FRayTracingInstance RayTracingInstance;
+				RayTracingInstance.Geometry = &RayTracingGeometry;
+				RayTracingInstance.InstanceTransforms.Add(GetLocalToWorld());
+
+				UMaterialInstanceDynamic* material = FurMaterials[Section.MaterialIndex];
+				auto MaterialProxy = material->GetRenderProxy();
+
+				FMeshBatch MeshBatch;
+
+				MeshBatch.VertexFactory = GetVertexFactory(sectionIdx);
+				MeshBatch.SegmentIndex = 0;
+				MeshBatch.MaterialRenderProxy = MaterialProxy;
+				MeshBatch.ReverseCulling = IsLocalToWorldDeterminantNegative();
+				MeshBatch.Type = PT_TriangleList;
+				MeshBatch.DepthPriorityGroup = SDPG_World;
+				MeshBatch.CastRayTracedShadow = bCastDynamicShadow;
+
+				FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
+				BatchElement.IndexBuffer = FurData[0]->GetIndexBuffer_RenderThread();
+
+				BatchElement.FirstIndex = Section.BaseIndex;
+				BatchElement.NumPrimitives = Section.NumTriangles;
+				BatchElement.MinVertexIndex = Section.MinVertexIndex;
+				BatchElement.MaxVertexIndex = Section.MaxVertexIndex;
+
+				RayTracingInstance.Materials.Add(MeshBatch);
+
+				RayTracingInstance.BuildInstanceMaskAndFlags();
+				OutRayTracingInstances.Add(RayTracingInstance);
+			}
+		}
+	}
+#endif
+
 	virtual bool CanBeOccluded() const override { return true; }
 
 	virtual uint32 GetMemoryFootprint(void) const { return (sizeof(*this) + GetAllocatedSize()); }
@@ -258,6 +344,10 @@ private:
 	mutable int CurrentMeshLodLevel = 0;
 	mutable int SectionOffset = 0;
 	bool CastShadows;
+
+#if RHI_RAYTRACING
+	TArray<FRayTracingGeometry> RayTracingGeometries;
+#endif
 };
 
 //////////////////////////////////////////////////////////////////////////

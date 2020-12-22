@@ -49,9 +49,13 @@ public:
 	VertexType* Lock(uint32 VertexCount);
 	void Unlock();
 
+	uint32 GetSize() const { return Size; }
+	uint32 GetVertexSize() const { return VertexSize; }
+
 private:
 	uint8* VertexData = nullptr;
 	uint32 Size = 0;
+	uint32 VertexSize = 0;
 };
 
 template<typename VertexType>
@@ -59,6 +63,7 @@ VertexType* FFurVertexBuffer::Lock(uint32 InVertexCount)
 {
 	if (InVertexCount == 0)
 		InVertexCount = 1;
+	VertexSize = sizeof(VertexType);
 	uint32 NewSize = InVertexCount * sizeof(VertexType);
 	if (NewSize != Size)
 	{
@@ -128,6 +133,10 @@ public:
 
 	const TArray<int32>& GetSplineMap() const { return SplineMap; }
 	const TArray<FVector>& GetVertexNormals() const { return Normals; }
+
+	const TArray<FSection>& GetSections() const { return Sections; }
+	FFurVertexBuffer& GetVertexBuffer() { return VertexBuffer; }
+	FFurIndexBuffer& GetIndexBuffer() { return IndexBuffer; }
 
 	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel) = 0;
 

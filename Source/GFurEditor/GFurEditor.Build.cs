@@ -5,14 +5,14 @@ using UnrealBuildTool;
 
 public class GFurEditor : ModuleRules
 {
-	public GFurEditor(ReadOnlyTargetRules Target) : base(Target)
+    public GFurEditor(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		bFasterWithoutUnity = true;
 		MinFilesUsingPrecompiledHeaderOverride = 1;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "Slate", "InputCore", "RHI", "RenderCore",
-			"UnrealEd", "EditorStyle", "VREditor", "MeshPaint" });
+			"UnrealEd", "EditorStyle", "VREditor", "MeshPaint", "Projects" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "SlateCore", "PropertyEditor", "LevelEditor", "ViewportInteraction", "AlembicLib", "Projects" });
 

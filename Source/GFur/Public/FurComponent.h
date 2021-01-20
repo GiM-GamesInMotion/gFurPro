@@ -45,7 +45,7 @@ struct FFurLod
 UCLASS(editinlinenew,
 	meta = (BlueprintSpawnableComponent),
 	ClassGroup = Rendering,
-	HideCategories = (Collision, Physics, Object, Activation, "Components|Activation"),
+	HideCategories = (Physics, Object, Activation, "Components|Activation"),
 	meta = (DisplayName = "gFur"))
 class GFUR_API UGFurComponent : public UMeshComponent
 {

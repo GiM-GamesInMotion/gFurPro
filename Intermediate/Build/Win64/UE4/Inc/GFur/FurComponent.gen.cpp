@@ -312,7 +312,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		{ "ClassGroupNames", "Rendering" },
 		{ "Comment", "/** UFurComponent */" },
 		{ "DisplayName", "gFur" },
-		{ "HideCategories", "Collision Physics Object Activation Components|Activation Mobility Trigger" },
+		{ "HideCategories", "Physics Object Activation Components|Activation Mobility Trigger" },
 		{ "IncludePath", "FurComponent.h" },
 		{ "ModuleRelativePath", "Public/FurComponent.h" },
 		{ "ToolTip", "UFurComponent" },
@@ -611,7 +611,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 2092961683);
+	IMPLEMENT_CLASS(UGFurComponent, 268692189);
 	template<> GFUR_API UClass* StaticClass<UGFurComponent>()
 	{
 		return UGFurComponent::StaticClass();

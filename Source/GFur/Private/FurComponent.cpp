@@ -290,7 +290,8 @@ UGFurComponent::UGFurComponent(const FObjectInitializer& ObjectInitializer)
 
 	LastDeltaTime = 1.0f;
 
-	SetCollisionProfileName(UCollisionProfile::BlockAllDynamic_ProfileName);
+	SetGenerateOverlapEvents(false);
+	SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 }
 
 const TArray<int32>& UGFurComponent::GetFurSplineMap() const

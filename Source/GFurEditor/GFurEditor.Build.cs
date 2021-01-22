@@ -12,9 +12,9 @@ public class GFurEditor : ModuleRules
 		MinFilesUsingPrecompiledHeaderOverride = 1;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "Slate", "InputCore", "RHI", "RenderCore",
-			"UnrealEd", "EditorStyle", "VREditor", "MeshPaint" });
+            "UnrealEd", "EditorStyle", "VREditor", "MeshPaint", "Projects" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "SlateCore", "PropertyEditor", "LevelEditor", "ViewportInteraction", "AlembicLib", "Projects" });
+        PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "SlateCore", "PropertyEditor", "LevelEditor", "ViewportInteraction", "AlembicLib", "Projects" });
 
         PublicIncludePaths.Add(ModuleDirectory + "/Public");
 

@@ -1320,6 +1320,9 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 	uint32 DstSectionVertexBegin = LocalSections[SectionIndex].MinVertexIndex;
 	uint32 DstSectionVertexCountPerLayer = (LocalSections[SectionIndex].MaxVertexIndex + 1 - DstSectionVertexBegin) / FurLayerCount;
 
+	TArray<float> FurLengths;
+	GenerateFurLengths(FurLengths);
+
 	VertexType* Vertices = VertexBuffer.Lock<VertexType>(VertexCountPerLayer * FurLayerCount);
 	bool UseRemap = VertexRemap.Num() > 0;
 	for (int32 Layer = 0; Layer < FurLayerCount; Layer++)
@@ -1344,11 +1347,11 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 			if (FurSplinesUsed)
 			{
 				int32 SplineIndex = SplineMap[SrcVertexIndex];
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData, SplineIndex);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLengths[SplineIndex], GenLayerData, SplineIndex);
 			}
 			else
 			{
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLength, GenLayerData);
 			}
 		}
 	}

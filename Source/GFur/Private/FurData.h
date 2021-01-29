@@ -204,8 +204,9 @@ protected:
 	void GenerateSplineMap(const FPositionVertexBuffer& InPositions);
 
 	FFurGenLayerData CalcFurGenLayerData(int32 Layer);
-	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, const FVector& InTangentZ, const FFurGenLayerData& InGenLayerData);
-	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, const FVector& InTangentZ, const FFurGenLayerData& InGenLayerData, int32 InSplineIndex);
+	void GenerateFurLengths(TArray<float>& FurLengths);
+	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, const FVector& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData);
+	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, const FVector& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData, int32 InSplineIndex);
 
 	template<typename VertexTypeT, typename VertexBlitterT>
 	uint32 GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 SrcVertexIndexEnd, VertexTypeT* Vertices, const VertexBlitterT& VertexBlitter);
@@ -228,6 +229,9 @@ void FFurData::UnpackNormals(const FStaticMeshVertexBuffer& InVertices)
 template<typename VertexTypeT, typename VertexBlitterT>
 inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 SrcVertexIndexEnd, VertexTypeT* Vertices, const VertexBlitterT& VertexBlitter)
 {
+	TArray<float> FurLengths;
+	GenerateFurLengths(FurLengths);
+
 	uint32 VerticesPerLayer;
 	uint32 DstVertexIndex = 0;
 	{
@@ -251,11 +255,11 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 						VertexRemap[SrcVertexIndex] = DstVertexIndex;
 					}
 				}
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData, SplineIndex);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLengths[SplineIndex], GenLayerData, SplineIndex);
 			}
 			else
 			{
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLength, GenLayerData);
 			}
 			DstVertexIndex++;
 		}
@@ -279,11 +283,11 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 						continue;
 					}
 				}
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData, SplineIndex);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLengths[SplineIndex], GenLayerData, SplineIndex);
 			}
 			else
 			{
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLength, GenLayerData);
 			}
 			DstVertexIndex++;
 		}

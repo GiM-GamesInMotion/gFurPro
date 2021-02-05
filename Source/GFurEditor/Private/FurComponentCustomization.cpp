@@ -509,7 +509,8 @@ void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFur
 	for (uint32 Index = 0, Count = SourceUVs.GetNumVertices(); Index < Count; Index++)
 	{
 		int32 SplineIndex = SplineMap[Index];
-		UVs[SplineIndex] = SourceUVs.GetVertexUV(Index, 0);
+		if (SplineIndex >= 0)
+			UVs[SplineIndex] = SourceUVs.GetVertexUV(Index, 0);
 	}
 
 	TArray<uint32> SourceIndices;

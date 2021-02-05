@@ -1063,7 +1063,7 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 	auto* MasterMesh = MasterPoseComponent->SkeletalMesh->GetResourceForRendering();
 	check(MasterMesh);
 
-	const auto& MasterLodModel = MasterMesh->LODRenderData[InLod];
+	const auto& MasterLodModel = MasterMesh->LODRenderData[FMath::Min(InLod, MasterMesh->LODRenderData.Num() - 1)];
 	const auto& MasterPositions = MasterLodModel.StaticVertexBuffers.PositionVertexBuffer;
 	const auto& MasterSkinWeights = MasterLodModel.SkinWeightVertexBuffer;
 	const auto& MasterVertices = MasterLodModel.StaticVertexBuffers.StaticMeshVertexBuffer;

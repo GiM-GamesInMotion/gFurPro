@@ -275,7 +275,8 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 						continue;
 					}
 				}
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLengths[SplineIndex], GenLayerData, SplineIndex);
+				float Length = SplineIndex >= 0 ? FurLengths[SplineIndex] : FurLength;
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
 			}
 			else
 			{

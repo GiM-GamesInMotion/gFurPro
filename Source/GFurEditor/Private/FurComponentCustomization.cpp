@@ -126,8 +126,7 @@ TSharedRef<IDetailCustomization> FFurComponentCustomization::MakeInstance()
 void FFurComponentCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
 	UGFurComponent* FurComponent = nullptr;
-	bool skeletalMesh = true;
-	bool staticMesh = true;
+	bool skeletalMesh = false;
 	if (FindFurComponent(&DetailBuilder, FurComponent) && FurComponent)
 	{
 		TArray<USceneComponent*> parents;
@@ -140,16 +139,10 @@ void FFurComponentCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailBu
 				break;
 			}
 		}
-		staticMesh = !skeletalMesh;
 	}
-	USkeletalMesh* SkeletalGrowMesh = FurComponent->SkeletalGrowMesh;
-	UStaticMesh* StaticGrowMesh = FurComponent->StaticGrowMesh;
-	if (!SkeletalGrowMesh && !StaticGrowMesh)
-		return;
-
 
 	DetailBuilder.EditCategory("gFur Skeletal Mesh").SetCategoryVisibility(skeletalMesh);
-	DetailBuilder.EditCategory("gFur Static Mesh").SetCategoryVisibility(staticMesh);
+	DetailBuilder.EditCategory("gFur Static Mesh").SetCategoryVisibility(!skeletalMesh);
 
 	auto& FurMeshCategory = DetailBuilder.EditCategory("gFur Guides");
 

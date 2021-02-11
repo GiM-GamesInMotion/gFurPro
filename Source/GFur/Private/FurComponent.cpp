@@ -58,28 +58,27 @@ public:
 		{
 			ENQUEUE_RENDER_COMMAND(UpdateDataCommand)([this](FRHICommandListImmediate& RHICmdList) {
 				const auto& Sections = FurData[0]->GetSections();
+				FRayTracingGeometryInitializer Initializer;
+				Initializer.IndexBuffer = FurData[0]->GetIndexBuffer().IndexBufferRHI;
+				Initializer.TotalPrimitiveCount = 0;
+				Initializer.GeometryType = RTGT_Triangles;
+				Initializer.bFastBuild = true;
+				Initializer.bAllowUpdate = true;
 				for (int sectionIdx = 0; sectionIdx < Sections.Num(); sectionIdx++)
 				{
 					const FFurData::FSection& Section = Sections[sectionIdx];
-					FRayTracingGeometryInitializer Initializer;
-					Initializer.IndexBuffer = FurData[0]->GetIndexBuffer().IndexBufferRHI;
-					Initializer.TotalPrimitiveCount = Section.NumTriangles;
-					Initializer.GeometryType = RTGT_Triangles;
-					Initializer.bFastBuild = true;
-					Initializer.bAllowUpdate = true;
+					Initializer.TotalPrimitiveCount += Section.NumTriangles;
 
 					FRayTracingGeometrySegment Segment;
 					Segment.VertexBuffer = FurData[0]->GetVertexBuffer().VertexBufferRHI;
 					Segment.VertexBufferStride = FurData[0]->GetVertexBuffer().GetVertexSize();
-					Segment.FirstPrimitive = Section.BaseIndex;
-					Segment.NumPrimitives = Initializer.TotalPrimitiveCount;
+					Segment.FirstPrimitive = Section.BaseIndex / 3;
+					Segment.NumPrimitives = Section.NumTriangles;
 					Initializer.Segments.Add(Segment);
 
-					RayTracingGeometries.AddDefaulted();
-					FRayTracingGeometry& RayTracingGeometry = RayTracingGeometries[RayTracingGeometries.Num() - 1];
-					RayTracingGeometry.SetInitializer(Initializer);
-					RayTracingGeometry.InitResource();
 				}
+				RayTracingGeometry.SetInitializer(Initializer);
+				RayTracingGeometry.InitResource();
 			});
 		}
 #endif
@@ -95,8 +94,7 @@ public:
 		for (auto* MorphObject : FurMorphObjects)
 			delete MorphObject;
 #if RHI_RAYTRACING
-		for (FRayTracingGeometry& RayTracingGeometry : RayTracingGeometries)
-			RayTracingGeometry.ReleaseResource();
+		RayTracingGeometry.ReleaseResource();
 #endif
 	}
 
@@ -272,17 +270,16 @@ public:
 	virtual void GetDynamicRayTracingInstances(FRayTracingMaterialGatheringContext& Context, TArray<FRayTracingInstance>& OutRayTracingInstances) override
 	{
 		const auto& Sections = FurData[0]->GetSections_RenderThread();
-		for (int sectionIdx = 0; sectionIdx < Sections.Num(); sectionIdx++)
+		if (RayTracingGeometry.RayTracingGeometryRHI.IsValid())
 		{
-			const FFurData::FSection& Section = Sections[sectionIdx];
-			auto& RayTracingGeometry = RayTracingGeometries[sectionIdx];
-			if (RayTracingGeometry.RayTracingGeometryRHI.IsValid())
-			{
-				check(RayTracingGeometry.Initializer.IndexBuffer.IsValid());
+			FRayTracingInstance RayTracingInstance;
+			RayTracingInstance.Geometry = &RayTracingGeometry;
+			RayTracingInstance.InstanceTransforms.Add(GetLocalToWorld());
 
-				FRayTracingInstance RayTracingInstance;
-				RayTracingInstance.Geometry = &RayTracingGeometry;
-				RayTracingInstance.InstanceTransforms.Add(GetLocalToWorld());
+			for (int sectionIdx = 0; sectionIdx < Sections.Num(); sectionIdx++)
+			{
+				const FFurData::FSection& Section = Sections[sectionIdx];
+				check(RayTracingGeometry.Initializer.IndexBuffer.IsValid());
 
 				UMaterialInstanceDynamic* material = FurMaterials[Section.MaterialIndex];
 				auto MaterialProxy = material->GetRenderProxy();
@@ -290,7 +287,7 @@ public:
 				FMeshBatch MeshBatch;
 
 				MeshBatch.VertexFactory = GetVertexFactory(sectionIdx);
-				MeshBatch.SegmentIndex = 0;
+				MeshBatch.SegmentIndex = sectionIdx;
 				MeshBatch.MaterialRenderProxy = MaterialProxy;
 				MeshBatch.ReverseCulling = IsLocalToWorldDeterminantNegative();
 				MeshBatch.Type = PT_TriangleList;
@@ -299,17 +296,15 @@ public:
 
 				FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
 				BatchElement.IndexBuffer = FurData[0]->GetIndexBuffer_RenderThread();
-
 				BatchElement.FirstIndex = Section.BaseIndex;
 				BatchElement.NumPrimitives = Section.NumTriangles;
 				BatchElement.MinVertexIndex = Section.MinVertexIndex;
 				BatchElement.MaxVertexIndex = Section.MaxVertexIndex;
 
 				RayTracingInstance.Materials.Add(MeshBatch);
-
-				RayTracingInstance.BuildInstanceMaskAndFlags();
-				OutRayTracingInstances.Add(RayTracingInstance);
 			}
+			RayTracingInstance.BuildInstanceMaskAndFlags();
+			OutRayTracingInstances.Add(RayTracingInstance);
 		}
 	}
 #endif
@@ -346,7 +341,7 @@ private:
 	bool CastShadows;
 
 #if RHI_RAYTRACING
-	TArray<FRayTracingGeometry> RayTracingGeometries;
+	FRayTracingGeometry RayTracingGeometry;
 #endif
 };
 

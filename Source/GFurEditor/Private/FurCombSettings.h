@@ -58,6 +58,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Effect Distribution", UIMin = "-1.0", UIMax = "1.0", ClampMin = "-1.0", ClampMax = "1.0"))
 	float ApplySpread;
 
+	/** Affects the distance at which the effect is applied or faded out in both directions from the "Effect Height" point. -1 = extremely short, mostly at exact location defined by "Effect Height", 0 smooth distribution which fades out in both directions from "Effect Height", 1 affects the whole spline same way, achieving sort of linear effect.*/
+	UPROPERTY(EditAnywhere, Category = Comb, meta = (DisplayName = "Twist Count", UIMin = "0.0", UIMax = "1000.0", ClampMin = "0.0", ClampMax = "10.0"))
+	float TwistCount;
+
 	/** If the brush should affect the fur even if it's not moved.*/
 	UPROPERTY(EditAnywhere, Category = Comb)
 	bool bEnableFlow;

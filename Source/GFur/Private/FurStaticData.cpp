@@ -681,6 +681,9 @@ void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
 	while (RenderThreadDataSubmissionPending)
 		;
 
+	TArray<float> FurLengths;
+	GenerateFurLengths(FurLengths);
+
 	VertexType* Vertices = VertexBuffer.Lock<VertexType>(VertexCountPerLayer * FurLayerCount);
 	bool UseRemap = VertexRemap.Num() > 0;
 	for (int32 Layer = 0; Layer < FurLayerCount; Layer++)
@@ -693,11 +696,12 @@ void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
 			if (FurSplinesUsed)
 			{
 				int32 SplineIndex = SplineMap[SrcVertexIndex];
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData, SplineIndex);
+				float Length = SplineIndex >= 0 ? FurLengths[SplineIndex] : FurLength;
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
 			}
 			else
 			{
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], GenLayerData);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLength, GenLayerData);
 			}
 		}
 	}
@@ -753,4 +757,7 @@ void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLo
 		}
 		k++;
 	}
+
+	Splines->ControlPointCount = ControlPointCount;
+	Splines->Version = 2;
 }

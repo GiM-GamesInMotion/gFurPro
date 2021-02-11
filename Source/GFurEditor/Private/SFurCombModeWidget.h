@@ -5,6 +5,7 @@
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Widgets/Input/STextComboBox.h"
+#include "PropertyEditorModule.h"
 
 class FFurComb;
 class UFurCombSettings;
@@ -46,4 +47,6 @@ protected:
 	void SelectPreset(const TSharedPtr<FString>& InOption);
 	FReply DeletePreset();
 	FReply SavePreset();
+
+	bool IsPropertyVisible(const FPropertyAndParent& p);
 };

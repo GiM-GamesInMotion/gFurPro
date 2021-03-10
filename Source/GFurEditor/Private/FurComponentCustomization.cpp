@@ -132,21 +132,21 @@ void FFurComponentCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailBu
 	{
 		TArray<USceneComponent*> parents;
 		FurComponent->GetParentComponents(parents);
-		for (USceneComponent* Comp : parents)
+		if (parents.Num())
 		{
-			if (Comp->IsA(USkeletalMeshComponent::StaticClass()))
+			skeletalMesh = false;
+			staticMesh = true;
+			for (USceneComponent* Comp : parents)
 			{
-				skeletalMesh = true;
-				break;
+				if (Comp->IsA(USkeletalMeshComponent::StaticClass()))
+				{
+					skeletalMesh = true;
+					staticMesh = false;
+					break;
+				}
 			}
 		}
-		staticMesh = !skeletalMesh;
 	}
-	USkeletalMesh* SkeletalGrowMesh = FurComponent->SkeletalGrowMesh;
-	UStaticMesh* StaticGrowMesh = FurComponent->StaticGrowMesh;
-	if (!SkeletalGrowMesh && !StaticGrowMesh)
-		return;
-
 
 	DetailBuilder.EditCategory("gFur Skeletal Mesh").SetCategoryVisibility(skeletalMesh);
 	DetailBuilder.EditCategory("gFur Static Mesh").SetCategoryVisibility(staticMesh);

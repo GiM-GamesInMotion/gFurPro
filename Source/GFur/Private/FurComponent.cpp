@@ -115,6 +115,14 @@ public:
 				}
 			}
 		}
+
+		if (ViewFamily.FrameNumber != LastFrameNumber)
+		{
+			LastFurLodLevel = CurrentFurLodLevel;
+			LastMeshLodLevel = CurrentMeshLodLevel;
+			LastSectionOffset = SectionOffset;
+		}
+
 		NewLodLevel = FMath::Min(NewLodLevel, FurData.Num() - 1);
 		if (NewLodLevel != CurrentFurLodLevel)
 		{
@@ -124,10 +132,16 @@ public:
 			for (int i = 0; i < NewLodLevel; i++)
 				SectionOffset += FurData[i]->GetSections_RenderThread().Num();
 		}
-
-		if (CurrentFurLodLevel < FurData.Num())
+		if (LastFrameNumber)
 		{
-			const auto& Sections = FurData[CurrentFurLodLevel]->GetSections_RenderThread();
+			LastFurLodLevel = CurrentFurLodLevel;
+			LastMeshLodLevel = CurrentMeshLodLevel;
+			LastSectionOffset = SectionOffset;
+		}
+
+		if (LastFurLodLevel < FurData.Num())
+		{
+			const auto& Sections = FurData[LastFurLodLevel]->GetSections_RenderThread();
 			for (int sectionIdx = 0; sectionIdx < Sections.Num(); sectionIdx++)
 			{
 				const FFurData::FSection& section = Sections[sectionIdx];
@@ -137,7 +151,7 @@ public:
 				{
 					if (VisibilityMap & (1 << ViewIndex))
 					{
-						auto MorphObject = GetMorphObject();
+						auto MorphObject = GetMorphObject(false);
 						if (MorphObject != nullptr && !MorphObject->GetVertexBuffer()->IsInitialized())
 							continue;
 
@@ -156,9 +170,9 @@ public:
 
 						FMeshBatch& Mesh = Collector.AllocateMesh();
 						FMeshBatchElement& BatchElement = Mesh.Elements[0];
-						BatchElement.IndexBuffer = FurData[CurrentFurLodLevel]->GetIndexBuffer_RenderThread();
+						BatchElement.IndexBuffer = FurData[LastFurLodLevel]->GetIndexBuffer_RenderThread();
 						Mesh.bWireframe = Wireframe;
-						Mesh.VertexFactory = GetVertexFactory(sectionIdx);
+						Mesh.VertexFactory = GetVertexFactory(sectionIdx, false);
 						Mesh.MaterialRenderProxy = MaterialProxy;
 						BatchElement.PrimitiveUniformBuffer = GetUniformBuffer();
 						BatchElement.FirstIndex = section.BaseIndex;
@@ -233,9 +247,9 @@ public:
 
 	uint32 GetAllocatedSize(void) const { return (FPrimitiveSceneProxy::GetAllocatedSize()); }
 
-	FFurData* GetFurData() { return FurData[FMath::Min(CurrentFurLodLevel, FurData.Num() - 1)]; }
-	FFurVertexFactory* GetVertexFactory(int sectionIdx) const { return VertexFactories[SectionOffset + sectionIdx]; }
-	FFurMorphObject* GetMorphObject() const { return FurMorphObjects[CurrentFurLodLevel]; }
+	FFurData* GetFurData(bool Current) { return FurData[FMath::Min(Current ? CurrentFurLodLevel : LastFurLodLevel, FurData.Num() - 1)]; }
+	FFurVertexFactory* GetVertexFactory(int sectionIdx, bool Current) const { return VertexFactories[(Current ? SectionOffset : LastSectionOffset) + sectionIdx]; }
+	FFurMorphObject* GetMorphObject(bool Current) const { return FurMorphObjects[Current ? CurrentFurLodLevel : LastFurLodLevel]; }
 
 	int GetCurrentFurLodLevel() const { return CurrentFurLodLevel; }
 	int GetCurrentMeshLodLevel() const { return CurrentMeshLodLevel; }
@@ -256,6 +270,10 @@ private:
 	mutable int CurrentFurLodLevel = 0;
 	mutable int CurrentMeshLodLevel = 0;
 	mutable int SectionOffset = 0;
+	mutable int LastFurLodLevel = 0;
+	mutable int LastMeshLodLevel = 0;
+	mutable int LastSectionOffset = 0;
+	mutable int LastFrameNumber = 0;
 	bool CastShadows;
 };
 
@@ -669,13 +687,13 @@ void UGFurComponent::updateFur()
 	bool LodPhysicsEnabled = PhysicsEnabled && (FurLodLevel == 0 || LODs[FurLodLevel - 1].PhysicsEnabled);
 
 	float DeltaTime = fminf(LastDeltaTime, 1.0f);
-	float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData()->GetCurrentMaxFurLength() * ReferenceHairBias + Scene->GetFurData()->GetCurrentMinFurLength() * (1.0f - ReferenceHairBias));
+	float ReferenceFurLength = FMath::Max(0.00001f, Scene->GetFurData(true)->GetCurrentMaxFurLength() * ReferenceHairBias + Scene->GetFurData(true)->GetCurrentMinFurLength() * (1.0f - ReferenceHairBias));
 	//	float ForceFactor = 1.0f / (powf(ReferenceFurLength, FurForcePower) * fmaxf(FurStiffness, 0.000001f));
 	float ForceFactor = 1.0f / powf(ReferenceFurLength, ForceDistribution);
 	float DampingClamped = fmaxf(Damping, 0.000001f);
 	float DampingFactor = powf(1.0f - (DampingClamped / (DampingClamped + 1.0f)), DeltaTime);
 	float MaxForceFinal = (MaxForce * ReferenceFurLength) / powf(ReferenceFurLength, ForceDistribution);
-	float MaxTorque = MaxForceTorqueFactor * MaxForceFinal / Scene->GetFurData()->GetMaxVertexBoneDistance();
+	float MaxTorque = MaxForceTorqueFactor * MaxForceFinal / Scene->GetFurData(true)->GetMaxVertexBoneDistance();
 	//	FVector FurForceFinal = FurForce * (fmaxf(FurWeight, 0.000001f) * ForceFactor);
 	FVector FurForceFinal = ConstantForce * ReferenceFurLength * ForceFactor / Stiffness;
 
@@ -911,14 +929,14 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			const auto& Sections = LOD.RenderSections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
-				FurProxy->GetVertexFactory(SectionIdx)->UpdateSkeletonShaderData(ForceDistribution, MaxPhysicsOffsetLength, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,
+				FurProxy->GetVertexFactory(SectionIdx, true)->UpdateSkeletonShaderData(ForceDistribution, MaxPhysicsOffsetLength, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,
 					Sections[SectionIdx].BoneMap, Discontinuous, SceneFeatureLevel);
 			}
-			if (!DisableMorphTargets && MasterPoseComponent.IsValid() && FurProxy->GetMorphObject())
+			if (!DisableMorphTargets && MasterPoseComponent.IsValid() && FurProxy->GetMorphObject(true))
 			{
 				int32 FurLodLevel = FurProxy->GetCurrentFurLodLevel();
 				if (FurLodLevel == 0 || !LODs[FurLodLevel - 1].DisableMorphTargets)
-					FurProxy->GetMorphObject()->Update_RenderThread(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables, FurProxy->GetCurrentMeshLodLevel());
+					FurProxy->GetMorphObject(true)->Update_RenderThread(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables, FurProxy->GetCurrentMeshLodLevel());
 			}
 		}
 		else if (StaticGrowMesh)
@@ -927,7 +945,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			const auto& Sections = LOD.Sections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
-				FurProxy->GetVertexFactory(SectionIdx)->UpdateStaticShaderData(ForceDistribution, StaticLinearOffset, StaticAngularOffset,
+				FurProxy->GetVertexFactory(SectionIdx, true)->UpdateStaticShaderData(ForceDistribution, StaticLinearOffset, StaticAngularOffset,
 					StaticTransformation.GetOrigin(), Discontinuous, SceneFeatureLevel);
 			}
 		}

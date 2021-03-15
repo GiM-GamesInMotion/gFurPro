@@ -335,7 +335,7 @@ FFurStaticData* FFurStaticData::CreateFurData(int32 InFurLayerCount, int32 InLod
 			return Data;
 		}
 	}
-	for (FFurStaticData* Data : FurStaticData)
+/*	for (FFurStaticData* Data : FurStaticData)
 	{
 		if (Data->RefCount == 0 && Data->Similar(InLod, InFurComponent))
 		{
@@ -344,7 +344,7 @@ FFurStaticData* FFurStaticData::CreateFurData(int32 InFurLayerCount, int32 InLod
 			Data->RefCount++;
 			return Data;
 		}
-	}
+	}*/
 
 	FFurStaticData* Data = new FFurStaticData();
 	Data->Set(InFurLayerCount, InLod, InFurComponent);

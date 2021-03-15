@@ -823,7 +823,7 @@ FFurSkinData* FFurSkinData::CreateFurData(int32 InFurLayerCount, int32 InLod, UG
 			return Data;
 		}
 	}
-	for (FFurSkinData* Data : FurSkinData)
+/*	for (FFurSkinData* Data : FurSkinData)
 	{
 		if (Data->RefCount == 0 && Data->Similar(InLod, InFurComponent))
 		{
@@ -832,7 +832,7 @@ FFurSkinData* FFurSkinData::CreateFurData(int32 InFurLayerCount, int32 InLod, UG
 			Data->RefCount++;
 			return Data;
 		}
-	}
+	}*/
 
 	FFurSkinData* Data = new FFurSkinData();
 	Data->Set(InFurLayerCount, InLod, InFurComponent);

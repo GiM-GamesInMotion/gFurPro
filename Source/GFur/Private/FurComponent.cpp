@@ -10,6 +10,7 @@
 #include "Runtime/Engine/Public/DynamicMeshBuilder.h"
 #include "Runtime/Engine/Public/GPUSkinVertexFactory.h"
 #include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
+#include "Runtime/Engine/Public/SkeletalRenderPublic.h"
 #include "Runtime/Engine/Classes/Materials/Material.h"
 #include "Runtime/Engine/Classes/Materials/MaterialInstanceDynamic.h"
 #include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
@@ -856,7 +857,20 @@ void UGFurComponent::updateFur()
 		ValidTempMatrices.AddDefaulted(ReferenceToLocal.Num());
 		TempMatrices.AddUninitialized(ReferenceToLocal.Num());
 
-		const bool bIsMasterCompValid = MasterComp && MasterBoneMap.Num() == ThisMesh->RefSkeleton.GetNum();
+		int32 SyncLODLevel = 0;
+		if (MasterComp->SkeletalMesh && MasterComp->MeshObject)
+		{
+#if WITH_EDITOR
+			const int32 LODBias = MasterComp->GetLODBias();
+#else
+			const int32 LODBias = 0;
+#endif
+			SyncLODLevel = MasterComp->MeshObject->MinDesiredLODLevel + LODBias;
+		}
+
+		const auto& CurrentMasterBoneMap = MasterBoneMap[FMath::Clamp(SyncLODLevel, 0, MasterBoneMap.Num() - 1)];
+
+		const bool bIsMasterCompValid = MasterComp && CurrentMasterBoneMap.Num() == ThisMesh->RefSkeleton.GetNum();
 
 		const TArray<FBoneIndexType>* RequiredBoneSets[3] = { &LOD.ActiveBoneIndices, 0/*ExtraRequiredBoneIndices*/, NULL };
 
@@ -891,7 +905,7 @@ void UGFurComponent::updateFur()
 					if (bIsMasterCompValid)
 					{
 						// If valid, use matrix from parent component.
-						const int32 MasterBoneIndex = MasterBoneMap[ThisBoneIndex];
+						const int32 MasterBoneIndex = CurrentMasterBoneMap[ThisBoneIndex];
 						if (MasterComp->GetComponentSpaceTransforms().IsValidIndex(MasterBoneIndex))
 						{
 							const int32 ParentIndex = ThisMesh->RefSkeleton.GetParentIndex(ThisBoneIndex);
@@ -905,6 +919,12 @@ void UGFurComponent::updateFur()
 								checkSlow(MasterComp->GetComponentSpaceTransforms()[MasterBoneIndex].IsRotationNormalized());
 								TempMatrices[ThisBoneIndex] = MasterComp->GetComponentSpaceTransforms()[MasterBoneIndex].ToMatrixWithScale();
 							}
+							ValidTempMatrices[ThisBoneIndex] = true;
+						}
+						else
+						{
+							const int32 ParentIndex = ThisMesh->RefSkeleton.GetParentIndex(ThisBoneIndex);
+							TempMatrices[ThisBoneIndex] = ThisMesh->RefSkeleton.GetRefBonePose()[ThisBoneIndex].ToMatrixWithScale() * TempMatrices[ParentIndex];
 							ValidTempMatrices[ThisBoneIndex] = true;
 						}
 					}
@@ -1042,27 +1062,46 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 void UGFurComponent::UpdateMasterBoneMap()
 {
 	MasterBoneMap.Empty();
+	MasterBoneMap.AddDefaulted();
 
 	if (SkeletalGrowMesh && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh)
 	{
 		USkeletalMesh* ParentMesh = MasterPoseComponent->SkeletalMesh;
+		TArray<int32>& CurrentMasterBoneMap = MasterBoneMap[0];
 
-		MasterBoneMap.Empty(SkeletalGrowMesh->RefSkeleton.GetNum());
-		MasterBoneMap.AddUninitialized(SkeletalGrowMesh->RefSkeleton.GetNum());
+		CurrentMasterBoneMap.Empty(SkeletalGrowMesh->RefSkeleton.GetNum());
+		CurrentMasterBoneMap.AddUninitialized(SkeletalGrowMesh->RefSkeleton.GetNum());
 		if (SkeletalGrowMesh == ParentMesh)
 		{
 			// if the meshes are the same, the indices must match exactly so we don't need to look them up
-			for (int32 i = 0; i < MasterBoneMap.Num(); i++)
+			for (int32 i = 0; i < CurrentMasterBoneMap.Num(); i++)
 			{
-				MasterBoneMap[i] = i;
+				CurrentMasterBoneMap[i] = i;
 			}
 		}
 		else
 		{
-			for (int32 i = 0; i<MasterBoneMap.Num(); i++)
+			for (int32 i = 0; i < CurrentMasterBoneMap.Num(); i++)
 			{
 				FName BoneName = SkeletalGrowMesh->RefSkeleton.GetBoneName(i);
-				MasterBoneMap[i] = ParentMesh->RefSkeleton.FindBoneIndex(BoneName);
+				CurrentMasterBoneMap[i] = ParentMesh->RefSkeleton.FindBoneIndex(BoneName);
+			}
+		}
+
+		for (int32 LODIndex = 1; LODIndex < ParentMesh->GetLODNum(); LODIndex++)
+		{
+			MasterBoneMap.AddDefaulted();
+			MasterBoneMap[LODIndex] = MasterBoneMap[0];
+		}
+
+		for (int32 LODIndex = 0; LODIndex < ParentMesh->GetLODNum(); LODIndex++)
+		{
+			const auto& Lod = ParentMesh->GetLODInfo(LODIndex);
+			for (const auto& Bone : Lod->BonesToRemove)
+			{
+				int32 BoneIndex = ParentMesh->RefSkeleton.FindBoneIndex(Bone.BoneName);
+				if (BoneIndex >= 0)
+					MasterBoneMap[LODIndex][BoneIndex] = -1;
 			}
 		}
 	}

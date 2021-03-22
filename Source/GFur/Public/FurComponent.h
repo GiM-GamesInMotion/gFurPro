@@ -229,7 +229,7 @@ protected:
 
 private:
 	TWeakObjectPtr< class USkinnedMeshComponent > MasterPoseComponent;
-	TArray<int32> MasterBoneMap;
+	TArray<TArray<int32>> MasterBoneMap;
 	TArray<FMatrix> ReferenceToLocal;
 	TArray<FMatrix> Transformations;
 	TArray<FVector> LinearVelocities;

@@ -1030,6 +1030,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 	{
 		ERHIFeatureLevel::Type SceneFeatureLevel = GetWorld()->FeatureLevel;
 
+		int32 CurrentLOD = FurProxy->GetCurrentFurLodLevel();
 		if (SkeletalGrowMesh)
 		{
 			const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[FurProxy->GetCurrentMeshLodLevel()];
@@ -1037,7 +1038,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
 				FurProxy->GetVertexFactory(SectionIdx, true)->UpdateSkeletonShaderData(ForceDistribution, MaxPhysicsOffsetLength, ReferenceToLocal, LinearOffsets, AngularOffsets, Transformations,
-					Sections[SectionIdx].BoneMap, Discontinuous, SceneFeatureLevel);
+					Sections[SectionIdx].BoneMap, Discontinuous || CurrentLOD != LastLOD, SceneFeatureLevel);
 			}
 			if (!DisableMorphTargets && MasterPoseComponent.IsValid() && FurProxy->GetMorphObject(true))
 			{
@@ -1053,9 +1054,10 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
 				FurProxy->GetVertexFactory(SectionIdx, true)->UpdateStaticShaderData(ForceDistribution, StaticLinearOffset, StaticAngularOffset,
-					StaticTransformation.GetOrigin(), Discontinuous, SceneFeatureLevel);
+					StaticTransformation.GetOrigin(), Discontinuous || CurrentLOD != LastLOD, SceneFeatureLevel);
 			}
 		}
+		LastLOD = CurrentLOD;
 	}
 }
 

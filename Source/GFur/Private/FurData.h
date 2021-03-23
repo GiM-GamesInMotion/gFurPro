@@ -229,6 +229,11 @@ void FFurData::UnpackNormals(const FStaticMeshVertexBuffer& InVertices)
 template<typename VertexTypeT, typename VertexBlitterT>
 inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 SrcVertexIndexEnd, VertexTypeT* Vertices, const VertexBlitterT& VertexBlitter)
 {
+	if (Vertices == nullptr)
+	{
+		return 0;
+	}
+
 	TArray<float> FurLengths;
 	GenerateFurLengths(FurLengths);
 

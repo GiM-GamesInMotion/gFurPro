@@ -154,11 +154,13 @@ public:
 			}
 		}
 
+		bool FirstFrame = LastFrameNumber == 0;
 		if (ViewFamily.FrameNumber != LastFrameNumber)
 		{
 			LastFurLodLevel = CurrentFurLodLevel;
 			LastMeshLodLevel = CurrentMeshLodLevel;
 			LastSectionOffset = SectionOffset;
+			LastFrameNumber = ViewFamily.FrameNumber;
 		}
 
 		NewLodLevel = FMath::Min(NewLodLevel, FurData.Num() - 1);
@@ -170,7 +172,7 @@ public:
 			for (int i = 0; i < NewLodLevel; i++)
 				SectionOffset += FurData[i]->GetSections_RenderThread().Num();
 		}
-		if (LastFrameNumber)
+		if (FirstFrame)
 		{
 			LastFurLodLevel = CurrentFurLodLevel;
 			LastMeshLodLevel = CurrentMeshLodLevel;
@@ -358,7 +360,6 @@ private:
 	mutable int LastSectionOffset = 0;
 	mutable int LastFrameNumber = 0;
 	bool CastShadows;
-	mutable bool FirstFrame = true;
 
 #if RHI_RAYTRACING
 	FRayTracingGeometry RayTracingGeometry;

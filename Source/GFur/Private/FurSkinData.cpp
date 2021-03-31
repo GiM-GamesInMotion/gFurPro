@@ -1077,6 +1077,10 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 	FFurSkinVertexBlitter<TangentBasisTypeT, UVTypeT, bExtraBoneInfluencesT> VertexBlitter(SourcePositions, SourceVertices, SourceColors, SourceSkinWeights);
 
 	VertexType* Vertices = VertexBuffer.Lock<VertexType>(NewVertexCount);
+	if (Vertices == nullptr)
+	{
+		return;
+	}
 	uint32 SectionVertexOffset = 0;
 	float MaxDistSq = 0.0f;
 	for (int32 SectionIndex = 0; SectionIndex < LodRenderData.RenderSections.Num(); SectionIndex++)

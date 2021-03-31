@@ -246,6 +246,7 @@ private:
 	FVector StaticAngularVelocity;
 	FMatrix StaticTransformation;
 	bool OldPositionValid = false;
+	int32 LastLOD = -1;
 
 	float LastDeltaTime;
 

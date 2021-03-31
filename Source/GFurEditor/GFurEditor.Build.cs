@@ -5,6 +5,16 @@ using UnrealBuildTool;
 
 public class GFurEditor : ModuleRules
 {
+	string EnginePath
+	{
+		get { return Path.GetFullPath(Target.RelativeEnginePath); }
+	}
+
+	string EngineThirdPartyPath
+	{
+		get { return Path.GetFullPath(Path.Combine(EnginePath, "Source/ThirdParty/")); }
+	}
+	
 	public GFurEditor(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
@@ -12,22 +22,22 @@ public class GFurEditor : ModuleRules
 		MinFilesUsingPrecompiledHeaderOverride = 1;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "Slate", "InputCore", "RHI", "RenderCore",
-            "UnrealEd", "EditorStyle", "VREditor", "MeshPaint", "Projects" });
+			"UnrealEd", "EditorStyle", "VREditor", "MeshPaint", "Projects" });
 
-        PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "SlateCore", "PropertyEditor", "LevelEditor", "ViewportInteraction", "AlembicLib", "Projects" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "InputCore", "SlateCore", "PropertyEditor", "LevelEditor", "ViewportInteraction", "AlembicLib", "Projects" });
 
         PublicIncludePaths.Add(ModuleDirectory + "/Public");
 
-        PrivateIncludePaths.Add(Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Fbxsdk/include")));
+        PrivateIncludePaths.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2018.1.1/include/")));
         if (Target.Platform == UnrealTargetPlatform.Win32)
         {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Fbxsdk/lib/x86/libfbxsdk-md.lib")));
-            PublicDelayLoadDLLs.Add(Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Fbxsdk/lib/x86/libfbxsdk.dll")));
+            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2018.1.1/lib/vs2015/x64/release/libfbxsdk.lib")));
+            PublicDelayLoadDLLs.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2018.1.1/lib/vs2015/x64/release/libfbxsdk.dll")));
         }
         else if (Target.Platform == UnrealTargetPlatform.Win64)
         {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Fbxsdk/lib/x64/libfbxsdk-md.lib")));
-            PublicDelayLoadDLLs.Add(Path.GetFullPath(Path.Combine(ModuleDirectory, "../../Fbxsdk/lib/x64/libfbxsdk.dll")));
+			PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2018.1.1/lib/vs2015/x64/release/libfbxsdk.lib")));
+			PublicDelayLoadDLLs.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2018.1.1/lib/vs2015/x64/release/libfbxsdk.dll")));
         }
 
         PrivateIncludePaths.Add(ModuleDirectory + "/Private");

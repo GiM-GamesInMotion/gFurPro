@@ -859,7 +859,7 @@ void UGFurComponent::updateFur()
 		TempMatrices.AddUninitialized(ReferenceToLocal.Num());
 
 		int32 SyncLODLevel = 0;
-		if (MasterComp->SkeletalMesh && MasterComp->MeshObject)
+		if (MasterComp && MasterComp->SkeletalMesh && MasterComp->MeshObject)
 		{
 #if WITH_EDITOR
 			const int32 LODBias = MasterComp->GetLODBias();

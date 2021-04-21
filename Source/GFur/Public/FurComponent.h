@@ -216,7 +216,7 @@ public:
 	virtual class UBodySetup* GetBodySetup() override;
 	// End UPrimitiveComponent interface.
 
-//	const TArray<class UMaterialInstanceDynamic*>& GetFurMaterials() const { return FurMaterials; }
+	const TArray<class UMaterialInstanceDynamic*>& GetFurMaterials() const { return FurMaterials; }
 
 protected:
 	//~ Begin UActorComponent Interface

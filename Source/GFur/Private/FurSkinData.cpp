@@ -942,7 +942,7 @@ void FFurSkinData::UnbindChangeDelegates()
 		SkeletalMesh->GetOnMeshChanged().Remove(SkeletalMeshChangeHandle);
 		SkeletalMeshChangeHandle.Reset();
 	}
-	for (int32 i = 0; i < GuideMeshes.Num(); i++)
+	for (int32 i = 0; i < GuideMeshes.Num() && i < GuideMeshesChangeHandles.Num(); i++)
 	{
 		if (GuideMeshes[i])
 			GuideMeshes[i]->GetOnMeshChanged().Remove(GuideMeshesChangeHandles[i]);

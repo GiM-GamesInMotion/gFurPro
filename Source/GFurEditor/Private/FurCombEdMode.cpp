@@ -29,12 +29,10 @@ FEdModeFurComb::FEdModeFurComb()
 	: FEdMode(),
 	PaintingWithInteractorInVR(nullptr)
 {
-	GEditor->OnEditorClose().AddRaw(this, &FEdModeFurComb::OnResetViewMode);
 }
 
 FEdModeFurComb::~FEdModeFurComb()
 {
-	GEditor->OnEditorClose().RemoveAll(this);
 }
 
 void FEdModeFurComb::Initialize()
@@ -148,8 +146,6 @@ void FEdModeFurComb::Exit()
 
 	// The user can manipulate the editor selection lock flag in paint mode so we make sure to restore it here
 	GEdSelectionLock = bWasSelectionLockedOnStart;
-
-	OnResetViewMode();
 
 	// Restore selection color
 	GEngine->RestoreSelectedMaterialColor();
@@ -336,18 +332,6 @@ void FEdModeFurComb::OnAssetRemoved(const FAssetData& AssetData)
 
 void FEdModeFurComb::OnObjectsReplaced(const TMap<UObject*, UObject*>& OldToNewInstanceMap)
 {
-}
-
-void FEdModeFurComb::OnResetViewMode()
-{
-	// Reset viewport color mode for all active viewports
-	for (FEditorViewportClient* ViewportClient : GEditor->GetAllViewportClients())
-	{
-		if (!ViewportClient || ViewportClient->GetModeTools() != GetModeManager())
-		{
-			continue;
-		}
-	}
 }
 
 /** FEdMode: Called after an Undo operation */

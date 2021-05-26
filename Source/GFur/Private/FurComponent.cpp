@@ -172,12 +172,12 @@ public:
 			for (int i = 0; i < NewLodLevel; i++)
 				SectionOffset += FurData[i]->GetSections_RenderThread().Num();
 		}
-		if (FirstFrame)
+/*		if (FirstFrame)
 		{
 			LastFurLodLevel = CurrentFurLodLevel;
 			LastMeshLodLevel = CurrentMeshLodLevel;
 			LastSectionOffset = SectionOffset;
-		}
+		}*/
 
 		if (LastFurLodLevel < FurData.Num())
 		{
@@ -925,8 +925,11 @@ void UGFurComponent::updateFur()
 						else
 						{
 							const int32 ParentIndex = ThisMesh->RefSkeleton.GetParentIndex(ThisBoneIndex);
-							TempMatrices[ThisBoneIndex] = ThisMesh->RefSkeleton.GetRefBonePose()[ThisBoneIndex].ToMatrixWithScale() * TempMatrices[ParentIndex];
-							ValidTempMatrices[ThisBoneIndex] = true;
+							if (ParentIndex >= 0)
+							{
+								TempMatrices[ThisBoneIndex] = ThisMesh->RefSkeleton.GetRefBonePose()[ThisBoneIndex].ToMatrixWithScale() * TempMatrices[ParentIndex];
+								ValidTempMatrices[ThisBoneIndex] = true;
+							}
 						}
 					}
 					else

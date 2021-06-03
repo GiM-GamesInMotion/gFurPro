@@ -12,6 +12,11 @@ class USkeletalMesh;
 class UStaticMesh;
 class UGFurComponent;
 
+struct ExportInfo
+{
+	int32 GuideCount;
+	int32 TotalCount;
+};
 
 class SGFurExportOptions : public SCompoundWidget
 {
@@ -73,6 +78,8 @@ public:
 	: bShouldExport(false)
 	{}
 
+	void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
+
 private:
 	bool CanExport() const;
 
@@ -82,6 +89,13 @@ private:
 	bool			bShouldExport;
 	TSharedPtr<IDetailsView> DetailsView;
 	float SplineDensity = 0.5f;
+	TSharedPtr< STextBlock > InfoText;
+	FText Filename;
+
+	bool DirtyFlag = true;
+	float TimeLeft = 0.0f;
+
+	void Update();
 };
 
 class FFurComponentCustomization : public IDetailCustomization
@@ -109,8 +123,8 @@ private:
 	void ExportFurSplinesAssetWidget(FDetailWidgetRow& OutWidgetRow, IDetailLayoutBuilder* DetailBuilder);
 	void ExportFurSplines(IDetailLayoutBuilder* DetailBuilder) const;
 
-	static void ExportHairSplines(const FString& filename, UFurSplines* FurSplines, USkeletalMesh* Mesh, float MinFurLength, float CountFactor);
-	static void ExportHairSplines(const FString& filename, UFurSplines* FurSplines, UStaticMesh* Mesh, float MinFurLength, float CountFactor);
+	static ExportInfo ExportHairSplines(const FString& filename, UFurSplines* FurSplines, USkeletalMesh* Mesh, float MinFurLength, float CountFactor, bool Save);
+	static ExportInfo ExportHairSplines(const FString& filename, UFurSplines* FurSplines, UStaticMesh* Mesh, float MinFurLength, float CountFactor, bool Save);
 
 	static void GenerateInterpolatedSplines(TArray<FVector>& Points, TArray<FVector2D>& DestUVs, FVector* Vertices, FVector2D* SrcUVs,
 		int32* SplineIndices, int32 ControlPointCount, float& CountRemainder, float CountFactor);
@@ -118,4 +132,6 @@ private:
 	static void GenerateSplineMap(TArray<int32>& SplineMap, UFurSplines* FurSplines, const class FPositionVertexBuffer& InPositions, float MinFurLength);
 
 	void ShowExportOptionsWindow(TSharedPtr<SGFurExportOptions>& Options, FString FilePath) const;
+
+	friend class SGFurExportOptions;
 };

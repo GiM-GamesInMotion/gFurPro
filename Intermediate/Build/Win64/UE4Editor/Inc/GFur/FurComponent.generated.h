@@ -21,8 +21,16 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 template<> GFUR_API UScriptStruct* StaticStruct<struct FFurLod>();
 
 #define HostProject_Plugins_GFur_Source_GFur_Public_FurComponent_h_52_SPARSE_DATA
-#define HostProject_Plugins_GFur_Source_GFur_Public_FurComponent_h_52_RPC_WRAPPERS
-#define HostProject_Plugins_GFur_Source_GFur_Public_FurComponent_h_52_RPC_WRAPPERS_NO_PURE_DECLS
+#define HostProject_Plugins_GFur_Source_GFur_Public_FurComponent_h_52_RPC_WRAPPERS \
+ \
+	DECLARE_FUNCTION(execRegenerateFur);
+
+
+#define HostProject_Plugins_GFur_Source_GFur_Public_FurComponent_h_52_RPC_WRAPPERS_NO_PURE_DECLS \
+ \
+	DECLARE_FUNCTION(execRegenerateFur);
+
+
 #define HostProject_Plugins_GFur_Source_GFur_Public_FurComponent_h_52_INCLASS_NO_PURE_DECLS \
 private: \
 	static void StaticRegisterNativesUGFurComponent(); \

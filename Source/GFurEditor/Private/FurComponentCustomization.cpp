@@ -33,9 +33,17 @@
 
 #define LOCTEXT_NAMESPACE "GFurEditor"
 
+static const FFurComponentCustomization* CurrentComponent = nullptr;
+static UGFurComponent* CurrentFurComponent = nullptr;
+static UFurSplines* CurrentFurSplines = nullptr;
+static USkeletalMesh* CurrentSkeletalGrowMesh = nullptr;
+static UStaticMesh* CurrentStaticGrowMesh = nullptr;
+
+
 void SGFurExportOptions::Construct(const FArguments& InArgs)
 {
 	WidgetWindow = InArgs._WidgetWindow;
+	Filename = InArgs._FullPath;
 
 	this->ChildSlot
 	[
@@ -83,7 +91,15 @@ void SGFurExportOptions::Construct(const FArguments& InArgs)
 			.Value(this, &SGFurExportOptions::GetSplineDensity)
 				.OnValueChanged_Lambda([this](float InValue) {
 				SplineDensity = InValue;
+				Update();
 			})
+		]
+
+		+ SVerticalBox::Slot()
+		.Padding(2)
+		.MaxHeight(40.0f)
+		[
+			SAssignNew(InfoText, STextBlock)
 		]
 
 		+ SVerticalBox::Slot()
@@ -111,11 +127,38 @@ void SGFurExportOptions::Construct(const FArguments& InArgs)
 			]
 		]
 	];
+	Update();
+}
+
+void SGFurExportOptions::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	if (DirtyFlag)
+	{
+		TimeLeft -= InDeltaTime;
+		if (TimeLeft <= 0.0f)
+		{
+			float CountFactor = GetSplineDensity().GetValue();
+			ExportInfo Info = { 0, 0 };
+			if (CurrentSkeletalGrowMesh)
+				Info = CurrentComponent->ExportHairSplines(Filename.ToString(), CurrentFurSplines, CurrentSkeletalGrowMesh, CurrentFurComponent->MinFurLength, CountFactor, false);
+			else if (CurrentStaticGrowMesh)
+				Info = CurrentComponent->ExportHairSplines(Filename.ToString(), CurrentFurSplines, CurrentStaticGrowMesh, CurrentFurComponent->MinFurLength, CountFactor, false);
+			FText Text = FText::FromString(FString::Printf(TEXT("Groom Spline Count: %i\nStrand Spline Count: %i"), Info.GuideCount, Info.TotalCount - Info.GuideCount));
+			InfoText->SetText(Text);
+			DirtyFlag = false;
+		}
+	}
 }
 
 bool SGFurExportOptions::CanExport()  const
 {
 	return true;
+}
+
+void SGFurExportOptions::Update()
+{
+	DirtyFlag = true;
+	TimeLeft = 0.5f;
 }
 
 TSharedRef<IDetailCustomization> FFurComponentCustomization::MakeInstance()
@@ -467,6 +510,12 @@ void FFurComponentCustomization::ExportFurSplines(IDetailLayoutBuilder* DetailBu
 		FString Filename;
 		if (FPackageName::TryConvertLongPackageNameToFilename(PackageName, Filename, ".abc"))
 		{
+			CurrentComponent = this;
+			CurrentFurComponent = FurComponent;
+			CurrentFurSplines = FurSplines;
+			CurrentSkeletalGrowMesh = SkeletalGrowMesh;
+			CurrentStaticGrowMesh = StaticGrowMesh;
+
 			TSharedPtr<SGFurExportOptions> Options;
 			ShowExportOptionsWindow(Options, Filename);
 
@@ -474,17 +523,19 @@ void FFurComponentCustomization::ExportFurSplines(IDetailLayoutBuilder* DetailBu
 			{
 				return;
 			}
+			CurrentComponent = nullptr;
 
 			float CountFactor = Options->GetSplineDensity().GetValue();
 			if (SkeletalGrowMesh)
-				ExportHairSplines(Filename, FurSplines, SkeletalGrowMesh, FurComponent->MinFurLength, CountFactor);
+				ExportHairSplines(Filename, FurSplines, SkeletalGrowMesh, FurComponent->MinFurLength, CountFactor, true);
 			else if (StaticGrowMesh)
-				ExportHairSplines(Filename, FurSplines, StaticGrowMesh, FurComponent->MinFurLength, CountFactor);
+				ExportHairSplines(Filename, FurSplines, StaticGrowMesh, FurComponent->MinFurLength, CountFactor, true);
 		}
 	}
 }
 
-void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFurSplines* FurSplines, USkeletalMesh* Mesh, float MinFurLength, float CountFactor)
+ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFurSplines* FurSplines, USkeletalMesh* Mesh, float MinFurLength, float CountFactor,
+	bool Save)
 {
 	auto* SkeletalMeshResource = Mesh->GetResourceForRendering();
 	check(SkeletalMeshResource);
@@ -545,10 +596,17 @@ void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFur
 		}
 	}
 
-	::ExportFurSplines(Filename, Points, UVs, ControlPointCount, GroomSplineCount);
+	if (Save)
+		::ExportFurSplines(Filename, Points, UVs, ControlPointCount, GroomSplineCount);
+
+	ExportInfo Info;
+	Info.GuideCount = GroomSplineCount;
+	Info.TotalCount = Points.Num() / ControlPointCount;
+	return Info;
 }
 
-void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFurSplines* FurSplines, UStaticMesh* Mesh, float MinFurLength, float CountFactor)
+ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFurSplines* FurSplines, UStaticMesh* Mesh, float MinFurLength, float CountFactor,
+	bool Save)
 {
 	auto* StaticMeshResource = Mesh->RenderData.Get();
 	check(StaticMeshResource);
@@ -608,7 +666,13 @@ void FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFur
 		}
 	}
 
-	::ExportFurSplines(Filename, Points, UVs, ControlPointCount, GroomSplineCount);
+	if (Save)
+		::ExportFurSplines(Filename, Points, UVs, ControlPointCount, GroomSplineCount);
+
+	ExportInfo Info;
+	Info.GuideCount = GroomSplineCount;
+	Info.TotalCount = Points.Num() / ControlPointCount;
+	return Info;
 }
 
 void FFurComponentCustomization::GenerateInterpolatedSplines(TArray<FVector>& Points, TArray<FVector2D>& DestUVs, FVector* Vertices, FVector2D* SrcUVs,

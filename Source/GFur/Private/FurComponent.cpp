@@ -401,6 +401,15 @@ UGFurComponent::UGFurComponent(const FObjectInitializer& ObjectInitializer)
 	SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 }
 
+void UGFurComponent::RegenerateFur()
+{
+	if (IsRenderStateCreated())
+	{
+		DestroyRenderState_Concurrent();
+		CreateRenderState_Concurrent(nullptr);
+	}
+}
+
 const TArray<int32>& UGFurComponent::GetFurSplineMap() const
 {
 	return FurData[0]->GetSplineMap();

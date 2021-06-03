@@ -196,6 +196,9 @@ public:
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category=SkeletalMesh)
 	float StreamingDistanceMultiplier;
 
+	UFUNCTION(BlueprintCallable)
+	void RegenerateFur();
+
 	const TArray<int32>& GetFurSplineMap() const;
 	const TArray<FVector>& GetVertexNormals() const;
 

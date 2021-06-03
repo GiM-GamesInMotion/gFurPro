@@ -179,8 +179,42 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		return ReturnStruct;
 	}
 	uint32 Get_Z_Construct_UScriptStruct_FFurLod_Hash() { return 3307286530U; }
+	DEFINE_FUNCTION(UGFurComponent::execRegenerateFur)
+	{
+		P_FINISH;
+		P_NATIVE_BEGIN;
+		P_THIS->RegenerateFur();
+		P_NATIVE_END;
+	}
 	void UGFurComponent::StaticRegisterNativesUGFurComponent()
 	{
+		UClass* Class = UGFurComponent::StaticClass();
+		static const FNameNativePtrPair Funcs[] = {
+			{ "RegenerateFur", &UGFurComponent::execRegenerateFur },
+		};
+		FNativeFunctionRegistrar::RegisterFunctions(Class, Funcs, UE_ARRAY_COUNT(Funcs));
+	}
+	struct Z_Construct_UFunction_UGFurComponent_RegenerateFur_Statics
+	{
+#if WITH_METADATA
+		static const UE4CodeGen_Private::FMetaDataPairParam Function_MetaDataParams[];
+#endif
+		static const UE4CodeGen_Private::FFunctionParams FuncParams;
+	};
+#if WITH_METADATA
+	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UGFurComponent_RegenerateFur_Statics::Function_MetaDataParams[] = {
+		{ "ModuleRelativePath", "Public/FurComponent.h" },
+	};
+#endif
+	const UE4CodeGen_Private::FFunctionParams Z_Construct_UFunction_UGFurComponent_RegenerateFur_Statics::FuncParams = { (UObject*(*)())Z_Construct_UClass_UGFurComponent, nullptr, "RegenerateFur", nullptr, nullptr, 0, nullptr, 0, RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(Z_Construct_UFunction_UGFurComponent_RegenerateFur_Statics::Function_MetaDataParams, UE_ARRAY_COUNT(Z_Construct_UFunction_UGFurComponent_RegenerateFur_Statics::Function_MetaDataParams)) };
+	UFunction* Z_Construct_UFunction_UGFurComponent_RegenerateFur()
+	{
+		static UFunction* ReturnFunction = nullptr;
+		if (!ReturnFunction)
+		{
+			UE4CodeGen_Private::ConstructUFunction(ReturnFunction, Z_Construct_UFunction_UGFurComponent_RegenerateFur_Statics::FuncParams);
+		}
+		return ReturnFunction;
 	}
 	UClass* Z_Construct_UClass_UGFurComponent_NoRegister()
 	{
@@ -189,6 +223,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 	struct Z_Construct_UClass_UGFurComponent_Statics
 	{
 		static UObject* (*const DependentSingletons[])();
+		static const FClassFunctionLinkInfo FuncInfo[];
 #if WITH_METADATA
 		static const UE4CodeGen_Private::FMetaDataPairParam Class_MetaDataParams[];
 #endif
@@ -305,6 +340,9 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 	UObject* (*const Z_Construct_UClass_UGFurComponent_Statics::DependentSingletons[])() = {
 		(UObject* (*)())Z_Construct_UClass_UMeshComponent,
 		(UObject* (*)())Z_Construct_UPackage__Script_GFur,
+	};
+	const FClassFunctionLinkInfo Z_Construct_UClass_UGFurComponent_Statics::FuncInfo[] = {
+		{ &Z_Construct_UFunction_UGFurComponent_RegenerateFur, "RegenerateFur" }, // 142226681
 	};
 #if WITH_METADATA
 	const UE4CodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::Class_MetaDataParams[] = {
@@ -592,11 +630,11 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		"Engine",
 		&StaticCppClassTypeInfo,
 		DependentSingletons,
-		nullptr,
+		FuncInfo,
 		Z_Construct_UClass_UGFurComponent_Statics::PropPointers,
 		nullptr,
 		UE_ARRAY_COUNT(DependentSingletons),
-		0,
+		UE_ARRAY_COUNT(FuncInfo),
 		UE_ARRAY_COUNT(Z_Construct_UClass_UGFurComponent_Statics::PropPointers),
 		0,
 		0x00B010A4u,
@@ -611,7 +649,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 4280544809);
+	IMPLEMENT_CLASS(UGFurComponent, 354334122);
 	template<> GFUR_API UClass* StaticClass<UGFurComponent>()
 	{
 		return UGFurComponent::StaticClass();

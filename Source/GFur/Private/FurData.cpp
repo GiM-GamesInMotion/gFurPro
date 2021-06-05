@@ -337,7 +337,7 @@ void FFurData::GenerateFurLengths(TArray<float>& FurLengths)
 	}
 }
 
-void FFurData::GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, const FVector& InTangentZ, float InFurLength, const FFurGenLayerData& InGenLayerData)
+void FFurData::GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, FVector2D& OutUv3, const FVector& InTangentZ, float InFurLength, const FFurGenLayerData& InGenLayerData)
 {
 	OutUv1.X = InGenLayerData.NonLinearFactor * FurLength;
 	float r = InGenLayerData.LayerNoiseStrength != 0 ? FMath::RandRange(-InGenLayerData.LayerNoiseStrength, InGenLayerData.LayerNoiseStrength) : 0;
@@ -360,9 +360,10 @@ void FFurData::GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVect
 	OutUv1.Y = InGenLayerData.NonLinearFactor;
 	OutUv2.X = InGenLayerData.LinearFactor;
 	OutUv2.Y = InFurLength;
+	OutUv3.X = Lod;
 }
 
-void FFurData::GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, const FVector& InTangentZ, float InFurLength, const FFurGenLayerData& InGenLayerData, int32 InSplineIndex)
+void FFurData::GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, FVector2D& OutUv3, const FVector& InTangentZ, float InFurLength, const FFurGenLayerData& InGenLayerData, int32 InSplineIndex)
 {
 	if (InSplineIndex >= 0)
 	{
@@ -431,4 +432,5 @@ void FFurData::GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVect
 	OutUv1.Y = InGenLayerData.NonLinearFactor;
 	OutUv2.X = InGenLayerData.LinearFactor;
 	OutUv2.Y = InFurLength;
+	OutUv3.X = Lod;
 }

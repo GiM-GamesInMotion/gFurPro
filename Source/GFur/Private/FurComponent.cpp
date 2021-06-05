@@ -115,41 +115,57 @@ public:
 		Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
 
 		int NewLodLevel = 0x7fffffff;
-		for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
+		if (FurComponent->LODFromParent)
 		{
-			if (VisibilityMap & (1 << ViewIndex))
+			const USkinnedMeshComponent* const MasterComp = FurComponent->GetMasterPoseComponent().Get();
+			if (MasterComp && MasterComp->SkeletalMesh && MasterComp->MeshObject)
 			{
-				const FSceneView* View = Views[ViewIndex];
-				static const auto* SkeletalMeshLODRadiusScale = IConsoleManager::Get().FindTConsoleVariableDataFloat(TEXT("r.SkeletalMeshLODRadiusScale"));
-				float LODScale = FMath::Clamp(SkeletalMeshLODRadiusScale->GetValueOnRenderThread(), 0.25f, 1.0f);
-				const float ScreenRadiusSquared = ComputeBoundsScreenRadiusSquared(FurComponent->Bounds.Origin, FurComponent->Bounds.SphereRadius, *View) * LODScale * LODScale;
-
-				if (FMath::Square(FurComponent->MinScreenSize * 0.5f) < ScreenRadiusSquared)
+#if WITH_EDITOR
+				const int32 LODBias = MasterComp->GetLODBias();
+#else
+				const int32 LODBias = 0;
+#endif
+				NewLodLevel = MasterComp->MeshObject->MinDesiredLODLevel + LODBias;
+			}
+		}
+		else
+		{
+			for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
+			{
+				if (VisibilityMap & (1 << ViewIndex))
 				{
-					bool Found = false;
-					for (int32 LODLevel = FurData.Num() - 1; LODLevel > 0; LODLevel--)
-					{
-						// Get ScreenSize for this LOD
-						float ScreenSize = FurLods[LODLevel - 1].ScreenSize;
+					const FSceneView* View = Views[ViewIndex];
+					static const auto* SkeletalMeshLODRadiusScale = IConsoleManager::Get().FindTConsoleVariableDataFloat(TEXT("r.SkeletalMeshLODRadiusScale"));
+					float LODScale = FMath::Clamp(SkeletalMeshLODRadiusScale->GetValueOnRenderThread(), 0.25f, 1.0f);
+					const float ScreenRadiusSquared = ComputeBoundsScreenRadiusSquared(FurComponent->Bounds.Origin, FurComponent->Bounds.SphereRadius, *View) * LODScale * LODScale;
 
-						// If have passed this boundary, use this LOD
-						if (FMath::Square(ScreenSize * 0.5f) > ScreenRadiusSquared)
+					if (FMath::Square(FurComponent->MinScreenSize * 0.5f) < ScreenRadiusSquared)
+					{
+						bool Found = false;
+						for (int32 LODLevel = FurData.Num() - 1; LODLevel > 0; LODLevel--)
 						{
-							NewLodLevel = FMath::Min(NewLodLevel, LODLevel);
-							Found = true;
+							// Get ScreenSize for this LOD
+							float ScreenSize = FurLods[LODLevel - 1].ScreenSize;
+
+							// If have passed this boundary, use this LOD
+							if (FMath::Square(ScreenSize * 0.5f) > ScreenRadiusSquared)
+							{
+								NewLodLevel = FMath::Min(NewLodLevel, LODLevel);
+								Found = true;
+								break;
+							}
+						}
+
+						if (!Found)
+						{
+							NewLodLevel = 0;
 							break;
 						}
 					}
-
-					if (!Found)
+					else
 					{
-						NewLodLevel = 0;
-						break;
+						NewLodLevel = FMath::Min(NewLodLevel, 0x7fffffff);
 					}
-				}
-				else
-				{
-					NewLodLevel = FMath::Min(NewLodLevel, 0x7fffffff);
 				}
 			}
 		}

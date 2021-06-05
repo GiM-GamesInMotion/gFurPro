@@ -32,6 +32,8 @@ struct FFurStaticVertex
 	FVector2D		UV1;
 	// UVs
 	FVector2D		UV2;
+	// UVs
+	FVector2D		UV3;
 	// VertexColor
 	FColor			Color;
 
@@ -205,8 +207,8 @@ protected:
 
 	FFurGenLayerData CalcFurGenLayerData(int32 Layer);
 	void GenerateFurLengths(TArray<float>& FurLengths);
-	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, const FVector& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData);
-	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, const FVector& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData, int32 InSplineIndex);
+	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, FVector2D& OutUv3, const FVector& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData);
+	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, FVector2D& OutUv3, const FVector& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData, int32 InSplineIndex);
 
 	template<typename VertexTypeT, typename VertexBlitterT>
 	uint32 GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 SrcVertexIndexEnd, VertexTypeT* Vertices, const VertexBlitterT& VertexBlitter);
@@ -261,11 +263,11 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 					}
 				}
 				float Length = SplineIndex >= 0 ? FurLengths[SplineIndex] : FurLength;
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
 			}
 			else
 			{
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLength, GenLayerData);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], FurLength, GenLayerData);
 			}
 			DstVertexIndex++;
 		}
@@ -290,11 +292,11 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 					}
 				}
 				float Length = SplineIndex >= 0 ? FurLengths[SplineIndex] : FurLength;
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
 			}
 			else
 			{
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLength, GenLayerData);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], FurLength, GenLayerData);
 			}
 			DstVertexIndex++;
 		}

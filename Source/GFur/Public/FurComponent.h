@@ -89,6 +89,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
 	TArray<FFurLod> LODs;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "gFur Shell settings")
+	bool LODFromParent;
+
 	/**
 	* With value 0.0 the shells are distributed linearly from root to tip. With values larger than 0.0, distribution becomes nonlinear,
 	* pushing the shells more to the tip where the shells tend to be more visible if the layer count is relatively low.
@@ -220,6 +223,8 @@ public:
 	// End UPrimitiveComponent interface.
 
 	const TArray<class UMaterialInstanceDynamic*>& GetFurMaterials() const { return FurMaterials; }
+
+	TWeakObjectPtr< class USkinnedMeshComponent > GetMasterPoseComponent() const { return MasterPoseComponent; }
 
 protected:
 	//~ Begin UActorComponent Interface

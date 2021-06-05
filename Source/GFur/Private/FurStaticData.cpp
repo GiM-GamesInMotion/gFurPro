@@ -694,11 +694,11 @@ void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
 			{
 				int32 SplineIndex = SplineMap[SrcVertexIndex];
 				float Length = SplineIndex >= 0 ? FurLengths[SplineIndex] : FurLength;
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
 			}
 			else
 			{
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Normals[SrcVertexIndex], FurLength, GenLayerData);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], FurLength, GenLayerData);
 			}
 		}
 	}

@@ -11,13 +11,13 @@ FFurVertexBuffer::~FFurVertexBuffer()
 
 void FFurVertexBuffer::InitRHI()
 {
-	FRHIResourceCreateInfo CreateInfo;
+	FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 	VertexBufferRHI = RHICreateVertexBuffer(Size, BUF_Static, CreateInfo);
 
 	// Copy the vertex data into the vertex buffer.
-	void* VertexBufferData = RHILockVertexBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
+	void* VertexBufferData = RHILockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
 	FMemory::Memcpy(VertexBufferData, VertexData, Size);
-	RHIUnlockVertexBuffer(VertexBufferRHI);
+	RHIUnlockBuffer(VertexBufferRHI);
 
 #if !WITH_EDITORONLY_DATA
 	delete[]VertexData;
@@ -33,14 +33,14 @@ void FFurVertexBuffer::Unlock()
 			check(VertexBufferRHI.IsValid());
 			if (Size != VertexBufferRHI->GetSize() || VertexBufferRHI->GetUsage() == BUF_Static)
 			{
-				FRHIResourceCreateInfo CreateInfo;
+				FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 				VertexBufferRHI = RHICreateVertexBuffer(Size, BUF_Dynamic, CreateInfo);
 			}
 
 			// Copy the vertex data into the vertex buffer.
-			void* VertexBufferData = RHILockVertexBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
+			void* VertexBufferData = RHILockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
 			FMemory::Memcpy(VertexBufferData, VertexData, Size);
-			RHIUnlockVertexBuffer(VertexBufferRHI);
+			RHIUnlockBuffer(VertexBufferRHI);
 		});
 	}
 	else
@@ -55,12 +55,12 @@ void FFurIndexBuffer::InitRHI()
 	if (Indices.Num() == 0)
 		Indices.Add(0);
 
-	FRHIResourceCreateInfo CreateInfo;
+	FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 	IndexBufferRHI = RHICreateIndexBuffer(sizeof(int32), Indices.Num() * sizeof(int32), BUF_Static, CreateInfo);
 	// Write the indices to the index buffer.
-	void* Buffer = RHILockIndexBuffer(IndexBufferRHI, 0, Indices.Num() * sizeof(int32), RLM_WriteOnly);
+	void* Buffer = RHILockBuffer(IndexBufferRHI, 0, Indices.Num() * sizeof(int32), RLM_WriteOnly);
 	FMemory::Memcpy(Buffer, Indices.GetData(), Indices.Num() * sizeof(int32));
-	RHIUnlockIndexBuffer(IndexBufferRHI);
+	RHIUnlockBuffer(IndexBufferRHI);
 
 #if !WITH_EDITORONLY_DATA
 	Indices.SetNum(0, true);
@@ -83,13 +83,13 @@ void FFurIndexBuffer::Unlock()
 			uint32 Size = Indices.Num() * sizeof(int32);
 			if (Size != IndexBufferRHI->GetSize() || IndexBufferRHI->GetUsage() == BUF_Static)
 			{
-				FRHIResourceCreateInfo CreateInfo;
+				FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 				IndexBufferRHI = RHICreateIndexBuffer(sizeof(int32), Size, BUF_Dynamic, CreateInfo);
 			}
 
-			void* Buffer = RHILockIndexBuffer(IndexBufferRHI, 0, Indices.Num() * sizeof(int32), RLM_WriteOnly);
+			void* Buffer = RHILockBuffer(IndexBufferRHI, 0, Indices.Num() * sizeof(int32), RLM_WriteOnly);
 			FMemory::Memcpy(Buffer, Indices.GetData(), Indices.Num() * sizeof(int32));
-			RHIUnlockIndexBuffer(IndexBufferRHI);
+			RHIUnlockBuffer(IndexBufferRHI);
 		});
 	}
 	else

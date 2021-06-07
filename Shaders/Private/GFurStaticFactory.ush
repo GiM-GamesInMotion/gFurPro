@@ -433,3 +433,5 @@ uint VertexFactoryGetPrimitiveId(FVertexFactoryInterpolantsVSToPS Interpolants)
 {
 	return GetPrimitiveId(Interpolants);
 }
+
+#include "/Engine/Private/VertexFactoryDefaultInterface.ush"

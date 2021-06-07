@@ -12,7 +12,7 @@ static FCriticalSection FurStaticDataCS;
 /** Vertex Factory Shader Parameters */
 class FFurStaticVertexFactoryShaderParameters : public FVertexFactoryShaderParameters
 {
-	DECLARE_INLINE_TYPE_LAYOUT(FFurStaticVertexFactoryShaderParameters, NonVirtual);
+	DECLARE_TYPE_LAYOUT(FFurStaticVertexFactoryShaderParameters, NonVirtual);
 public:
 	void Bind(const FShaderParameterMap& ParameterMap)
 	{
@@ -69,6 +69,8 @@ private:
 	LAYOUT_FIELD(FShaderParameter, PreviousFurPositionParameter);
 	LAYOUT_FIELD(FShaderParameter, PreviousFurAngularOffsetParameter);
 };
+
+IMPLEMENT_TYPE_LAYOUT(FFurStaticVertexFactoryShaderParameters)
 
 /** Vertex Factory */
 template<bool Physics>
@@ -274,8 +276,14 @@ public:
 IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FPhysicsFurStaticVertexFactory, SF_Vertex, FFurStaticVertexFactoryShaderParameters);
 IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FFurStaticVertexFactory, SF_Vertex, FFurStaticVertexFactoryShaderParameters);
 
-IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush", true, false, true, true, false);
-IMPLEMENT_VERTEX_FACTORY_TYPE(FFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush", true, false, true, true, false);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FFurStaticVertexFactory, "/Plugin/gFur/Private/GFurStaticFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
 
 template<bool Physics>
 void FFurStaticVertexFactoryBase<Physics>::FShaderDataType::GoToNextFrame(bool InDiscontinuous)
@@ -496,7 +504,7 @@ bool FFurStaticData::Similar(int32 InLod, class UGFurComponent* InFurComponent)
 
 void FFurStaticData::BuildFur(BuildType Build)
 {
-	auto* StaticMeshResource = StaticMesh->RenderData.Get();
+	auto* StaticMeshResource = StaticMesh->GetRenderData();
 	check(StaticMeshResource);
 
 	const FStaticMeshLODResources& LodRenderData = StaticMeshResource->LODResources[Lod];
@@ -651,7 +659,7 @@ inline void FFurStaticData::BuildFur(const FStaticMeshLODResources& LodRenderDat
 
 void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
 {
-	auto* StaticMeshResource = StaticMesh->RenderData.Get();
+	auto* StaticMeshResource = StaticMesh->GetRenderData();
 	check(StaticMeshResource);
 
 	const FStaticMeshLODResources& LodRenderData = StaticMeshResource->LODResources[Lod];
@@ -714,7 +722,7 @@ void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
 /** Generate Splines */
 void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLod, const TArray<UStaticMesh*>& InGuideMeshes)
 {
-	auto* StaticMeshResource = InStaticMesh->RenderData.Get();
+	auto* StaticMeshResource = InStaticMesh->GetRenderData();
 	check(StaticMeshResource);
 
 	if (InLod >= StaticMeshResource->LODResources.Num())
@@ -737,7 +745,7 @@ void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLo
 	{
 		if (GuideMesh)
 		{
-			auto* StaticMeshResource2 = GuideMesh->RenderData.Get();
+			auto* StaticMeshResource2 = GuideMesh->GetRenderData();
 			check(StaticMeshResource2);
 			const auto& LodModel2 = StaticMeshResource2->LODResources[InLod];
 			const auto& SourcePositions2 = LodModel2.VertexBuffers.PositionVertexBuffer;

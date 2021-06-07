@@ -354,7 +354,7 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 			else if (FurComponent->StaticGrowMesh)
 			{
 				UStaticMesh* Mesh = FurComponent->StaticGrowMesh;
-				VertexBuffers = &Mesh->RenderData->LODResources[0].VertexBuffers;
+				VertexBuffers = &Mesh->GetRenderData()->LODResources[0].VertexBuffers;
 			}
 			else
 			{
@@ -641,8 +641,8 @@ bool FFurComb::LineTraceComponent(struct FHitResult& OutHit, const FVector Start
 		else
 		{
 			UStaticMesh* Mesh = FurComponent->StaticGrowMesh;
-			auto& IndexBuffer = Mesh->RenderData->LODResources[0].IndexBuffer;
-			auto& VertexBuffer = Mesh->RenderData->LODResources[0].VertexBuffers.PositionVertexBuffer;
+			auto& IndexBuffer = Mesh->GetRenderData()->LODResources[0].IndexBuffer;
+			auto& VertexBuffer = Mesh->GetRenderData()->LODResources[0].VertexBuffers.PositionVertexBuffer;
 
 			const int32 NumTriangles = IndexBuffer.GetNumIndices() / 3;
 

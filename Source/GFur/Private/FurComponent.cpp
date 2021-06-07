@@ -442,13 +442,17 @@ UMaterialInterface* UGFurComponent::GetMaterial(int32 MaterialIndex) const
 	{
 		return OverrideMaterials[MaterialIndex];
 	}
-	else if (SkeletalGrowMesh && MaterialIndex < SkeletalGrowMesh->Materials.Num() && SkeletalGrowMesh->Materials[MaterialIndex].MaterialInterface)
+	else if (SkeletalGrowMesh)
 	{
-		return SkeletalGrowMesh->Materials[MaterialIndex].MaterialInterface;
+		const auto& Materials = SkeletalGrowMesh->GetMaterials();
+		if (MaterialIndex < Materials.Num() && Materials[MaterialIndex].MaterialInterface)
+			return Materials[MaterialIndex].MaterialInterface;
 	}
-	else if (StaticGrowMesh && MaterialIndex < StaticGrowMesh->StaticMaterials.Num() && StaticGrowMesh->StaticMaterials[MaterialIndex].MaterialInterface)
+	else if (StaticGrowMesh)
 	{
-		return StaticGrowMesh->StaticMaterials[MaterialIndex].MaterialInterface;
+		const auto& Materials = StaticGrowMesh->GetStaticMaterials();
+		if (MaterialIndex < Materials.Num() && Materials[MaterialIndex].MaterialInterface)
+			return Materials[MaterialIndex].MaterialInterface;
 	}
 
 	return NULL;
@@ -458,9 +462,10 @@ int32 UGFurComponent::GetMaterialIndex(FName MaterialSlotName) const
 {
 	if (SkeletalGrowMesh)
 	{
-		for (int32 MaterialIndex = 0; MaterialIndex < SkeletalGrowMesh->Materials.Num(); ++MaterialIndex)
+		const auto& Materials = SkeletalGrowMesh->GetMaterials();
+		for (int32 MaterialIndex = 0; MaterialIndex < Materials.Num(); ++MaterialIndex)
 		{
-			const auto& SkeletalMaterial = SkeletalGrowMesh->Materials[MaterialIndex];
+			const auto& SkeletalMaterial = Materials[MaterialIndex];
 			if (SkeletalMaterial.MaterialSlotName == MaterialSlotName)
 			{
 				return MaterialIndex;
@@ -469,9 +474,10 @@ int32 UGFurComponent::GetMaterialIndex(FName MaterialSlotName) const
 	}
 	else if (StaticGrowMesh)
 	{
-		for (int32 MaterialIndex = 0; MaterialIndex < StaticGrowMesh->StaticMaterials.Num(); ++MaterialIndex)
+		const auto& Materials = StaticGrowMesh->GetStaticMaterials();
+		for (int32 MaterialIndex = 0; MaterialIndex < Materials.Num(); ++MaterialIndex)
 		{
-			const auto& SkeletalMaterial = StaticGrowMesh->StaticMaterials[MaterialIndex];
+			const auto& SkeletalMaterial = Materials[MaterialIndex];
 			if (SkeletalMaterial.MaterialSlotName == MaterialSlotName)
 			{
 				return MaterialIndex;
@@ -486,17 +492,19 @@ TArray<FName> UGFurComponent::GetMaterialSlotNames() const
 	TArray<FName> MaterialNames;
 	if (SkeletalGrowMesh)
 	{
-		for (int32 MaterialIndex = 0; MaterialIndex < SkeletalGrowMesh->Materials.Num(); ++MaterialIndex)
+		const auto& Materials = SkeletalGrowMesh->GetMaterials();
+		for (int32 MaterialIndex = 0; MaterialIndex < Materials.Num(); ++MaterialIndex)
 		{
-			const auto& SkeletalMaterial = SkeletalGrowMesh->Materials[MaterialIndex];
+			const auto& SkeletalMaterial = Materials[MaterialIndex];
 			MaterialNames.Add(SkeletalMaterial.MaterialSlotName);
 		}
 	}
 	else if (StaticGrowMesh)
 	{
-		for (int32 MaterialIndex = 0; MaterialIndex < StaticGrowMesh->StaticMaterials.Num(); ++MaterialIndex)
+		const auto& Materials = StaticGrowMesh->GetStaticMaterials();
+		for (int32 MaterialIndex = 0; MaterialIndex < Materials.Num(); ++MaterialIndex)
 		{
-			const auto& SkeletalMaterial = StaticGrowMesh->StaticMaterials[MaterialIndex];
+			const auto& SkeletalMaterial = Materials[MaterialIndex];
 			MaterialNames.Add(SkeletalMaterial.MaterialSlotName);
 		}
 	}
@@ -565,8 +573,9 @@ void UGFurComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials,
 {
 	if (SkeletalGrowMesh)
 	{
+		const auto& Materials = SkeletalGrowMesh->GetMaterials();
 		// The max number of materials used is the max of the materials on the skeletal mesh and the materials on the mesh component
-		const int32 NumMaterials = FMath::Max(SkeletalGrowMesh->Materials.Num(), OverrideMaterials.Num());
+		const int32 NumMaterials = FMath::Max(Materials.Num(), OverrideMaterials.Num());
 		for (int32 MatIdx = 0; MatIdx < NumMaterials; ++MatIdx)
 		{
 			// GetMaterial will determine the correct material to use for this index.  
@@ -579,8 +588,9 @@ void UGFurComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials,
 	}
 	else if (StaticGrowMesh)
 	{
+		const auto& Materials = StaticGrowMesh->GetStaticMaterials();
 		// The max number of materials used is the max of the materials on the skeletal mesh and the materials on the mesh component
-		const int32 NumMaterials = FMath::Max(StaticGrowMesh->StaticMaterials.Num(), OverrideMaterials.Num());
+		const int32 NumMaterials = FMath::Max(Materials.Num(), OverrideMaterials.Num());
 		for (int32 MatIdx = 0; MatIdx < NumMaterials; ++MatIdx)
 		{
 			// GetMaterial will determine the correct material to use for this index.  
@@ -619,11 +629,11 @@ int32 UGFurComponent::GetNumMaterials() const
 {
 	if (SkeletalGrowMesh)
 	{
-		return SkeletalGrowMesh->Materials.Num();
+		return SkeletalGrowMesh->GetMaterials().Num();
 	}
 	else if (StaticGrowMesh)
 	{
-		return StaticGrowMesh->StaticMaterials.Num();
+		return StaticGrowMesh->GetStaticMaterials().Num();
 	}
 
 	return 0;
@@ -657,7 +667,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			auto NumLods = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData.Num();
 			MorphRemapTables.SetNum(NumLods);
 
-			bool UseMorphTargets = !DisableMorphTargets && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->MorphTargets.Num() > 0;
+			bool UseMorphTargets = !DisableMorphTargets && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->GetMorphTargets().Num() > 0;
 
 			{
 				auto Data = FFurSkinData::CreateFurData(FMath::Max(LayerCount, 1), 0, this);
@@ -679,13 +689,13 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 
 			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, OverrideMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
 		}
-		else if (StaticGrowMesh && StaticGrowMesh->RenderData)
+		else if (StaticGrowMesh && StaticGrowMesh->GetRenderData())
 		{
 			FurArray.Add(FFurStaticData::CreateFurData(FMath::Max(LayerCount, 1), 0, this));
 			MorphObjects.Add(NULL);
 			for (FFurLod& lod : LODs)
 			{
-				FurArray.Add(FFurStaticData::CreateFurData(FMath::Max(lod.LayerCount, 1), FMath::Min(StaticGrowMesh->RenderData->LODResources.Num() - 1, lod.Lod), this));
+				FurArray.Add(FFurStaticData::CreateFurData(FMath::Max(lod.LayerCount, 1), FMath::Min(StaticGrowMesh->GetRenderData()->LODResources.Num() - 1, lod.Lod), this));
 				MorphObjects.Add(NULL);
 			}
 
@@ -862,21 +872,23 @@ void UGFurComponent::updateFur()
 
 		TArray<FMatrix, TInlineAllocator<256>> TempMatrices;
 		TArray<bool, TInlineAllocator<256>> ValidTempMatrices;
-		check(ThisMesh->RefBasesInvMatrix.Num() != 0);
-		if (ReferenceToLocal.Num() != ThisMesh->RefBasesInvMatrix.Num())
+		const auto& RefSkeleton = ThisMesh->GetRefSkeleton();
+		const auto& RefBasesInvMatrix = ThisMesh->GetRefBasesInvMatrix();
+		check(RefBasesInvMatrix.Num() != 0);
+		if (ReferenceToLocal.Num() != RefBasesInvMatrix.Num())
 		{
 			Transformations.Reset();
-			Transformations.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			Transformations.AddUninitialized(RefBasesInvMatrix.Num());
 			ReferenceToLocal.Reset();
-			ReferenceToLocal.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			ReferenceToLocal.AddUninitialized(RefBasesInvMatrix.Num());
 			LinearVelocities.Reset();
-			LinearVelocities.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			LinearVelocities.AddUninitialized(RefBasesInvMatrix.Num());
 			AngularVelocities.Reset();
-			AngularVelocities.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			AngularVelocities.AddUninitialized(RefBasesInvMatrix.Num());
 			LinearOffsets.Reset();
-			LinearOffsets.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			LinearOffsets.AddUninitialized(RefBasesInvMatrix.Num());
 			AngularOffsets.Reset();
-			AngularOffsets.AddUninitialized(ThisMesh->RefBasesInvMatrix.Num());
+			AngularOffsets.AddUninitialized(RefBasesInvMatrix.Num());
 			OldPositionValid = false;
 		}
 
@@ -896,7 +908,7 @@ void UGFurComponent::updateFur()
 
 		const auto& CurrentMasterBoneMap = MasterBoneMap[FMath::Clamp(SyncLODLevel, 0, MasterBoneMap.Num() - 1)];
 
-		const bool bIsMasterCompValid = MasterComp && CurrentMasterBoneMap.Num() == ThisMesh->RefSkeleton.GetNum();
+		const bool bIsMasterCompValid = MasterComp && CurrentMasterBoneMap.Num() == RefSkeleton.GetNum();
 
 		const TArray<FBoneIndexType>* RequiredBoneSets[3] = { &LOD.ActiveBoneIndices, 0/*ExtraRequiredBoneIndices*/, NULL };
 
@@ -923,7 +935,7 @@ void UGFurComponent::updateFur()
 					TempMatrices.AddUninitialized(Count);
 				}
 
-				if (ThisMesh->RefBasesInvMatrix.IsValidIndex(ThisBoneIndex))
+				if (RefBasesInvMatrix.IsValidIndex(ThisBoneIndex))
 				{
 					// On the off chance the parent matrix isn't valid, revert to identity.
 					TempMatrices[ThisBoneIndex] = FMatrix::Identity;
@@ -934,7 +946,7 @@ void UGFurComponent::updateFur()
 						const int32 MasterBoneIndex = CurrentMasterBoneMap[ThisBoneIndex];
 						if (MasterComp->GetComponentSpaceTransforms().IsValidIndex(MasterBoneIndex))
 						{
-							const int32 ParentIndex = ThisMesh->RefSkeleton.GetParentIndex(ThisBoneIndex);
+							const int32 ParentIndex = RefSkeleton.GetParentIndex(ThisBoneIndex);
 							bool bNeedToHideBone = MasterComp->GetBoneVisibilityStates()[MasterBoneIndex] != BVS_Visible;
 							if (bNeedToHideBone && ParentIndex != INDEX_NONE)
 							{
@@ -949,17 +961,17 @@ void UGFurComponent::updateFur()
 						}
 						else
 						{
-							const int32 ParentIndex = ThisMesh->RefSkeleton.GetParentIndex(ThisBoneIndex);
+							const int32 ParentIndex = RefSkeleton.GetParentIndex(ThisBoneIndex);
 							if (ParentIndex >= 0)
 							{
-								TempMatrices[ThisBoneIndex] = ThisMesh->RefSkeleton.GetRefBonePose()[ThisBoneIndex].ToMatrixWithScale() * TempMatrices[ParentIndex];
+								TempMatrices[ThisBoneIndex] = RefSkeleton.GetRefBonePose()[ThisBoneIndex].ToMatrixWithScale() * TempMatrices[ParentIndex];
 								ValidTempMatrices[ThisBoneIndex] = true;
 							}
 						}
 					}
 					else
 					{
-						TempMatrices[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex].Inverse();
+						TempMatrices[ThisBoneIndex] = RefBasesInvMatrix[ThisBoneIndex].Inverse();
 						ValidTempMatrices[ThisBoneIndex] = true;
 					}
 				}
@@ -977,7 +989,7 @@ void UGFurComponent::updateFur()
 				FMatrix NewTransformation;
 				if (ValidTempMatrices[ThisBoneIndex])
 				{
-					ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
+					ReferenceToLocal[ThisBoneIndex] = RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
 					NewTransformation = TempMatrices[ThisBoneIndex] * ToWorld;
 					NewTransformation.RemoveScaling();
 				}
@@ -997,7 +1009,7 @@ void UGFurComponent::updateFur()
 			{
 				if (ValidTempMatrices[ThisBoneIndex])
 				{
-					ReferenceToLocal[ThisBoneIndex] = ThisMesh->RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
+					ReferenceToLocal[ThisBoneIndex] = RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
 					Transformations[ThisBoneIndex] = TempMatrices[ThisBoneIndex] * ToWorld;
 					Transformations[ThisBoneIndex].RemoveScaling();
 				}
@@ -1078,7 +1090,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 		}
 		else if (StaticGrowMesh)
 		{
-			const auto& LOD = StaticGrowMesh->RenderData->LODResources[FurProxy->GetCurrentMeshLodLevel()];
+			const auto& LOD = StaticGrowMesh->GetRenderData()->LODResources[FurProxy->GetCurrentMeshLodLevel()];
 			const auto& Sections = LOD.Sections;
 			for (int32 SectionIdx = 0; SectionIdx < Sections.Num(); SectionIdx++)
 			{
@@ -1100,8 +1112,10 @@ void UGFurComponent::UpdateMasterBoneMap()
 		USkeletalMesh* ParentMesh = MasterPoseComponent->SkeletalMesh;
 		TArray<int32>& CurrentMasterBoneMap = MasterBoneMap[0];
 
-		CurrentMasterBoneMap.Empty(SkeletalGrowMesh->RefSkeleton.GetNum());
-		CurrentMasterBoneMap.AddUninitialized(SkeletalGrowMesh->RefSkeleton.GetNum());
+		const auto& GrowMeshRefSkeleton = SkeletalGrowMesh->GetRefSkeleton();
+		const auto& ParentMeshRefSkeleton = ParentMesh->GetRefSkeleton();
+		CurrentMasterBoneMap.Empty(GrowMeshRefSkeleton.GetNum());
+		CurrentMasterBoneMap.AddUninitialized(GrowMeshRefSkeleton.GetNum());
 		if (SkeletalGrowMesh == ParentMesh)
 		{
 			// if the meshes are the same, the indices must match exactly so we don't need to look them up
@@ -1114,8 +1128,8 @@ void UGFurComponent::UpdateMasterBoneMap()
 		{
 			for (int32 i = 0; i < CurrentMasterBoneMap.Num(); i++)
 			{
-				FName BoneName = SkeletalGrowMesh->RefSkeleton.GetBoneName(i);
-				CurrentMasterBoneMap[i] = ParentMesh->RefSkeleton.FindBoneIndex(BoneName);
+				FName BoneName = GrowMeshRefSkeleton.GetBoneName(i);
+				CurrentMasterBoneMap[i] = ParentMeshRefSkeleton.FindBoneIndex(BoneName);
 			}
 		}
 
@@ -1130,7 +1144,7 @@ void UGFurComponent::UpdateMasterBoneMap()
 			const auto& Lod = ParentMesh->GetLODInfo(LODIndex);
 			for (const auto& Bone : Lod->BonesToRemove)
 			{
-				int32 BoneIndex = ParentMesh->RefSkeleton.FindBoneIndex(Bone.BoneName);
+				int32 BoneIndex = ParentMeshRefSkeleton.FindBoneIndex(Bone.BoneName);
 				if (BoneIndex >= 0)
 					MasterBoneMap[LODIndex][BoneIndex] = -1;
 			}

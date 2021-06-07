@@ -117,7 +117,7 @@ private:
 template <bool Physics>
 class FFurSkinVertexFactoryShaderParameters : public FVertexFactoryShaderParameters
 {
-	DECLARE_INLINE_TYPE_LAYOUT(FFurSkinVertexFactoryShaderParameters<Physics>, NonVirtual);
+	DECLARE_TYPE_LAYOUT(FFurSkinVertexFactoryShaderParameters<Physics>, NonVirtual);
 public:
 	void Bind(const FShaderParameterMap& ParameterMap)
 	{
@@ -171,6 +171,9 @@ private:
 	LAYOUT_FIELD(FShaderResourceParameter, BoneFurOffsets);
 	LAYOUT_FIELD(FShaderResourceParameter, PreviousBoneFurOffsets);
 };
+
+IMPLEMENT_TYPE_LAYOUT(FFurSkinVertexFactoryShaderParameters<true>)
+IMPLEMENT_TYPE_LAYOUT(FFurSkinVertexFactoryShaderParameters<false>)
 
 /** Vertex Factory */
 template<bool MorphTargets, bool Physics, bool bExtraInfluencesT>
@@ -622,14 +625,38 @@ IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FPhysicsFurSkinVertexFactory, SF_Vertex,
 IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FMorphFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<false>);
 IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FFurSkinVertexFactory, SF_Vertex, FFurSkinVertexFactoryShaderParameters<false>);
 
-IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphPhysicsExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
-IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
-IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
-IMPLEMENT_VERTEX_FACTORY_TYPE(FExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
-IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphPhysicsFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
-IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
-IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
-IMPLEMENT_VERTEX_FACTORY_TYPE(FFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush", true, false, true, true, false);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphPhysicsExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FExtraInfluencesFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphPhysicsFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FPhysicsFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FMorphFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
+IMPLEMENT_VERTEX_FACTORY_TYPE(FFurSkinVertexFactory, "/Plugin/gFur/Private/GFurFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPrecisePrevWorldPos);
 
 #if WITH_EDITORONLY_DATA
 IMPLEMENT_GLOBAL_SHADER_PARAMETER_STRUCT(FBoneMatricesUniformShaderParameters, "BonesFur");
@@ -672,7 +699,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 		if (!IsValidRef(*CurrentBoneBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
-			FRHIResourceCreateInfo CreateInfo;
+			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(VectorArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
 			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
 			*CurrentBoneBuffer = Buffer;
@@ -683,7 +710,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 		if (!IsValidRef(*CurrentBoneFurOffsetsBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
-			FRHIResourceCreateInfo CreateInfo;
+			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(OffsetArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
 			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
 			*CurrentBoneFurOffsetsBuffer = Buffer;
@@ -692,8 +719,8 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 
 		if (NumBones)
 		{
-			ChunkMatrices = (float*)RHILockVertexBuffer(CurrentBoneBuffer->VertexBufferRHI, 0, VectorArraySize, RLM_WriteOnly);
-			Offsets = (FVector4*)RHILockVertexBuffer(CurrentBoneFurOffsetsBuffer->VertexBufferRHI, 0, OffsetArraySize, RLM_WriteOnly);
+			ChunkMatrices = (float*)RHILockBuffer(CurrentBoneBuffer->VertexBufferRHI, 0, VectorArraySize, RLM_WriteOnly);
+			Offsets = (FVector4*)RHILockBuffer(CurrentBoneFurOffsetsBuffer->VertexBufferRHI, 0, OffsetArraySize, RLM_WriteOnly);
 		}
 	}
 	else
@@ -746,9 +773,9 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 		if (NumBones)
 		{
 			check(CurrentBoneBuffer);
-			RHIUnlockVertexBuffer(CurrentBoneBuffer->VertexBufferRHI);
+			RHIUnlockBuffer(CurrentBoneBuffer->VertexBufferRHI);
 			check(CurrentBoneFurOffsetsBuffer);
-			RHIUnlockVertexBuffer(CurrentBoneFurOffsetsBuffer->VertexBufferRHI);
+			RHIUnlockBuffer(CurrentBoneFurOffsetsBuffer->VertexBufferRHI);
 		}
 	}
 	else
@@ -778,7 +805,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 		if (!IsValidRef(*CurrentBoneBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
-			FRHIResourceCreateInfo CreateInfo;
+			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(VectorArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
 			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
 			*CurrentBoneBuffer = Buffer;
@@ -789,7 +816,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 		if (!IsValidRef(*PreviousBoneBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
-			FRHIResourceCreateInfo CreateInfo;
+			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(VectorArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
 			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
 			*PreviousBoneBuffer = Buffer;
@@ -800,7 +827,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 		if (!IsValidRef(*CurrentBoneFurOffsetsBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
-			FRHIResourceCreateInfo CreateInfo;
+			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(OffsetArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
 			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
 			*CurrentBoneFurOffsetsBuffer = Buffer;
@@ -811,7 +838,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 		if (!IsValidRef(*PreviousBoneFurOffsetsBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
-			FRHIResourceCreateInfo CreateInfo;
+			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(OffsetArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
 			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
 			*PreviousBoneFurOffsetsBuffer = Buffer;
@@ -1174,7 +1201,7 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 		uint32 VertCount = GenerateFurVertices(SourceSection.BaseVertexIndex, SourceSection.BaseVertexIndex + SourceSection.NumVertices, Vertices + SectionVertexOffset, VertexBlitter);
 		if (Build == BuildType::Full)
 		{
-			const auto& RefPose = SkeletalMesh->RefSkeleton.GetRawRefBonePose();
+			const auto& RefPose = SkeletalMesh->GetRefSkeleton().GetRawRefBonePose();
 			for (uint32 i = 0; i < VertCount; i++)
 			{
 				uint32 VertexIndex = SectionVertexOffset + i;

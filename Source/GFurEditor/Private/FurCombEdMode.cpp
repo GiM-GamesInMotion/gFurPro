@@ -15,7 +15,6 @@
 #include "Editor/ViewportInteraction/Public/ViewportInteraction.h"
 #include "EditorWorldExtension.h"
 #include "Editor/UnrealEd/Public/Toolkits/BaseToolkit.h"
-#include "Editor/UnrealEd/Public/Toolkits/ToolkitManager.h"
 #include "VREditorMode.h"
 #include "VREditorInteractor.h"
 #include "Runtime/Engine/Classes/Engine/Selection.h"
@@ -150,11 +149,11 @@ void FEdModeFurComb::Exit()
 	// Restore selection color
 	GEngine->RestoreSelectedMaterialColor();
 
-	if (Toolkit.IsValid())
+/*	if (Toolkit.IsValid())
 	{
 		FToolkitManager::Get().CloseToolkit(Toolkit.ToSharedRef());
 		Toolkit.Reset();
-	}
+	}*/
 
 	// Unbind delegates
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
@@ -440,13 +439,13 @@ void FEdModeFurComb::OnVRAction(class FEditorViewportClient& ViewportClient, UVi
 				bool bIsClickingOnSelectedObject = false;
 				{
 					FHitResult HitResult = VRInteractor->GetHitResultFromLaserPointer();
-					if (HitResult.Actor.IsValid())
+					if (HitResult.HitObjectHandle.IsValid())
 					{
 						UViewportWorldInteraction& WorldInteraction = VREditorMode->GetWorldInteraction();
 
 						if (WorldInteraction.IsInteractableComponent(HitResult.GetComponent()))
 						{
-							AActor* Actor = HitResult.Actor.Get();
+							AActor* Actor = HitResult.HitObjectHandle.FetchActor();
 
 							// Make sure we're not hovering over some other viewport interactable, such as a dockable window selection bar or close button
 							IViewportInteractableInterface* ActorInteractable = Cast<IViewportInteractableInterface>(Actor);

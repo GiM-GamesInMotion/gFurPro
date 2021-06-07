@@ -12,7 +12,7 @@ void FFurMorphVertexBuffer::InitDynamicRHI()
 {
 	// Create the buffer rendering resource
 	uint32 Size = NumVertices * sizeof(FMorphGPUSkinVertex);
-	FRHIResourceCreateInfo CreateInfo;
+	FRHIResourceCreateInfo CreateInfo(L"FurMorphVertexBuffer");
 
 	EBufferUsageFlags Flags = BUF_Dynamic;
 
@@ -22,11 +22,11 @@ void FFurMorphVertexBuffer::InitDynamicRHI()
 	VertexBufferRHI = RHICreateVertexBuffer(Size, Flags, CreateInfo);
 
 	// Lock the buffer.
-	void* BufferData = RHILockVertexBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
+	void* BufferData = RHILockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
 	FMorphGPUSkinVertex* Buffer = (FMorphGPUSkinVertex*)BufferData;
 	FMemory::Memzero(&Buffer[0], Size);
 	// Unlock the buffer.
-	RHIUnlockVertexBuffer(VertexBufferRHI);
+	RHIUnlockBuffer(VertexBufferRHI);
 }
 
 void FFurMorphVertexBuffer::ReleaseDynamicRHI()
@@ -140,7 +140,7 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 				VertexBuffer.InitDynamicRHI();
 			}
 
-			FMorphGPUSkinVertex* ActualBuffer = (FMorphGPUSkinVertex*)RHILockVertexBuffer(VertexBuffer.VertexBufferRHI, 0, Size * NumLayers, RLM_WriteOnly);
+			FMorphGPUSkinVertex* ActualBuffer = (FMorphGPUSkinVertex*)RHILockBuffer(VertexBuffer.VertexBufferRHI, 0, Size * NumLayers, RLM_WriteOnly);
 			for (const auto& Section : FurData->GetSections_RenderThread())
 			{
 				uint32 NumSectionVertices = Section.MaxVertexIndex - Section.MinVertexIndex + 1;
@@ -160,7 +160,7 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 
 		{
 			// Unlock the buffer.
-			RHIUnlockVertexBuffer(VertexBuffer.VertexBufferRHI);
+			RHIUnlockBuffer(VertexBuffer.VertexBufferRHI);
 			// set update flag
 //			MorphVertexBuffer.bHasBeenUpdated = true;
 		}

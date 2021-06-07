@@ -10,7 +10,7 @@
 	"DocsURL": "gim.studio/gfur-user-manual",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/9073da3940d4482384d111870ccc9ab7",
 	"SupportURL": "gfur@gim.studio",
-	"EngineVersion": "4.26.0",
+	"EngineVersion": "5.0.0",
 	"CanContainContent": true,
 	"Installed": true,
 	"Modules": [
@@ -19,11 +19,7 @@
 			"Type": "Runtime",
 			"LoadingPhase": "PostConfigInit",
 			"WhitelistPlatforms": [
-				"Win64",
-				"Win32",
-				"PS4",
-				"XboxOne",
-				"Android"
+				"Win64"
 			]
 		},
 		{
@@ -31,8 +27,7 @@
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit",
 			"WhitelistPlatforms": [
-				"Win64",
-				"Win32"
+				"Win64"
 			]
 		}
 	]

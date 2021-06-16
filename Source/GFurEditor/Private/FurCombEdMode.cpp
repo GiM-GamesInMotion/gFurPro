@@ -18,6 +18,8 @@
 #include "VREditorMode.h"
 #include "VREditorInteractor.h"
 #include "Runtime/Engine/Classes/Engine/Selection.h"
+#include "LevelEditor.h"
+#include "Toolkits/ToolkitManager.h"
 
 #define LOCTEXT_NAMESPACE "FurCombEdMode"
 
@@ -49,7 +51,6 @@ void FEdModeFurComb::AddReferencedObjects(FReferenceCollector& Collector)
 {
 	// Call parent implementation
 	FEdMode::AddReferencedObjects(Collector);
-	FurComb->AddReferencedObjects(Collector);
 }
 
 void FEdModeFurComb::Enter()
@@ -166,8 +167,14 @@ void FEdModeFurComb::Exit()
 	GEditor->OnObjectsReplaced().RemoveAll(this);
 	USelection::SelectionChangedEvent.Remove(SelectionChangedHandle);
 
+	FToolkitManager::Get().CloseToolkit(Toolkit.ToSharedRef());
+	Toolkit.Reset();
+
 	// Call parent implementation
 	FEdMode::Exit();
+
+	FLevelEditorModule& LevelEditor = FModuleManager::GetModuleChecked<FLevelEditorModule>(FName(TEXT("LevelEditor")));
+	LevelEditor.OnRedrawLevelEditingViewports().RemoveAll(this);
 }
 
 bool FEdModeFurComb::CapturedMouseMove(FEditorViewportClient* InViewportClient, FViewport* InViewport, int32 InMouseX, int32 InMouseY)

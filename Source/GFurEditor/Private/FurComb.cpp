@@ -215,11 +215,6 @@ void FFurComb::ActorDeselected(AActor* Actor)
 	FurComponents.Reset();
 }
 
-void FFurComb::AddReferencedObjects(FReferenceCollector& Collector)
-{
-
-}
-
 UFurCombSettings* FFurComb::GetCurrentFurCombSettings()
 {
 	return FurCombSettings[(int)Mode];

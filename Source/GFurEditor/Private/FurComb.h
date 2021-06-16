@@ -90,9 +90,6 @@ public:
 	/** Tries to retrieves a valid mesh adapter for the given component (derived painters can cache these hence no base implementation) */
 //	TSharedPtr<IMeshPaintGeometryAdapter> GetMeshAdapterForComponent(const UMeshComponent* Component);//TODO
 
-	/** Functionality to collect painter referenced objects to prevent GC */
-	void AddReferencedObjects(FReferenceCollector& Collector);
-
 	/** Returns an instance of UPaintBrushSettings (base or derived) which contains the basic settings used for painting */
 	UFurCombSettings* GetCurrentFurCombSettings();
 

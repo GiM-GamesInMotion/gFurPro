@@ -450,12 +450,13 @@ void FFurStaticData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponen
 
 	if (FurSplinesAssigned == NULL && GuideMeshes.Num() > 0)
 	{
-		FurSplinesUsed = NewObject<UFurSplines>();
-		GenerateSplines(FurSplinesUsed, StaticMesh, InLod, GuideMeshes);
+		FurSplinesGenerated = NewObject<UFurSplines>();
+		GenerateSplines(FurSplinesGenerated, StaticMesh, InLod, GuideMeshes);
+		FurSplinesUsed = FurSplinesGenerated;
 	}
 #if WITH_EDITORONLY_DATA
 	StaticMeshChangeHandle = StaticMesh->OnMeshChanged.AddLambda([this]() { BuildFur(BuildType::Full); });
-	if (FurSplinesAssigned)
+	if (FurSplinesAssigned.IsValid())
 	{
 		FurSplinesChangeHandle = FurSplinesAssigned->OnSplinesChanged.AddLambda([this]() { BuildFur(BuildType::Splines); });
 		FurSplinesCombHandle = FurSplinesAssigned->OnSplinesCombed.AddLambda([this](const TArray<uint32>& VertexSet) { BuildFur(VertexSet); });
@@ -467,10 +468,11 @@ void FFurStaticData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponen
 			if (GuideMesh)
 			{
 				auto Handle = GuideMesh->OnMeshChanged.AddLambda([this, InLod]() {
-					if (FurSplinesUsed)
-						FurSplinesUsed->ConditionalBeginDestroy();
-					FurSplinesUsed = NewObject<UFurSplines>();
-					GenerateSplines(FurSplinesUsed, StaticMesh, InLod, GuideMeshes);
+					if (FurSplinesGenerated)
+						FurSplinesGenerated->ConditionalBeginDestroy();
+					FurSplinesGenerated = NewObject<UFurSplines>();
+					GenerateSplines(FurSplinesGenerated, StaticMesh, InLod, GuideMeshes);
+					FurSplinesUsed = FurSplinesGenerated;
 					BuildFur(BuildType::Splines);
 				});
 				GuideMeshesChangeHandles.Add(Handle);

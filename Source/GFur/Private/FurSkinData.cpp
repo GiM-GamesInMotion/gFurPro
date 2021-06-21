@@ -934,15 +934,18 @@ void FFurSkinData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFacto
 void FFurSkinData::UnbindChangeDelegates()
 {
 #if WITH_EDITORONLY_DATA
-	if (FurSplinesChangeHandle.IsValid())
+	if (FurSplinesAssigned.IsValid())
 	{
-		FurSplinesAssigned->OnSplinesChanged.Remove(FurSplinesChangeHandle);
-		FurSplinesChangeHandle.Reset();
-	}
-	if (FurSplinesCombHandle.IsValid())
-	{
-		FurSplinesAssigned->OnSplinesCombed.Remove(FurSplinesCombHandle);
-		FurSplinesCombHandle.Reset();
+		if (FurSplinesChangeHandle.IsValid())
+		{
+			FurSplinesAssigned->OnSplinesChanged.Remove(FurSplinesChangeHandle);
+			FurSplinesChangeHandle.Reset();
+		}
+		if (FurSplinesCombHandle.IsValid())
+		{
+			FurSplinesAssigned->OnSplinesCombed.Remove(FurSplinesCombHandle);
+			FurSplinesCombHandle.Reset();
+		}
 	}
 	if (SkeletalMeshChangeHandle.IsValid())
 	{
@@ -971,13 +974,16 @@ void FFurSkinData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent*
 
 	if (FurSplinesAssigned == NULL && GuideMeshes.Num() > 0)
 	{
-		FurSplinesUsed = NewObject<UFurSplines>();
-		GenerateSplines(FurSplinesUsed, SkeletalMesh, InLod, GuideMeshes);
+		if (FurSplinesGenerated)
+			FurSplinesGenerated->ConditionalBeginDestroy();
+		FurSplinesGenerated = NewObject<UFurSplines>();
+		GenerateSplines(FurSplinesGenerated, SkeletalMesh, InLod, GuideMeshes);
+		FurSplinesUsed = FurSplinesGenerated;
 	}
 
 #if WITH_EDITORONLY_DATA
 	SkeletalMeshChangeHandle = SkeletalMesh->GetOnMeshChanged().AddLambda([this]() { BuildFur(BuildType::Full); });
-	if (FurSplinesAssigned)
+	if (FurSplinesAssigned.Get())
 	{
 		FurSplinesChangeHandle = FurSplinesAssigned->OnSplinesChanged.AddLambda([this]() { BuildFur(BuildType::Splines); });
 		FurSplinesCombHandle = FurSplinesAssigned->OnSplinesCombed.AddLambda([this](const TArray<uint32>& VertexSet) { BuildFur(VertexSet); });
@@ -989,10 +995,11 @@ void FFurSkinData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent*
 			if (GuideMesh)
 			{
 				auto Handle = GuideMesh->GetOnMeshChanged().AddLambda([this, InLod]() {
-					if (FurSplinesUsed)
-						FurSplinesUsed->ConditionalBeginDestroy();
-					FurSplinesUsed = NewObject<UFurSplines>();
-					GenerateSplines(FurSplinesUsed, SkeletalMesh, InLod, GuideMeshes);
+					if (FurSplinesGenerated)
+						FurSplinesGenerated->ConditionalBeginDestroy();
+					FurSplinesGenerated = NewObject<UFurSplines>();
+					GenerateSplines(FurSplinesGenerated, SkeletalMesh, InLod, GuideMeshes);
+					FurSplinesUsed = FurSplinesGenerated;
 					BuildFur(BuildType::Splines);
 				});
 				GuideMeshesChangeHandles.Add(Handle);

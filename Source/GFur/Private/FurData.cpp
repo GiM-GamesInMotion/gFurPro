@@ -110,10 +110,10 @@ FFurData::FFurData()
 
 FFurData::~FFurData()
 {
-	if (FurSplinesUsed != FurSplinesAssigned)
+	if (FurSplinesGenerated)
 	{
-		if (FurSplinesUsed->IsValidLowLevel())
-			FurSplinesUsed->ConditionalBeginDestroy();
+		if (FurSplinesGenerated->IsValidLowLevel())
+			FurSplinesGenerated->ConditionalBeginDestroy();
 	}
 
 	VertexBuffer.ReleaseResource();
@@ -132,7 +132,7 @@ void FFurData::Set(int InFurLayerCount, int InLod, class UGFurComponent* InFurCo
 	NoiseStrength = InFurComponent->NoiseStrength;
 	RemoveFacesWithoutSplines = InFurComponent->RemoveFacesWithoutSplines;
 
-	FurSplinesUsed = FurSplinesAssigned;
+	FurSplinesUsed = FurSplinesAssigned.Get();
 	CurrentMinFurLength = InFurComponent->FurLength;
 	CurrentMaxFurLength = InFurComponent->FurLength;
 }

@@ -160,7 +160,7 @@ protected:
 	int32 RefCount;
 
 	// set
-	UFurSplines* FurSplinesAssigned;
+	TWeakObjectPtr<UFurSplines> FurSplinesAssigned;
 	int32 Lod;
 	int32 FurLayerCount;
 	float FurLength;
@@ -171,7 +171,7 @@ protected:
 	bool RemoveFacesWithoutSplines;
 
 	// generated
-	UFurSplines* FurSplinesUsed;
+	UFurSplines* FurSplinesUsed = nullptr;
 	FFurVertexBuffer VertexBuffer;
 	FFurIndexBuffer IndexBuffer;
 	TArray<FSection> Sections;
@@ -181,6 +181,8 @@ protected:
 	bool bUseHighPrecisionTangentBasis;
 	bool bUseFullPrecisionUVs;
 	uint32 VertexCount;
+
+	UFurSplines* FurSplinesGenerated = nullptr;
 
 	// Temp Data
 	uint32 VertexCountPerLayer;

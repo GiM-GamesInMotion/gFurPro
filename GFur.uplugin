@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 3,
-	"VersionName": "3.7.9",
+	"VersionName": "3.8.1",
 	"FriendlyName": "GFur PRO",
 	"Description": "Shell based fur plugin.",
 	"Category": "Rendering",

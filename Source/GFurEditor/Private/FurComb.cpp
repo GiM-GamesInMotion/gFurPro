@@ -32,7 +32,6 @@ FFurComb::FFurComb()
 
 FFurComb::~FFurComb()
 {
-	FCoreUObjectDelegates::OnObjectPropertyChanged.RemoveAll(this);
 }
 
 void FFurComb::Init()

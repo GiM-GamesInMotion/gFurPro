@@ -456,7 +456,7 @@ void FFurStaticData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponen
 	}
 #if WITH_EDITORONLY_DATA
 	StaticMeshChangeHandle = StaticMesh->OnMeshChanged.AddLambda([this]() { BuildFur(BuildType::Full); });
-	if (FurSplinesAssigned.IsValid())
+	if (FurSplinesAssigned)
 	{
 		FurSplinesChangeHandle = FurSplinesAssigned->OnSplinesChanged.AddLambda([this]() { BuildFur(BuildType::Splines); });
 		FurSplinesCombHandle = FurSplinesAssigned->OnSplinesCombed.AddLambda([this](const TArray<uint32>& VertexSet) { BuildFur(VertexSet); });

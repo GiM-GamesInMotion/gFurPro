@@ -160,7 +160,7 @@ protected:
 	int32 RefCount;
 
 	// set
-	TWeakObjectPtr<UFurSplines> FurSplinesAssigned;
+	UFurSplines* FurSplinesAssigned = nullptr;
 	int32 Lod;
 	int32 FurLayerCount;
 	float FurLength;

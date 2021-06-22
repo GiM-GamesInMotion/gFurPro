@@ -931,10 +931,20 @@ void FFurSkinData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFacto
 	}
 }
 
+FFurSkinData::~FFurSkinData()
+{
+	UnbindChangeDelegates();
+
+	if (SkeletalMesh)
+		SkeletalMesh->RemoveFromRoot();
+	for (USkeletalMesh* Mesh : GuideMeshes)
+		Mesh->RemoveFromRoot();
+}
+
 void FFurSkinData::UnbindChangeDelegates()
 {
 #if WITH_EDITORONLY_DATA
-	if (FurSplinesAssigned.IsValid())
+	if (FurSplinesAssigned)
 	{
 		if (FurSplinesChangeHandle.IsValid())
 		{
@@ -947,7 +957,7 @@ void FFurSkinData::UnbindChangeDelegates()
 			FurSplinesCombHandle.Reset();
 		}
 	}
-	if (SkeletalMeshChangeHandle.IsValid())
+	if (SkeletalMesh && SkeletalMeshChangeHandle.IsValid())
 	{
 		SkeletalMesh->GetOnMeshChanged().Remove(SkeletalMeshChangeHandle);
 		SkeletalMeshChangeHandle.Reset();
@@ -964,11 +974,20 @@ void FFurSkinData::UnbindChangeDelegates()
 void FFurSkinData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent)
 {
 	UnbindChangeDelegates();
+	if (SkeletalMesh)
+		SkeletalMesh->RemoveFromRoot();
+	for (USkeletalMesh* Mesh : GuideMeshes)
+		Mesh->RemoveFromRoot();
+
 
 	FFurData::Set(InFurLayerCount, InLod, InFurComponent);
 
 	SkeletalMesh = InFurComponent->SkeletalGrowMesh;
+	if (SkeletalMesh)
+		SkeletalMesh->AddToRoot();
 	GuideMeshes = InFurComponent->SkeletalGuideMeshes;
+	for (auto* Mesh : InFurComponent->SkeletalGuideMeshes)
+		Mesh->AddToRoot();
 
 	check(SkeletalMesh);
 
@@ -983,7 +1002,7 @@ void FFurSkinData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent*
 
 #if WITH_EDITORONLY_DATA
 	SkeletalMeshChangeHandle = SkeletalMesh->GetOnMeshChanged().AddLambda([this]() { BuildFur(BuildType::Full); });
-	if (FurSplinesAssigned.Get())
+	if (FurSplinesAssigned)
 	{
 		FurSplinesChangeHandle = FurSplinesAssigned->OnSplinesChanged.AddLambda([this]() { BuildFur(BuildType::Splines); });
 		FurSplinesCombHandle = FurSplinesAssigned->OnSplinesCombed.AddLambda([this](const TArray<uint32>& VertexSet) { BuildFur(VertexSet); });
@@ -1325,9 +1344,9 @@ void GenerateSplines(UFurSplines* Splines, USkeletalMesh* InSkeletalMesh, int32 
 	}
 
 	int32 k = 1;
-	for (USkeletalMesh* GuideMesh : InGuideMeshes)
+	for (const TWeakObjectPtr<USkeletalMesh>& GuideMesh : InGuideMeshes)
 	{
-		if (GuideMesh)
+		if (GuideMesh.IsValid())
 		{
 			auto* SkeletalMeshResource2 = GuideMesh->GetResourceForRendering();
 			check(SkeletalMeshResource2);

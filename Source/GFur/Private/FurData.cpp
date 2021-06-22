@@ -118,11 +118,16 @@ FFurData::~FFurData()
 
 	VertexBuffer.ReleaseResource();
 	IndexBuffer.ReleaseResource();
+
+	if (FurSplinesAssigned)
+		FurSplinesAssigned->RemoveFromRoot();
 }
 
 void FFurData::Set(int InFurLayerCount, int InLod, class UGFurComponent* InFurComponent)
 {
 	FurSplinesAssigned = InFurComponent->FurSplines;
+	if (FurSplinesAssigned)
+		FurSplinesAssigned->AddToRoot();
 	Lod = InLod;
 	FurLayerCount = FMath::Clamp(InFurLayerCount, MinimalFurLayerCount, MaximalFurLayerCount);
 	FurLength = InFurComponent->FurLength;
@@ -132,7 +137,7 @@ void FFurData::Set(int InFurLayerCount, int InLod, class UGFurComponent* InFurCo
 	NoiseStrength = InFurComponent->NoiseStrength;
 	RemoveFacesWithoutSplines = InFurComponent->RemoveFacesWithoutSplines;
 
-	FurSplinesUsed = FurSplinesAssigned.Get();
+	FurSplinesUsed = FurSplinesAssigned;
 	CurrentMinFurLength = InFurComponent->FurLength;
 	CurrentMaxFurLength = InFurComponent->FurLength;
 }

@@ -27,7 +27,7 @@ public:
 
 	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel) override;
 protected:
-	USkeletalMesh* SkeletalMesh;
+	USkeletalMesh* SkeletalMesh = nullptr;
 	TArray<USkeletalMesh*> GuideMeshes;
 	bool HasExtraBoneInfluences;
 
@@ -39,7 +39,7 @@ protected:
 #endif // WITH_EDITORONLY_DATA
 
 	FFurSkinData() {}
-	~FFurSkinData() { UnbindChangeDelegates(); }
+	~FFurSkinData();
 
 	void UnbindChangeDelegates();
 	void Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent);

@@ -935,10 +935,12 @@ FFurSkinData::~FFurSkinData()
 {
 	UnbindChangeDelegates();
 
+#if WITH_EDITORONLY_DATA
 	if (SkeletalMesh)
 		SkeletalMesh->RemoveFromRoot();
 	for (USkeletalMesh* Mesh : GuideMeshes)
 		Mesh->RemoveFromRoot();
+#endif // WITH_EDITORONLY_DATA
 }
 
 void FFurSkinData::UnbindChangeDelegates()
@@ -974,20 +976,24 @@ void FFurSkinData::UnbindChangeDelegates()
 void FFurSkinData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent)
 {
 	UnbindChangeDelegates();
+#if WITH_EDITORONLY_DATA
 	if (SkeletalMesh)
 		SkeletalMesh->RemoveFromRoot();
 	for (USkeletalMesh* Mesh : GuideMeshes)
 		Mesh->RemoveFromRoot();
+#endif // WITH_EDITORONLY_DATA
 
 
 	FFurData::Set(InFurLayerCount, InLod, InFurComponent);
 
 	SkeletalMesh = InFurComponent->SkeletalGrowMesh;
+	GuideMeshes = InFurComponent->SkeletalGuideMeshes;
+#if WITH_EDITORONLY_DATA
 	if (SkeletalMesh)
 		SkeletalMesh->AddToRoot();
-	GuideMeshes = InFurComponent->SkeletalGuideMeshes;
 	for (auto* Mesh : InFurComponent->SkeletalGuideMeshes)
 		Mesh->AddToRoot();
+#endif // WITH_EDITORONLY_DATA
 
 	check(SkeletalMesh);
 

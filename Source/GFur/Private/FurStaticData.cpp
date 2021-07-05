@@ -410,6 +410,18 @@ void FFurStaticData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFac
 	}
 }
 
+FFurStaticData::~FFurStaticData()
+{
+	UnbindChangeDelegates();
+
+#if WITH_EDITORONLY_DATA
+	if (StaticMesh)
+		StaticMesh->RemoveFromRoot();
+	for (UStaticMesh* Mesh : GuideMeshes)
+		Mesh->RemoveFromRoot();
+#endif // WITH_EDITORONLY_DATA
+}
+
 void FFurStaticData::UnbindChangeDelegates()
 {
 #if WITH_EDITORONLY_DATA
@@ -440,11 +452,23 @@ void FFurStaticData::UnbindChangeDelegates()
 void FFurStaticData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent)
 {
 	UnbindChangeDelegates();
+#if WITH_EDITORONLY_DATA
+	if (StaticMesh)
+		StaticMesh->RemoveFromRoot();
+	for (UStaticMesh* Mesh : GuideMeshes)
+		Mesh->RemoveFromRoot();
+#endif // WITH_EDITORONLY_DATA
 
 	FFurData::Set(InFurLayerCount, InLod, InFurComponent);
 
 	StaticMesh = InFurComponent->StaticGrowMesh;
 	GuideMeshes = InFurComponent->StaticGuideMeshes;
+#if WITH_EDITORONLY_DATA
+	if (StaticMesh)
+		StaticMesh->AddToRoot();
+	for (auto* Mesh : InFurComponent->SkeletalGuideMeshes)
+		Mesh->AddToRoot();
+#endif // WITH_EDITORONLY_DATA
 
 	check(StaticMesh);
 

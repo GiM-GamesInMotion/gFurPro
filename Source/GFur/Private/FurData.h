@@ -247,8 +247,6 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 		auto GenLayerData = CalcFurGenLayerData(FurLayerCount);
 		for (uint32 SrcVertexIndex = SrcVertexIndexBegin; SrcVertexIndex < SrcVertexIndexEnd; SrcVertexIndex++)
 		{
-			auto& Vertex = Vertices[DstVertexIndex];
-			VertexBlitter.Blit(Vertex, SrcVertexIndex);
 			if (FurSplinesUsed)
 			{
 				int32 SplineIndex = SplineMap[SrcVertexIndex];
@@ -264,11 +262,15 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 						VertexRemap[SrcVertexIndex] = DstVertexIndex;
 					}
 				}
+				auto& Vertex = Vertices[DstVertexIndex];
+				VertexBlitter.Blit(Vertex, SrcVertexIndex);
 				float Length = SplineIndex >= 0 ? FurLengths[SplineIndex] : FurLength;
 				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
 			}
 			else
 			{
+				auto& Vertex = Vertices[DstVertexIndex];
+				VertexBlitter.Blit(Vertex, SrcVertexIndex);
 				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], FurLength, GenLayerData);
 			}
 			DstVertexIndex++;
@@ -281,8 +283,6 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 		auto GenLayerData = CalcFurGenLayerData(Layer + 1);
 		for (uint32 SrcVertexIndex = SrcVertexIndexBegin; SrcVertexIndex < SrcVertexIndexEnd; SrcVertexIndex++)
 		{
-			auto& Vertex = Vertices[DstVertexIndex];
-			VertexBlitter.Blit(Vertex, SrcVertexIndex);
 			if (FurSplinesUsed)
 			{
 				int32 SplineIndex = SplineMap[SrcVertexIndex];
@@ -293,11 +293,15 @@ inline uint32 FFurData::GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 S
 						continue;
 					}
 				}
+				auto& Vertex = Vertices[DstVertexIndex];
+				VertexBlitter.Blit(Vertex, SrcVertexIndex);
 				float Length = SplineIndex >= 0 ? FurLengths[SplineIndex] : FurLength;
 				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
 			}
 			else
 			{
+				auto& Vertex = Vertices[DstVertexIndex];
+				VertexBlitter.Blit(Vertex, SrcVertexIndex);
 				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], FurLength, GenLayerData);
 			}
 			DstVertexIndex++;

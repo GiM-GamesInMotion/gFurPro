@@ -25,7 +25,7 @@ protected:
 #endif // WITH_EDITORONLY_DATA
 
 	FFurStaticData() {}
-	~FFurStaticData() { UnbindChangeDelegates(); }
+	~FFurStaticData();
 
 	void UnbindChangeDelegates();
 	void Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent);

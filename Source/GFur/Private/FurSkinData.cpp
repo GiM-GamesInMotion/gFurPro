@@ -958,20 +958,35 @@ void FFurSkinData::CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFacto
 	}
 }
 
+FFurSkinData::~FFurSkinData()
+{
+	UnbindChangeDelegates();
+
+#if WITH_EDITORONLY_DATA
+	if (SkeletalMesh)
+		SkeletalMesh->RemoveFromRoot();
+	for (USkeletalMesh* Mesh : GuideMeshes)
+		Mesh->RemoveFromRoot();
+#endif // WITH_EDITORONLY_DATA
+}
+
 void FFurSkinData::UnbindChangeDelegates()
 {
 #if WITH_EDITORONLY_DATA
-	if (FurSplinesChangeHandle.IsValid())
+	if (FurSplinesAssigned)
 	{
-		FurSplinesAssigned->OnSplinesChanged.Remove(FurSplinesChangeHandle);
-		FurSplinesChangeHandle.Reset();
+		if (FurSplinesChangeHandle.IsValid())
+		{
+			FurSplinesAssigned->OnSplinesChanged.Remove(FurSplinesChangeHandle);
+			FurSplinesChangeHandle.Reset();
+		}
+		if (FurSplinesCombHandle.IsValid())
+		{
+			FurSplinesAssigned->OnSplinesCombed.Remove(FurSplinesCombHandle);
+			FurSplinesCombHandle.Reset();
+		}
 	}
-	if (FurSplinesCombHandle.IsValid())
-	{
-		FurSplinesAssigned->OnSplinesCombed.Remove(FurSplinesCombHandle);
-		FurSplinesCombHandle.Reset();
-	}
-	if (SkeletalMeshChangeHandle.IsValid())
+	if (SkeletalMesh && SkeletalMeshChangeHandle.IsValid())
 	{
 		SkeletalMesh->GetOnMeshChanged().Remove(SkeletalMeshChangeHandle);
 		SkeletalMeshChangeHandle.Reset();
@@ -988,18 +1003,34 @@ void FFurSkinData::UnbindChangeDelegates()
 void FFurSkinData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent* InFurComponent)
 {
 	UnbindChangeDelegates();
+#if WITH_EDITORONLY_DATA
+	if (SkeletalMesh)
+		SkeletalMesh->RemoveFromRoot();
+	for (USkeletalMesh* Mesh : GuideMeshes)
+		Mesh->RemoveFromRoot();
+#endif // WITH_EDITORONLY_DATA
+
 
 	FFurData::Set(InFurLayerCount, InLod, InFurComponent);
 
 	SkeletalMesh = InFurComponent->SkeletalGrowMesh;
 	GuideMeshes = InFurComponent->SkeletalGuideMeshes;
+#if WITH_EDITORONLY_DATA
+	if (SkeletalMesh)
+		SkeletalMesh->AddToRoot();
+	for (auto* Mesh : InFurComponent->SkeletalGuideMeshes)
+		Mesh->AddToRoot();
+#endif // WITH_EDITORONLY_DATA
 
 	check(SkeletalMesh);
 
 	if (FurSplinesAssigned == NULL && GuideMeshes.Num() > 0)
 	{
-		FurSplinesUsed = NewObject<UFurSplines>();
-		GenerateSplines(FurSplinesUsed, SkeletalMesh, InLod, GuideMeshes);
+		if (FurSplinesGenerated)
+			FurSplinesGenerated->ConditionalBeginDestroy();
+		FurSplinesGenerated = NewObject<UFurSplines>();
+		GenerateSplines(FurSplinesGenerated, SkeletalMesh, InLod, GuideMeshes);
+		FurSplinesUsed = FurSplinesGenerated;
 	}
 
 #if WITH_EDITORONLY_DATA
@@ -1016,10 +1047,11 @@ void FFurSkinData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent*
 			if (GuideMesh)
 			{
 				auto Handle = GuideMesh->GetOnMeshChanged().AddLambda([this, InLod]() {
-					if (FurSplinesUsed)
-						FurSplinesUsed->ConditionalBeginDestroy();
-					FurSplinesUsed = NewObject<UFurSplines>();
-					GenerateSplines(FurSplinesUsed, SkeletalMesh, InLod, GuideMeshes);
+					if (FurSplinesGenerated)
+						FurSplinesGenerated->ConditionalBeginDestroy();
+					FurSplinesGenerated = NewObject<UFurSplines>();
+					GenerateSplines(FurSplinesGenerated, SkeletalMesh, InLod, GuideMeshes);
+					FurSplinesUsed = FurSplinesGenerated;
 					BuildFur(BuildType::Splines);
 				});
 				GuideMeshesChangeHandles.Add(Handle);

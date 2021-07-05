@@ -203,6 +203,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UFunction_UGFurComponent_RegenerateFur_Statics::Function_MetaDataParams[] = {
+		{ "Category", "gFur Shell settings" },
 		{ "ModuleRelativePath", "Public/FurComponent.h" },
 	};
 #endif
@@ -347,7 +348,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		(UObject* (*)())Z_Construct_UPackage__Script_GFur,
 	};
 	const FClassFunctionLinkInfo Z_Construct_UClass_UGFurComponent_Statics::FuncInfo[] = {
-		{ &Z_Construct_UFunction_UGFurComponent_RegenerateFur, "RegenerateFur" }, // 1206516515
+		{ &Z_Construct_UFunction_UGFurComponent_RegenerateFur, "RegenerateFur" }, // 3971206577
 	};
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UGFurComponent_Statics::Class_MetaDataParams[] = {
@@ -666,7 +667,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 4054375827);
+	IMPLEMENT_CLASS(UGFurComponent, 1592118753);
 	template<> GFUR_API UClass* StaticClass<UGFurComponent>()
 	{
 		return UGFurComponent::StaticClass();

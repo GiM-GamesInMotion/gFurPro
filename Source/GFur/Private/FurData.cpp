@@ -118,11 +118,20 @@ FFurData::~FFurData()
 
 	VertexBuffer.ReleaseResource();
 	IndexBuffer.ReleaseResource();
+
+#if WITH_EDITORONLY_DATA
+	if (FurSplinesAssigned)
+		FurSplinesAssigned->RemoveFromRoot();
+#endif // WITH_EDITORONLY_DATA
 }
 
 void FFurData::Set(int InFurLayerCount, int InLod, class UGFurComponent* InFurComponent)
 {
 	FurSplinesAssigned = InFurComponent->FurSplines;
+#if WITH_EDITORONLY_DATA
+	if (FurSplinesAssigned)
+		FurSplinesAssigned->AddToRoot();
+#endif // WITH_EDITORONLY_DATA
 	Lod = InLod;
 	FurLayerCount = FMath::Clamp(InFurLayerCount, MinimalFurLayerCount, MaximalFurLayerCount);
 	FurLength = InFurComponent->FurLength;

@@ -199,7 +199,7 @@ public:
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category=SkeletalMesh)
 	float StreamingDistanceMultiplier;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "gFur Shell settings")
 	void RegenerateFur();
 
 	const TArray<int32>& GetFurSplineMap() const;

@@ -1132,7 +1132,7 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 		uint32 VertCount = GenerateFurVertices(SourceSection.BaseVertexIndex, SourceSection.BaseVertexIndex + SourceSection.NumVertices, Vertices + SectionVertexOffset, VertexBlitter);
 		if (Build == BuildType::Full)
 		{
-			const auto& RefPose = SkeletalMesh->RefSkeleton.GetRawRefBonePose();
+			const auto& RefPose = SkeletalMesh->GetRefSkeleton().GetRawRefBonePose();
 			for (uint32 i = 0; i < VertCount; i++)
 			{
 				uint32 VertexIndex = SectionVertexOffset + i;

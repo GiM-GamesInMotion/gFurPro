@@ -42,7 +42,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 {
 	FScriptStruct_GFur_StaticRegisterNativesFFurLod()
 	{
-		UScriptStruct::DeferCppStructOps(FName(TEXT("FurLod")),new UScriptStruct::TCppStructOps<FFurLod>);
+		UScriptStruct::DeferCppStructOps<FFurLod>(FName(TEXT("FurLod")));
 	}
 } ScriptStruct_GFur_StaticRegisterNativesFFurLod;
 	struct Z_Construct_UScriptStruct_FFurLod_Statics
@@ -667,7 +667,7 @@ static struct FScriptStruct_GFur_StaticRegisterNativesFFurLod
 		}
 		return OuterClass;
 	}
-	IMPLEMENT_CLASS(UGFurComponent, 1829097765);
+	IMPLEMENT_CLASS(UGFurComponent, 3369457952);
 	template<> GFUR_API UClass* StaticClass<UGFurComponent>()
 	{
 		return UGFurComponent::StaticClass();

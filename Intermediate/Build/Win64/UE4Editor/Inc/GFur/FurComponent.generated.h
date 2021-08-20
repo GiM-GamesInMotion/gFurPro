@@ -54,7 +54,7 @@ public: \
 	NO_API UGFurComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UGFurComponent) \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UGFurComponent); \
-DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UGFurComponent); \
+	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UGFurComponent); \
 private: \
 	/** Private move- and copy-constructors, should never be used */ \
 	NO_API UGFurComponent(UGFurComponent&&); \
@@ -71,7 +71,7 @@ private: \
 	NO_API UGFurComponent(const UGFurComponent&); \
 public: \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UGFurComponent); \
-DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UGFurComponent); \
+	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UGFurComponent); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UGFurComponent)
 
 

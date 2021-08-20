@@ -428,7 +428,7 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, USkele
 void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, UStaticMesh* Mesh, int32 ControlPointCount, float Length) const
 {
 	check(ControlPointCount >= 2);
-	auto& RenderData = Mesh->RenderData;
+	auto* RenderData = Mesh->GetRenderData();
 	check(RenderData);
 
 	const auto& LodModel = RenderData->LODResources[0];
@@ -608,7 +608,7 @@ ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename
 ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename, UFurSplines* FurSplines, UStaticMesh* Mesh, float MinFurLength, float CountFactor,
 	bool Save)
 {
-	auto* StaticMeshResource = Mesh->RenderData.Get();
+	auto* StaticMeshResource = Mesh->GetRenderData();
 	check(StaticMeshResource);
 	const FStaticMeshLODResources& LodRenderData = StaticMeshResource->LODResources[0];
 

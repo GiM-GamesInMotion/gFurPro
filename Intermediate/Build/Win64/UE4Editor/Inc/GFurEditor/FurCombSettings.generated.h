@@ -39,7 +39,7 @@ public: \
 	NO_API UFurCombSettings(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UFurCombSettings) \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UFurCombSettings); \
-DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurCombSettings); \
+	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurCombSettings); \
 private: \
 	/** Private move- and copy-constructors, should never be used */ \
 	NO_API UFurCombSettings(UFurCombSettings&&); \
@@ -56,7 +56,7 @@ private: \
 	NO_API UFurCombSettings(const UFurCombSettings&); \
 public: \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UFurCombSettings); \
-DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurCombSettings); \
+	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurCombSettings); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UFurCombSettings)
 
 

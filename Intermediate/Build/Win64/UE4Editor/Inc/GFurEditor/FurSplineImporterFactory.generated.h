@@ -39,7 +39,7 @@ public: \
 	NO_API UFurSplineImporterFactory(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UFurSplineImporterFactory) \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UFurSplineImporterFactory); \
-DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplineImporterFactory); \
+	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplineImporterFactory); \
 private: \
 	/** Private move- and copy-constructors, should never be used */ \
 	NO_API UFurSplineImporterFactory(UFurSplineImporterFactory&&); \
@@ -56,7 +56,7 @@ private: \
 	NO_API UFurSplineImporterFactory(const UFurSplineImporterFactory&); \
 public: \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UFurSplineImporterFactory); \
-DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplineImporterFactory); \
+	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplineImporterFactory); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UFurSplineImporterFactory)
 
 

@@ -522,7 +522,7 @@ bool FFurStaticData::Similar(int32 InLod, class UGFurComponent* InFurComponent)
 
 void FFurStaticData::BuildFur(BuildType Build)
 {
-	auto* StaticMeshResource = StaticMesh->RenderData.Get();
+	auto* StaticMeshResource = StaticMesh->GetRenderData();
 	check(StaticMeshResource);
 
 	const FStaticMeshLODResources& LodRenderData = StaticMeshResource->LODResources[Lod];
@@ -677,7 +677,7 @@ inline void FFurStaticData::BuildFur(const FStaticMeshLODResources& LodRenderDat
 
 void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
 {
-	auto* StaticMeshResource = StaticMesh->RenderData.Get();
+	auto* StaticMeshResource = StaticMesh->GetRenderData();
 	check(StaticMeshResource);
 
 	const FStaticMeshLODResources& LodRenderData = StaticMeshResource->LODResources[Lod];
@@ -740,7 +740,7 @@ void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
 /** Generate Splines */
 void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLod, const TArray<UStaticMesh*>& InGuideMeshes)
 {
-	auto* StaticMeshResource = InStaticMesh->RenderData.Get();
+	auto* StaticMeshResource = InStaticMesh->GetRenderData();
 	check(StaticMeshResource);
 
 	if (InLod >= StaticMeshResource->LODResources.Num())
@@ -763,7 +763,7 @@ void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLo
 	{
 		if (GuideMesh)
 		{
-			auto* StaticMeshResource2 = GuideMesh->RenderData.Get();
+			auto* StaticMeshResource2 = GuideMesh->GetRenderData();
 			check(StaticMeshResource2);
 			const auto& LodModel2 = StaticMeshResource2->LODResources[InLod];
 			const auto& SourcePositions2 = LodModel2.VertexBuffers.PositionVertexBuffer;

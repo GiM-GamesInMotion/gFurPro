@@ -7,7 +7,6 @@ public class GFur : ModuleRules
 	public GFur(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-		bFasterWithoutUnity = true;
 		MinFilesUsingPrecompiledHeaderOverride = 1;
 
 		PublicIncludePaths.Add(ModuleDirectory + "/Public");

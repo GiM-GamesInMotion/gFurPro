@@ -39,7 +39,7 @@ public: \
 	NO_API UFurSplines(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UFurSplines) \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UFurSplines); \
-DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplines); \
+	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplines); \
 private: \
 	/** Private move- and copy-constructors, should never be used */ \
 	NO_API UFurSplines(UFurSplines&&); \
@@ -56,7 +56,7 @@ private: \
 	NO_API UFurSplines(const UFurSplines&); \
 public: \
 	DECLARE_VTABLE_PTR_HELPER_CTOR(NO_API, UFurSplines); \
-DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplines); \
+	DEFINE_VTABLE_PTR_HELPER_CTOR_CALLER(UFurSplines); \
 	DEFINE_DEFAULT_OBJECT_INITIALIZER_CONSTRUCTOR_CALL(UFurSplines)
 
 

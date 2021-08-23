@@ -1350,9 +1350,9 @@ void GenerateSplines(UFurSplines* Splines, USkeletalMesh* InSkeletalMesh, int32 
 	}
 
 	int32 k = 1;
-	for (const TWeakObjectPtr<USkeletalMesh>& GuideMesh : InGuideMeshes)
+	for (const USkeletalMesh* GuideMesh : InGuideMeshes)
 	{
-		if (GuideMesh.IsValid())
+		if (GuideMesh)
 		{
 			auto* SkeletalMeshResource2 = GuideMesh->GetResourceForRendering();
 			check(SkeletalMeshResource2);

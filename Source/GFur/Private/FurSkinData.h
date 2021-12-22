@@ -27,7 +27,7 @@ public:
 
 	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel) override;
 protected:
-	USkeletalMesh* SkeletalMesh;
+	USkeletalMesh* SkeletalMesh = nullptr;
 	TArray<USkeletalMesh*> GuideMeshes;
 	bool HasExtraBoneInfluences;
 

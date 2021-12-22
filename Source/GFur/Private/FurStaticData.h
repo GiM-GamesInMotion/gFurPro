@@ -14,7 +14,7 @@ public:
 
 	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel) override;
 protected:
-	UStaticMesh* StaticMesh;
+	UStaticMesh* StaticMesh = nullptr;
 	TArray<UStaticMesh*> GuideMeshes;
 
 #if WITH_EDITORONLY_DATA

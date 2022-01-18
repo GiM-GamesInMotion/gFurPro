@@ -38,6 +38,8 @@ void FFurMorphVertexBuffer::ReleaseDynamicRHI()
 FFurMorphObject::FFurMorphObject(FFurSkinData* InFurData)
 {
 	FurData = InFurData;
+	VertexBuffer.NumVertices = 1;
+	VertexBuffer.InitResource();
 }
 
 FFurMorphObject::~FFurMorphObject()

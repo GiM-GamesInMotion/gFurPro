@@ -39,7 +39,7 @@ FFurMorphObject::FFurMorphObject(FFurSkinData* InFurData)
 {
 	FurData = InFurData;
 	VertexBuffer.NumVertices = 1;
-	VertexBuffer.InitResource();
+	BeginInitResource(&VertexBuffer);
 }
 
 FFurMorphObject::~FFurMorphObject()

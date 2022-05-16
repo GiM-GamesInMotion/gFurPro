@@ -336,7 +336,7 @@ public:
 
 				RayTracingInstance.Materials.Add(MeshBatch);
 			}
-			RayTracingInstance.BuildInstanceMaskAndFlags();
+			RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
 			OutRayTracingInstances.Add(RayTracingInstance);
 		}
 	}
@@ -971,7 +971,7 @@ void UGFurComponent::updateFur()
 					}
 					else
 					{
-						TempMatrices[ThisBoneIndex] = RefBasesInvMatrix[ThisBoneIndex].Inverse();
+						TempMatrices[ThisBoneIndex] = FMatrix(RefBasesInvMatrix[ThisBoneIndex].Inverse());
 						ValidTempMatrices[ThisBoneIndex] = true;
 					}
 				}
@@ -989,7 +989,7 @@ void UGFurComponent::updateFur()
 				FMatrix NewTransformation;
 				if (ValidTempMatrices[ThisBoneIndex])
 				{
-					ReferenceToLocal[ThisBoneIndex] = RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
+					ReferenceToLocal[ThisBoneIndex] = FMatrix(RefBasesInvMatrix[ThisBoneIndex]) * TempMatrices[ThisBoneIndex];
 					NewTransformation = TempMatrices[ThisBoneIndex] * ToWorld;
 					NewTransformation.RemoveScaling();
 				}
@@ -1009,7 +1009,7 @@ void UGFurComponent::updateFur()
 			{
 				if (ValidTempMatrices[ThisBoneIndex])
 				{
-					ReferenceToLocal[ThisBoneIndex] = RefBasesInvMatrix[ThisBoneIndex] * TempMatrices[ThisBoneIndex];
+					ReferenceToLocal[ThisBoneIndex] = FMatrix(RefBasesInvMatrix[ThisBoneIndex]) * TempMatrices[ThisBoneIndex];
 					Transformations[ThisBoneIndex] = TempMatrices[ThisBoneIndex] * ToWorld;
 					Transformations[ThisBoneIndex].RemoveScaling();
 				}

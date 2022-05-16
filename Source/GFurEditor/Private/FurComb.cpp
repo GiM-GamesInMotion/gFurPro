@@ -743,7 +743,7 @@ void FFurComb::Comb(UFurSplines* FurSplines, const CombParams& Params, const F& 
 				StrengtHeight = powf(1.0f - FMath::Abs(Height - Params.ApplyHeight), Exp);
 			}
 
-			FVector& Vertex = FurSplines->Vertices[i];
+			FVector3f& Vertex = FurSplines->Vertices[i];
 			FVector Dir = Vertex - PrevVertexOld;
 			PrevVertexOld = Vertex;
 
@@ -777,10 +777,10 @@ void FFurComb::CombAverageLength(UFurSplines* FurSplines, const CombParams& Para
 	{
 		int32 Cnt = FurSplines->ControlPointCount;
 		int32 Idx = Index * Cnt;
-		FVector PrevVertex = FurSplines->Vertices[Idx];
+		FVector3f PrevVertex = FurSplines->Vertices[Idx];
 		for (int32 i = Idx + 1, End = Idx + Cnt; i < End; i++)
 		{
-			FVector& Vertex = FurSplines->Vertices[i];
+			FVector3f& Vertex = FurSplines->Vertices[i];
 			LengthSum += (Vertex - PrevVertex).Size();
 			PrevVertex = Vertex;
 		}

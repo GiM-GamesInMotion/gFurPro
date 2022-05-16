@@ -123,8 +123,8 @@ public:
 
 		/** Mesh origin and Mesh Extension for Mesh compressions **/
 		/** This value will be (0, 0, 0), (1, 1, 1) relatively for non compressed meshes **/
-		FVector MeshOrigin;
-		FVector MeshExtension;
+		FVector3f MeshOrigin;
+		FVector3f MeshExtension;
 		float FurOffsetPower;
 		float MaxPhysicsOffsetLength;
 
@@ -604,7 +604,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	const uint32 NumBones = BoneMap.Num();
 	check(NumBones <= MaxGPUSkinBones);
 	float* ChunkMatrices = nullptr;
-	FVector4* Offsets = nullptr;
+	FVector4f* Offsets = nullptr;
 
 	FVertexBufferAndSRV* CurrentBoneBuffer = 0;
 	FVertexBufferAndSRV* CurrentBoneFurOffsetsBuffer = 0;
@@ -618,16 +618,16 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 
 		uint32 NumVectors = NumBones * 3;
 		check(NumVectors <= (MaxGPUSkinBones * 3));
-		uint32 VectorArraySize = NumVectors * sizeof(FVector4);
+		uint32 VectorArraySize = NumVectors * sizeof(FVector4f);
 
-		uint32 OffsetArraySize = NumBones * 3 * sizeof(FVector4);
+		uint32 OffsetArraySize = NumBones * 3 * sizeof(FVector4f);
 
 		if (!IsValidRef(*CurrentBoneBuffer))
 		{
 			FVertexBufferAndSRV Buffer;
 			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(VectorArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
-			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
+			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4f), PF_A32B32G32R32F);
 			*CurrentBoneBuffer = Buffer;
 			check(IsValidRef(*CurrentBoneBuffer));
 		}
@@ -638,7 +638,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			FVertexBufferAndSRV Buffer;
 			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(OffsetArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
-			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
+			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4f), PF_A32B32G32R32F);
 			*CurrentBoneFurOffsetsBuffer = Buffer;
 			check(IsValidRef(*CurrentBoneFurOffsetsBuffer));
 		}
@@ -646,7 +646,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 		if (NumBones)
 		{
 			ChunkMatrices = (float*)RHILockBuffer(CurrentBoneBuffer->VertexBufferRHI, 0, VectorArraySize, RLM_WriteOnly);
-			Offsets = (FVector4*)RHILockBuffer(CurrentBoneFurOffsetsBuffer->VertexBufferRHI, 0, OffsetArraySize, RLM_WriteOnly);
+			Offsets = (FVector4f*)RHILockBuffer(CurrentBoneFurOffsetsBuffer->VertexBufferRHI, 0, OffsetArraySize, RLM_WriteOnly);
 		}
 	}
 	else
@@ -672,12 +672,12 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			FPlatformMisc::Prefetch(ReferenceToLocalMatrices.GetData() + RefToLocalIdx + PreFetchStride, PLATFORM_CACHE_LINE_SIZE);
 
 			float* BoneMat = ChunkMatrices + BoneIdx * 12;
-			const FMatrix& RefToLocal = ReferenceToLocalMatrices[RefToLocalIdx];
+			const FMatrix44f RefToLocal = FMatrix44f(ReferenceToLocalMatrices[RefToLocalIdx]);
 			RefToLocal.To3x4MatrixTranspose(BoneMat);
 
-			Offsets[BoneIdx * 3] = LinearOffsets[RefToLocalIdx];
-			Offsets[BoneIdx * 3 + 1] = AngularOffsets[RefToLocalIdx];
-			Offsets[BoneIdx * 3 + 2] = LastTransformations[RefToLocalIdx].GetOrigin();
+			Offsets[BoneIdx * 3] = FVector4f(LinearOffsets[RefToLocalIdx]);
+			Offsets[BoneIdx * 3 + 1] = FVector4f(AngularOffsets[RefToLocalIdx]);
+			Offsets[BoneIdx * 3 + 2] = FVector4f(LastTransformations[RefToLocalIdx].GetOrigin());
 		}
 	}
 	else
@@ -690,7 +690,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			FPlatformMisc::Prefetch(ReferenceToLocalMatrices.GetData() + RefToLocalIdx + PreFetchStride, PLATFORM_CACHE_LINE_SIZE);
 
 			float* BoneMat = ChunkMatrices + BoneIdx * 12;
-			const FMatrix& RefToLocal = ReferenceToLocalMatrices[RefToLocalIdx];
+			const FMatrix44f RefToLocal = FMatrix44f(ReferenceToLocalMatrices[RefToLocalIdx]);
 			RefToLocal.To3x4MatrixTranspose(BoneMat);
 		}
 	}
@@ -706,7 +706,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	}
 	else
 	{
-		UniformBuffer = RHICreateUniformBuffer(&GBoneUniformStruct, FBoneMatricesUniformShaderParameters::StaticStructMetadata.GetLayout(), UniformBuffer_MultiFrame);
+		UniformBuffer = RHICreateUniformBuffer(&GBoneUniformStruct, &FBoneMatricesUniformShaderParameters::StaticStructMetadata.GetLayout(), UniformBuffer_MultiFrame);
 	}
 }
 
@@ -723,9 +723,9 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 
 		uint32 NumVectors = NumBones * 3;
 		check(NumVectors <= (MaxGPUSkinBones * 3));
-		uint32 VectorArraySize = NumVectors * sizeof(FVector4);
+		uint32 VectorArraySize = NumVectors * sizeof(FVector4f);
 
-		uint32 OffsetArraySize = NumBones * 3 * sizeof(FVector4);
+		uint32 OffsetArraySize = NumBones * 3 * sizeof(FVector4f);
 
 		FVertexBufferAndSRV* CurrentBoneBuffer = &GetBoneBufferForWriting(false);
 		if (!IsValidRef(*CurrentBoneBuffer))
@@ -733,7 +733,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			FVertexBufferAndSRV Buffer;
 			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(VectorArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
-			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
+			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4f), PF_A32B32G32R32F);
 			*CurrentBoneBuffer = Buffer;
 			check(IsValidRef(*CurrentBoneBuffer));
 		}
@@ -744,7 +744,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			FVertexBufferAndSRV Buffer;
 			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(VectorArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
-			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
+			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4f), PF_A32B32G32R32F);
 			*PreviousBoneBuffer = Buffer;
 			check(IsValidRef(*PreviousBoneBuffer));
 		}
@@ -755,7 +755,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			FVertexBufferAndSRV Buffer;
 			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(OffsetArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
-			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
+			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4f), PF_A32B32G32R32F);
 			*CurrentBoneFurOffsetsBuffer = Buffer;
 			check(IsValidRef(*CurrentBoneFurOffsetsBuffer));
 		}
@@ -766,7 +766,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			FVertexBufferAndSRV Buffer;
 			FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
 			Buffer.VertexBufferRHI = RHICreateVertexBuffer(OffsetArraySize, (BUF_Dynamic | BUF_ShaderResource), CreateInfo);
-			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4), PF_A32B32G32R32F);
+			Buffer.VertexBufferSRV = RHICreateShaderResourceView(Buffer.VertexBufferRHI, sizeof(FVector4f), PF_A32B32G32R32F);
 			*PreviousBoneFurOffsetsBuffer = Buffer;
 			check(IsValidRef(*PreviousBoneFurOffsetsBuffer));
 		}
@@ -785,7 +785,7 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 	}
 	else
 	{
-		UniformBuffer = RHICreateUniformBuffer(&GBoneUniformStruct, FBoneMatricesUniformShaderParameters::StaticStructMetadata.GetLayout(), UniformBuffer_MultiFrame);
+		UniformBuffer = RHICreateUniformBuffer(&GBoneUniformStruct, &FBoneMatricesUniformShaderParameters::StaticStructMetadata.GetLayout(), UniformBuffer_MultiFrame);
 	}
 }
 

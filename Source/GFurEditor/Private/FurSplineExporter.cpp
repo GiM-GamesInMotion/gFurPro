@@ -23,7 +23,7 @@ THIRD_PARTY_INCLUDES_START
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/Abc/OArchive.h>
 #include <Alembic/Abc/OObject.h>
-#include <Alembic/AbcCoreHDF5/All.h>
+#include <Alembic/AbcCoreOgawa/All.h>
 THIRD_PARTY_INCLUDES_END
 PRAGMA_DEFAULT_VISIBILITY_END
 
@@ -31,7 +31,7 @@ PRAGMA_DEFAULT_VISIBILITY_END
 #include "Windows/HideWindowsPlatformTypes.h"
 #endif
 
-void SetGeometry(Alembic::AbcGeom::OCurvesSchema& Schema, const FVector* Points, const FVector2D* UVs, int32 NumPoints, int32 NumSplines, int32 NumControlPoints)
+void SetGeometry(Alembic::AbcGeom::OCurvesSchema& Schema, const FVector3f* Points, const FVector2f* UVs, int32 NumPoints, int32 NumSplines, int32 NumControlPoints)
 {
 	TArray<int32> NumVerticesData;
 	NumVerticesData.AddUninitialized(NumSplines);
@@ -66,9 +66,9 @@ void SetGroomProperties(Alembic::AbcGeom::OCurvesSchema& Schema)
 	Params.set(Sample);
 }
 
-void ExportFurSplines(const FString& filename, const TArray<FVector>& Points, const TArray<FVector2D>& UVs, int32 ControlPointCount, int32 GroomSplineCount)
+void ExportFurSplines(const FString& filename, const TArray<FVector3f>& Points, const TArray<FVector2f>& UVs, int32 ControlPointCount, int32 GroomSplineCount)
 {
-	TArray<FVector2D> UVs2;
+	TArray<FVector2f> UVs2;
 	UVs2.AddUninitialized(UVs.Num());
 	for (int i = 0; i < UVs.Num(); i++)
 	{
@@ -79,7 +79,7 @@ void ExportFurSplines(const FString& filename, const TArray<FVector>& Points, co
 	{
 		std::string path(TCHAR_TO_UTF8(*filename));
 
-		Alembic::Abc::OArchive Archive(Alembic::AbcCoreHDF5::WriteArchive(), path);
+		Alembic::Abc::OArchive Archive(Alembic::AbcCoreOgawa::WriteArchive(), path);
 
 		Alembic::AbcGeom::OCurves GroomCurves(Archive.getTop(), "groom_splines");
 		Alembic::AbcGeom::OCurvesSchema& GroomSchema = GroomCurves.getSchema();

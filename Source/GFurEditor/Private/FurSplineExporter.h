@@ -1,4 +1,4 @@
 
 #pragma once
 
-void ExportFurSplines(const FString& filename, const TArray<FVector>& Points, const TArray<FVector2D>& UVs, int32 ControlPointCount, int32 GroomSplineCount);
+void ExportFurSplines(const FString& filename, const TArray<FVector3f>& Points, const TArray<FVector2f>& UVs, int32 ControlPointCount, int32 GroomSplineCount);

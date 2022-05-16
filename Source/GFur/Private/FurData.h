@@ -17,7 +17,7 @@ struct FFurStaticVertex
 	typedef typename TStaticMeshVertexTangentTypeSelector<TangentBasisTypeT>::TangentTypeT TangentTypeT;
 	typedef typename TStaticMeshVertexUVsTypeSelector<UVTypeT>::UVsTypeT UVsTypeT;
 
-	FVector			Position;
+	FVector3f			Position;
 
 	// Tangent, U-direction
 	TangentTypeT	TangentX;
@@ -29,15 +29,15 @@ struct FFurStaticVertex
 	// UVs
 	UVsTypeT		UV0;
 	// UVs
-	FVector2D		UV1;
+	FVector2f		UV1;
 	// UVs
-	FVector2D		UV2;
+	FVector2f		UV2;
 	// UVs
-	FVector2D		UV3;
+	FVector2f		UV3;
 	// VertexColor
 	FColor			Color;
 
-	FVector			FurOffset;
+	FVector3f			FurOffset;
 };
 
 /** Fur Vertex Buffer */
@@ -209,8 +209,8 @@ protected:
 
 	FFurGenLayerData CalcFurGenLayerData(int32 Layer);
 	void GenerateFurLengths(TArray<float>& FurLengths);
-	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, FVector2D& OutUv3, const FVector& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData);
-	void GenerateFurVertex(FVector& OutFurOffset, FVector2D& OutUv1, FVector2D& OutUv2, FVector2D& OutUv3, const FVector& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData, int32 InSplineIndex);
+	void GenerateFurVertex(FVector3f& OutFurOffset, FVector2f& OutUv1, FVector2f& OutUv2, FVector2f& OutUv3, const FVector3f& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData);
+	void GenerateFurVertex(FVector3f& OutFurOffset, FVector2f& OutUv1, FVector2f& OutUv2, FVector2f& OutUv3, const FVector3f& InTangentZ, float FurLength, const FFurGenLayerData& InGenLayerData, int32 InSplineIndex);
 
 	template<typename VertexTypeT, typename VertexBlitterT>
 	uint32 GenerateFurVertices(uint32 SrcVertexIndexBegin, uint32 SrcVertexIndexEnd, VertexTypeT* Vertices, const VertexBlitterT& VertexBlitter);

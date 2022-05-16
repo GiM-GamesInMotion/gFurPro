@@ -81,7 +81,7 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 
 			// Get deltas
 			int32 NumDeltas;
-			FMorphTargetDelta* Deltas = MorphTarget.MorphTarget->GetMorphTargetDelta(InMeshLod, NumDeltas);
+			const FMorphTargetDelta* Deltas = MorphTarget.MorphTarget->GetMorphTargetDelta(InMeshLod, NumDeltas);
 
 			// iterate over the vertices that this lod model has changed
 			for (int32 MorphVertIdx = 0; MorphVertIdx < NumDeltas; MorphVertIdx++)

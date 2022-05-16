@@ -64,11 +64,11 @@ void FEdModeFurComb::Enter()
 	bWasSelectionLockedOnStart = GEdSelectionLock;
 
 	// Catch when objects are replaced when a construction script is rerun
-	GEditor->OnObjectsReplaced().AddSP(this, &FEdModeFurComb::OnObjectsReplaced);
+	FCoreUObjectDelegates::OnObjectsReplaced.AddSP(this, &FEdModeFurComb::OnObjectsReplaced);
 
 	// Hook into pre/post world save, so that the original collision volumes can be temporarily reinstated
-	FEditorDelegates::PreSaveWorld.AddSP(this, &FEdModeFurComb::OnPreSaveWorld);
-	FEditorDelegates::PostSaveWorld.AddSP(this, &FEdModeFurComb::OnPostSaveWorld);
+	FEditorDelegates::PreSaveWorldWithContext.AddSP(this, &FEdModeFurComb::OnPreSaveWorld);
+	FEditorDelegates::PostSaveWorldWithContext.AddSP(this, &FEdModeFurComb::OnPostSaveWorld);
 
 	// Catch assets if they are about to be (re)imported
 	GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.AddSP(this, &FEdModeFurComb::OnPostImportAsset);
@@ -162,9 +162,9 @@ void FEdModeFurComb::Exit()
 	FReimportManager::Instance()->OnPostReimport().RemoveAll(this);
 	GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.RemoveAll(this);
 //	FEditorDelegates::OnAssetPostImport.RemoveAll(this);
-	FEditorDelegates::PreSaveWorld.RemoveAll(this);
-	FEditorDelegates::PostSaveWorld.RemoveAll(this);
-	GEditor->OnObjectsReplaced().RemoveAll(this);
+	FEditorDelegates::PreSaveWorldWithContext.RemoveAll(this);
+	FEditorDelegates::PostSaveWorldWithContext.RemoveAll(this);
+	FCoreUObjectDelegates::OnObjectsReplaced.RemoveAll(this);
 	USelection::SelectionChangedEvent.Remove(SelectionChangedHandle);
 
 	FToolkitManager::Get().CloseToolkit(Toolkit.ToSharedRef());
@@ -316,11 +316,11 @@ bool FEdModeFurComb::InputKey(FEditorViewportClient* InViewportClient, FViewport
 	return bHandled;
 }
 
-void FEdModeFurComb::OnPreSaveWorld(uint32 SaveFlags, UWorld* World)
+void FEdModeFurComb::OnPreSaveWorld(UWorld* World, FObjectPreSaveContext ObjectSaveContext)
 {
 }
 
-void FEdModeFurComb::OnPostSaveWorld(uint32 SaveFlags, UWorld* World, bool bSuccess)
+void FEdModeFurComb::OnPostSaveWorld(UWorld* World, FObjectPostSaveContext ObjectSaveContext)
 {
 }
 

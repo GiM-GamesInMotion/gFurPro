@@ -126,9 +126,9 @@ private:
 	static ExportInfo ExportHairSplines(const FString& filename, UFurSplines* FurSplines, USkeletalMesh* Mesh, float MinFurLength, float CountFactor, bool Save);
 	static ExportInfo ExportHairSplines(const FString& filename, UFurSplines* FurSplines, UStaticMesh* Mesh, float MinFurLength, float CountFactor, bool Save);
 
-	static void GenerateInterpolatedSplines(TArray<FVector>& Points, TArray<FVector2D>& DestUVs, FVector* Vertices, FVector2D* SrcUVs,
+	static void GenerateInterpolatedSplines(TArray<FVector3f>& Points, TArray<FVector2f>& DestUVs, FVector3f* Vertices, FVector2f* SrcUVs,
 		int32* SplineIndices, int32 ControlPointCount, float& CountRemainder, float CountFactor);
-	static void GenerateInterpolatedSpline(TArray<FVector>& Points, const FVector& BarycentricCoords, int32* SplineIndices, int32 ControlPointCount);
+	static void GenerateInterpolatedSpline(TArray<FVector3f>& Points, const FVector3f& BarycentricCoords, int32* SplineIndices, int32 ControlPointCount);
 	static void GenerateSplineMap(TArray<int32>& SplineMap, UFurSplines* FurSplines, const class FPositionVertexBuffer& InPositions, float MinFurLength);
 
 	void ShowExportOptionsWindow(TSharedPtr<SGFurExportOptions>& Options, FString FilePath) const;

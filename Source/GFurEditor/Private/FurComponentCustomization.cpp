@@ -401,7 +401,7 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, USkele
 	uint32 Cnt = 0;
 	for (uint32 i = 0; i < VertexCount; i++)
 	{
-		FVector v = SourcePositions.VertexPosition(i);
+		FVector3f v = SourcePositions.VertexPosition(i);
 		bool found = false;
 		for (uint32 k = 0; k < Cnt; k++)
 		{
@@ -459,7 +459,7 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, UStati
 			for (int32 j = 0; j < ControlPointCount; j++)
 			{
 				float t = j / (float)(ControlPointCount - 1);
-				FurSplines->Vertices[Cnt++] = v + SourceVertices.VertexTangentZ(i) * t * Length;
+				FurSplines->Vertices[Cnt++] = v + FVector3f(SourceVertices.VertexTangentZ(i)) * t * Length;
 			}
 		}
 	}
@@ -540,7 +540,7 @@ ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename
 	auto* SkeletalMeshResource = Mesh->GetResourceForRendering();
 	check(SkeletalMeshResource);
 
-	TArray<FVector> Points;
+	TArray<FVector3f> Points;
 	Points.Append(FurSplines->Vertices);
 
 	int32 ControlPointCount = FurSplines->ControlPointCount;
@@ -555,7 +555,7 @@ ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename
 	TArray<int32> SplineMap;
 	GenerateSplineMap(SplineMap, FurSplines, SourcePositions, MinFurLength);
 
-	TArray<FVector2D> UVs;
+	TArray<FVector2f> UVs;
 	UVs.AddUninitialized(FurSplines->SplineCount());
 	for (uint32 Index = 0, Count = SourceUVs.GetNumVertices(); Index < Count; Index++)
 	{
@@ -583,11 +583,11 @@ ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename
 
 			if (SplineIndices[0] >= 0 && SplineIndices[1] >= 0 && SplineIndices[2] >= 0)
 			{
-				FVector Vertices[3];
+				FVector3f Vertices[3];
 				Vertices[0] = SourcePositions.VertexPosition(Idx[0]);
 				Vertices[1] = SourcePositions.VertexPosition(Idx[1]);
 				Vertices[2] = SourcePositions.VertexPosition(Idx[2]);
-				FVector2D SrcUVs[3];
+				FVector2f SrcUVs[3];
 				SrcUVs[0] = SourceUVs.GetVertexUV(Idx[0], 0);
 				SrcUVs[1] = SourceUVs.GetVertexUV(Idx[1], 0);
 				SrcUVs[2] = SourceUVs.GetVertexUV(Idx[2], 0);
@@ -612,7 +612,7 @@ ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename
 	check(StaticMeshResource);
 	const FStaticMeshLODResources& LodRenderData = StaticMeshResource->LODResources[0];
 
-	TArray<FVector> Points;
+	TArray<FVector3f> Points;
 	Points.Append(FurSplines->Vertices);
 
 	int32 ControlPointCount = FurSplines->ControlPointCount;
@@ -626,7 +626,7 @@ ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename
 	TArray<int32> SplineMap;
 	GenerateSplineMap(SplineMap, FurSplines, SourcePositions, MinFurLength);
 
-	TArray<FVector2D> UVs;
+	TArray<FVector2f> UVs;
 	UVs.AddUninitialized(FurSplines->Vertices.Num() * ControlPointCount);
 	for (uint32 Index = 0, Count = SourceUVs.GetNumVertices(); Index < Count; Index++)
 	{
@@ -653,11 +653,11 @@ ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename
 
 			if (SplineIndices[0] >= 0 && SplineIndices[1] >= 0 && SplineIndices[2] >= 0)
 			{
-				FVector Vertices[3];
+				FVector3f Vertices[3];
 				Vertices[0] = SourcePositions.VertexPosition(Idx[0]);
 				Vertices[1] = SourcePositions.VertexPosition(Idx[1]);
 				Vertices[2] = SourcePositions.VertexPosition(Idx[2]);
-				FVector2D SrcUVs[3];
+				FVector2f SrcUVs[3];
 				SrcUVs[0] = SourceUVs.GetVertexUV(Idx[0], 0);
 				SrcUVs[1] = SourceUVs.GetVertexUV(Idx[1], 0);
 				SrcUVs[2] = SourceUVs.GetVertexUV(Idx[2], 0);
@@ -675,7 +675,7 @@ ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename
 	return Info;
 }
 
-void FFurComponentCustomization::GenerateInterpolatedSplines(TArray<FVector>& Points, TArray<FVector2D>& DestUVs, FVector* Vertices, FVector2D* SrcUVs,
+void FFurComponentCustomization::GenerateInterpolatedSplines(TArray<FVector3f>& Points, TArray<FVector2f>& DestUVs, FVector3f* Vertices, FVector2f* SrcUVs,
 	int32* SplineIndices, int32 ControlPointCount, float& CountRemainder, float CountFactor)
 {
 	FVector u = Vertices[1] - Vertices[0];
@@ -721,10 +721,10 @@ void FFurComponentCustomization::GenerateInterpolatedSplines(TArray<FVector>& Po
 	}
 }
 
-void FFurComponentCustomization::GenerateInterpolatedSpline(TArray<FVector>& Points, const FVector& BarycentricCoords, int32* SplineIndices, int32 ControlPointCount)
+void FFurComponentCustomization::GenerateInterpolatedSpline(TArray<FVector3f>& Points, const FVector3f& BarycentricCoords, int32* SplineIndices, int32 ControlPointCount)
 {
 	Points.AddUninitialized(ControlPointCount);
-	FVector* p = &Points[Points.Num() - ControlPointCount];
+	FVector3f* p = &Points[Points.Num() - ControlPointCount];
 
 	int32 Indices[3] = { SplineIndices[0] * ControlPointCount, SplineIndices[1] * ControlPointCount, SplineIndices[2] * ControlPointCount };
 

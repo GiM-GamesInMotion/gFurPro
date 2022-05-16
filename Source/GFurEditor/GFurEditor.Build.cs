@@ -28,11 +28,11 @@ public class GFurEditor : ModuleRules
 
         PublicIncludePaths.Add(ModuleDirectory + "/Public");
 
-        PrivateIncludePaths.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2020.1.1/include/")));
+        PrivateIncludePaths.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2020.2/include/")));
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
-			PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2020.1.1/lib/vs2017/x64/release/libfbxsdk.lib")));
-			PublicDelayLoadDLLs.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2020.1.1/lib/vs2017/x64/release/libfbxsdk.dll")));
+			PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2020.2/lib/vs2017/x64/release/libfbxsdk.lib")));
+			PublicDelayLoadDLLs.Add(Path.GetFullPath(Path.Combine(EngineThirdPartyPath, "FBX/2020.2/lib/vs2017/x64/release/libfbxsdk.dll")));
         }
 
         PrivateIncludePaths.Add(ModuleDirectory + "/Private");

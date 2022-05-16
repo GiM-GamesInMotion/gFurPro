@@ -81,15 +81,15 @@ public:
 	{
 		/** Mesh origin and Mesh Extension for Mesh compressions **/
 		/** This value will be (0, 0, 0), (1, 1, 1) relatively for non compressed meshes **/
-		FVector MeshOrigin;
-		FVector MeshExtension;
+		FVector3f MeshOrigin;
+		FVector3f MeshExtension;
 		float FurOffsetPower;
-		FVector FurLinearOffset;
-		FVector FurPosition;
-		FVector FurAngularOffset;
-		FVector PreviousFurLinearOffset;
-		FVector PreviousFurPosition;
-		FVector PreviousFurAngularOffset;
+		FVector3f FurLinearOffset;
+		FVector3f FurPosition;
+		FVector3f FurAngularOffset;
+		FVector3f PreviousFurLinearOffset;
+		FVector3f PreviousFurPosition;
+		FVector3f PreviousFurAngularOffset;
 
 		FShaderDataType()
 			: MeshOrigin(0, 0, 0)

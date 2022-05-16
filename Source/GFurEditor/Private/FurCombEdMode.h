@@ -58,10 +58,10 @@ public:
 	FFurComb* GetFurComb();
 private:
 	/** Called prior to saving a level */
-	void OnPreSaveWorld(uint32 SaveFlags, UWorld* World);
+	void OnPreSaveWorld(UWorld* World, FObjectPreSaveContext ObjectSaveContext);
 
 	/** Called after saving a level */
-	void OnPostSaveWorld(uint32 SaveFlags, UWorld* World, bool bSuccess);
+	void OnPostSaveWorld(UWorld* World, FObjectPostSaveContext ObjectSaveContext);
 
 	/** Called when an asset has just been imported */
 	void OnPostImportAsset(UFactory* Factory, UObject* Object);

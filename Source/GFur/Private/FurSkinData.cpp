@@ -675,9 +675,9 @@ void FFurSkinVertexFactoryBase<MorphTargets, Physics, ExtraInfluences>::FShaderD
 			const FMatrix44f RefToLocal = FMatrix44f(ReferenceToLocalMatrices[RefToLocalIdx]);
 			RefToLocal.To3x4MatrixTranspose(BoneMat);
 
-			Offsets[BoneIdx * 3] = FVector4f(LinearOffsets[RefToLocalIdx]);
-			Offsets[BoneIdx * 3 + 1] = FVector4f(AngularOffsets[RefToLocalIdx]);
-			Offsets[BoneIdx * 3 + 2] = FVector4f(LastTransformations[RefToLocalIdx].GetOrigin());
+			Offsets[BoneIdx * 3] = FVector3f(LinearOffsets[RefToLocalIdx]);
+			Offsets[BoneIdx * 3 + 1] = FVector3f(AngularOffsets[RefToLocalIdx]);
+			Offsets[BoneIdx * 3 + 2] = FVector3f(LastTransformations[RefToLocalIdx].GetOrigin());
 		}
 	}
 	else
@@ -1168,7 +1168,7 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 					if (Vertices[VertexIndex].InfluenceWeights[b] == 0)
 						break;
 					uint32 BoneIndex = SourceSection.BoneMap[Vertices[VertexIndex].InfluenceBones[b]];
-					float distSq = FVector::DistSquared(Vertices[VertexIndex].Position, RefPose[BoneIndex].GetTranslation());
+					float distSq = FVector::DistSquared(FVector(Vertices[VertexIndex].Position), RefPose[BoneIndex].GetTranslation());
 					if (distSq > MaxDistSq)
 						MaxDistSq = distSq;
 				}
@@ -1337,11 +1337,11 @@ inline void FFurSkinData::BuildFur(const FSkeletalMeshLODRenderData& LodRenderDa
 			{
 				int32 SplineIndex = SplineMap[SrcVertexIndex];
 				float Length = SplineIndex >= 0 ? FurLengths[SplineIndex] : FurLength;
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, FVector3f(Normals[SrcVertexIndex]), Length, GenLayerData, SplineIndex);
 			}
 			else
 			{
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], FurLength, GenLayerData);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, FVector3f(Normals[SrcVertexIndex]), FurLength, GenLayerData);
 			}
 		}
 	}
@@ -1373,7 +1373,7 @@ void GenerateSplines(UFurSplines* Splines, USkeletalMesh* InSkeletalMesh, int32 
 	for (uint32 i = 0; i < VertexCount; i++)
 	{
 		int32 Index = i * ControlPointCount;
-		Splines->Vertices[Index] = SourcePositions.VertexPosition(i);
+		Splines->Vertices[Index] = FVector(SourcePositions.VertexPosition(i));
 	}
 
 	int32 k = 1;
@@ -1387,7 +1387,7 @@ void GenerateSplines(UFurSplines* Splines, USkeletalMesh* InSkeletalMesh, int32 
 			const auto& SourcePositions2 = LodModel2.StaticVertexBuffers.PositionVertexBuffer;
 			int32 c = FMath::Min(SourcePositions2.GetNumVertices(), VertexCount);
 			for (int32 i = 0; i < c; i++)
-				Splines->Vertices[i * ControlPointCount + k] = SourcePositions2.VertexPosition(i);
+				Splines->Vertices[i * ControlPointCount + k] = FVector(SourcePositions2.VertexPosition(i));
 			for (uint32 i = c; i < VertexCount; i++)
 				Splines->Vertices[i * ControlPointCount + k] = Splines->Vertices[i * ControlPointCount + (k - 1)];
 		}

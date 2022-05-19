@@ -240,9 +240,9 @@ public:
 		ShaderData.PreviousFurAngularOffset = ShaderData.FurAngularOffset;
 		ShaderData.PreviousFurPosition = ShaderData.FurPosition;
 		
-		ShaderData.FurLinearOffset = InLinearOffset;
-		ShaderData.FurAngularOffset = InAngularOffset;
-		ShaderData.FurPosition = InPosition;
+		ShaderData.FurLinearOffset = FVector3f(InLinearOffset);
+		ShaderData.FurAngularOffset = FVector3f(InAngularOffset);
+		ShaderData.FurPosition = FVector3f(InPosition);
 	}
 
 	FDataType Data;
@@ -728,11 +728,11 @@ void FFurStaticData::BuildFur(const TArray<uint32>& InVertexSet)
 			{
 				int32 SplineIndex = SplineMap[SrcVertexIndex];
 				float Length = SplineIndex >= 0 ? FurLengths[SplineIndex] : FurLength;
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], Length, GenLayerData, SplineIndex);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, FVector3f(Normals[SrcVertexIndex]), Length, GenLayerData, SplineIndex);
 			}
 			else
 			{
-				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, Normals[SrcVertexIndex], FurLength, GenLayerData);
+				GenerateFurVertex(Vertex.FurOffset, Vertex.UV1, Vertex.UV2, Vertex.UV3, FVector3f(Normals[SrcVertexIndex]), FurLength, GenLayerData);
 			}
 		}
 	}
@@ -763,7 +763,7 @@ void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLo
 	for (uint32 i = 0; i < VertexCount; i++)
 	{
 		int32 Index = i * ControlPointCount;
-		Splines->Vertices[Index] = SourcePositions.VertexPosition(i);
+		Splines->Vertices[Index] = FVector(SourcePositions.VertexPosition(i));
 	}
 
 	int32 k = 1;
@@ -777,9 +777,9 @@ void GenerateSplines(UFurSplines* Splines, UStaticMesh* InStaticMesh, int32 InLo
 			const auto& SourcePositions2 = LodModel2.VertexBuffers.PositionVertexBuffer;
 			int32 c = FMath::Min(SourcePositions2.GetNumVertices(), VertexCount);
 			for (int32 i = 0; i < c; i++)
-				Splines->Vertices[i * ControlPointCount + k] = SourcePositions2.VertexPosition(i);
+				Splines->Vertices[i * ControlPointCount + k] = FVector(SourcePositions2.VertexPosition(i));
 			for (uint32 i = c; i < VertexCount; i++)
-				Splines->Vertices[i * ControlPointCount + k] = Splines->Vertices[i * ControlPointCount + (k - 1)];
+				Splines->Vertices[i * ControlPointCount + k] = FVector(Splines->Vertices[i * ControlPointCount + (k - 1)]);
 		}
 		else
 		{

@@ -235,7 +235,7 @@ void FFurData::GenerateSplineMap(const FPositionVertexBuffer& InPositions)
 		{
 			const float Epsilon = FurSplinesUsed->Threshold;
 			const float EpsilonSquared = Epsilon * Epsilon;
-			FVector p = InPositions.VertexPosition(i);
+			FVector p = FVector(InPositions.VertexPosition(i));
 			int32 BeginX = FMath::Max(FMath::FloorToInt((p.X - Epsilon - MinX) * FactorWidth), 0);
 			int32 BeginY = FMath::Max(FMath::FloorToInt((p.Y - Epsilon - MinY) * FactorHeight), 0);
 			int32 EndX = FMath::Min(FMath::FloorToInt((p.X + Epsilon - MinX) * FactorWidth), Size - 1);
@@ -386,7 +386,7 @@ void FFurData::GenerateFurVertex(FVector3f& OutFurOffset, FVector2f& OutUv1, FVe
 
 		FVector Spline = FurSplinesUsed->Vertices[Beginning + Count - 1] - FurSplinesUsed->Vertices[Beginning];
 		float SplineLength = Spline.Size() * FurLength;
-		if (FVector::DotProduct(InTangentZ, Spline) <= 0.0f)
+		if (FVector::DotProduct(FVector(InTangentZ), Spline) <= 0.0f)
 		{
 			OutFurOffset = InTangentZ * (InGenLayerData.NonLinearFactor * MinFurLength);
 		}
@@ -396,7 +396,7 @@ void FFurData::GenerateFurVertex(FVector3f& OutFurOffset, FVector2f& OutUv1, FVe
 			{
 				float k = MinFurLength / SplineLength;
 				FVector p = FurSplinesUsed->Vertices[Beginning + Bottom] * (1.0f - Height) + FurSplinesUsed->Vertices[Beginning + Top] * Height;
-				OutFurOffset = (p - FurSplinesUsed->Vertices[Beginning]) * FurLength * k;
+				OutFurOffset = FVector3f((p - FurSplinesUsed->Vertices[Beginning]) * FurLength * k);
 			}
 			else
 			{
@@ -406,8 +406,8 @@ void FFurData::GenerateFurVertex(FVector3f& OutFurOffset, FVector2f& OutUv1, FVe
 		}
 		else
 		{
-			OutFurOffset = FurSplinesUsed->Vertices[Beginning + Bottom] * (1.0f - Height) + FurSplinesUsed->Vertices[Beginning + Top] * Height;
-			OutFurOffset = (OutFurOffset - FurSplinesUsed->Vertices[Beginning]) * FurLength;
+			OutFurOffset = FVector3f(FurSplinesUsed->Vertices[Beginning + Bottom] * (1.0f - Height) + FurSplinesUsed->Vertices[Beginning + Top] * Height);
+			OutFurOffset = FVector3f((FVector(OutFurOffset) - FurSplinesUsed->Vertices[Beginning]) * FurLength);
 		}
 		if (InGenLayerData.LayerNoiseStrength != 0)
 		{

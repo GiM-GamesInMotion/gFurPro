@@ -392,7 +392,7 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 			{
 				for (int32 VertexIndex = 0; VertexIndex < VertexCount; VertexIndex++)
 				{
-					const FVector& Position = Positions.VertexPosition(VertexIndex);
+					const FVector& Position = FVector(Positions.VertexPosition(VertexIndex));
 					FVector Location = MirrorVector(ComponentSpaceLocation, Position, Params);
 					if (FVector::DistSquared(Position, Location) > ComponentSpaceRadiusSquared)
 						continue;
@@ -414,7 +414,7 @@ bool FFurComb::CombInternal(const FVector& InCameraOrigin, const FVector& InRayO
 			{
 				for (int32 VertexIndex = 0; VertexIndex < VertexCount; VertexIndex++)
 				{
-					const FVector& Position = Positions.VertexPosition(VertexIndex);
+					const FVector& Position = FVector(Positions.VertexPosition(VertexIndex));
 					FVector Location = MirrorVector(ComponentSpaceLocation, Position, Params);
 					if (FVector::DistSquared(Position, Location) > ComponentSpaceRadiusSquared)
 						continue;
@@ -607,9 +607,9 @@ bool FFurComb::LineTraceComponent(struct FHitResult& OutHit, const FVector Start
 			for (int32 TriangleIndex = 0; TriangleIndex < NumTriangles; ++TriangleIndex)
 			{
 				// Compute the normal of the triangle
-				const FVector& P0 = VertexBuffer.VertexPosition(IndexBuffer->Get((TriangleIndex * 3) + 0));
-				const FVector& P1 = VertexBuffer.VertexPosition(IndexBuffer->Get((TriangleIndex * 3) + 1));
-				const FVector& P2 = VertexBuffer.VertexPosition(IndexBuffer->Get((TriangleIndex * 3) + 2));
+				const FVector& P0 = FVector(VertexBuffer.VertexPosition(IndexBuffer->Get((TriangleIndex * 3) + 0)));
+				const FVector& P1 = FVector(VertexBuffer.VertexPosition(IndexBuffer->Get((TriangleIndex * 3) + 1)));
+				const FVector& P2 = FVector(VertexBuffer.VertexPosition(IndexBuffer->Get((TriangleIndex * 3) + 2)));
 
 				const FVector TriNorm = (P1 - P0) ^ (P2 - P0);
 
@@ -644,9 +644,9 @@ bool FFurComb::LineTraceComponent(struct FHitResult& OutHit, const FVector Start
 			for (int32 TriangleIndex = 0; TriangleIndex < NumTriangles; ++TriangleIndex)
 			{
 				// Compute the normal of the triangle
-				const FVector& P0 = VertexBuffer.VertexPosition(IndexBuffer.GetIndex((TriangleIndex * 3) + 0));
-				const FVector& P1 = VertexBuffer.VertexPosition(IndexBuffer.GetIndex((TriangleIndex * 3) + 1));
-				const FVector& P2 = VertexBuffer.VertexPosition(IndexBuffer.GetIndex((TriangleIndex * 3) + 2));
+				const FVector& P0 = FVector(VertexBuffer.VertexPosition(IndexBuffer.GetIndex((TriangleIndex * 3) + 0)));
+				const FVector& P1 = FVector(VertexBuffer.VertexPosition(IndexBuffer.GetIndex((TriangleIndex * 3) + 1)));
+				const FVector& P2 = FVector(VertexBuffer.VertexPosition(IndexBuffer.GetIndex((TriangleIndex * 3) + 2)));
 
 				const FVector TriNorm = (P1 - P0) ^ (P2 - P0);
 
@@ -743,7 +743,7 @@ void FFurComb::Comb(UFurSplines* FurSplines, const CombParams& Params, const F& 
 				StrengtHeight = powf(1.0f - FMath::Abs(Height - Params.ApplyHeight), Exp);
 			}
 
-			FVector3f& Vertex = FurSplines->Vertices[i];
+			FVector& Vertex = FurSplines->Vertices[i];
 			FVector Dir = Vertex - PrevVertexOld;
 			PrevVertexOld = Vertex;
 
@@ -777,10 +777,10 @@ void FFurComb::CombAverageLength(UFurSplines* FurSplines, const CombParams& Para
 	{
 		int32 Cnt = FurSplines->ControlPointCount;
 		int32 Idx = Index * Cnt;
-		FVector3f PrevVertex = FurSplines->Vertices[Idx];
+		FVector3f PrevVertex = FVector3f(FurSplines->Vertices[Idx]);
 		for (int32 i = Idx + 1, End = Idx + Cnt; i < End; i++)
 		{
-			FVector3f& Vertex = FurSplines->Vertices[i];
+			FVector3f Vertex = FVector3f(FurSplines->Vertices[i]);
 			LengthSum += (Vertex - PrevVertex).Size();
 			PrevVertex = Vertex;
 		}
@@ -889,7 +889,7 @@ void FFurComb::CombAdd(UFurSplines* FurSplines, const FPositionVertexBuffer& Pos
 	int32 NewSplineCount = OldSplineCount;
 	for (uint32 VertexIndex : VertexSet)
 	{
-		FVector v = Positions.VertexPosition(VertexIndex);
+		FVector v = FVector(Positions.VertexPosition(VertexIndex));
 		bool found = false;
 		for (int32 i = OldSplineCount; i < NewSplineCount; i++)
 		{

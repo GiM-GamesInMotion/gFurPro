@@ -11,7 +11,7 @@ class GFUR_API UFurSplines : public UObject
 
 public:
 	UPROPERTY()
-	TArray<FVector3f> Vertices;
+	TArray<FVector> Vertices;
 
 	// Old - don't use
 	UPROPERTY()

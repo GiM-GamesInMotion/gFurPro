@@ -64,7 +64,7 @@ void UFurSplines::PostEditUndo()
 
 void UFurSplines::ConvertToUniformControlPointCount(int32 NumControlPoints)
 {
-	TArray<FVector3f> Temp;
+	TArray<FVector> Temp;
 	Temp.AddUninitialized(NumControlPoints * Index.Num());
 	int32 Idx = 0;
 	float MaxControlPoint = (float)(NumControlPoints - 1);
@@ -85,8 +85,8 @@ void UFurSplines::ConvertToUniformControlPointCount(int32 NumControlPoints)
 				int32 floor = FMath::FloorToInt(f);
 				int32 ceil = FMath::CeilToInt(f);
 				float r = f - floor;
-				FVector3f v0 = Vertices[floor + Offset];
-				FVector3f v1 = Vertices[ceil + Offset];
+				FVector v0 = Vertices[floor + Offset];
+				FVector v1 = Vertices[ceil + Offset];
 				Temp[Idx++] = v0 * (1.0f - r) + v1 * r;
 			}
 		}

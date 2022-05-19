@@ -24,7 +24,10 @@ protected:
 	TArray<FDelegateHandle> GuideMeshesChangeHandles;
 #endif // WITH_EDITORONLY_DATA
 
-	FFurStaticData() {}
+	FFurStaticData(): StaticMesh(nullptr)
+	{
+	}
+
 	~FFurStaticData();
 
 	void UnbindChangeDelegates();

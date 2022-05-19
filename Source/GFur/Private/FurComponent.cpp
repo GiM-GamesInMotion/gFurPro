@@ -1214,7 +1214,7 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 		for (uint32 i = Section.BaseVertexIndex; i < Section.BaseVertexIndex + Section.NumVertices; i++)
 		{
 			const auto& Position = Positions.VertexPosition(i);
-			hashTable.Add(Hash(Position), i);
+			hashTable.Add(Hash(FVector(Position)), i);
 		}
 	}
 
@@ -1251,7 +1251,7 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 						return false;
 					};
 
-					for (uint32 Idx = hashTable.First(Hash(MasterPosition)); hashTable.IsValid(Idx); Idx = hashTable.Next(Idx))
+					for (uint32 Idx = hashTable.First(Hash(FVector(MasterPosition))); hashTable.IsValid(Idx); Idx = hashTable.Next(Idx))
 					{
 						if (Compare(Idx))
 							break;

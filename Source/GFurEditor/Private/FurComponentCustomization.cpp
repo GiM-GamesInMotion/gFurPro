@@ -401,7 +401,7 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, USkele
 	uint32 Cnt = 0;
 	for (uint32 i = 0; i < VertexCount; i++)
 	{
-		FVector3f v = SourcePositions.VertexPosition(i);
+		FVector v = FVector(SourcePositions.VertexPosition(i));
 		bool found = false;
 		for (uint32 k = 0; k < Cnt; k++)
 		{
@@ -418,7 +418,7 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, USkele
 			for (int32 j = 0; j < ControlPointCount; j++)
 			{
 				float t = j / (float)(ControlPointCount - 1);
-				FurSplines->Vertices[Cnt++] = v + SourceVertices.VertexTangentZ(i) * t * Length;
+				FurSplines->Vertices[Cnt++] = v + FVector(SourceVertices.VertexTangentZ(i) * t * Length);
 			}
 		}
 	}
@@ -442,7 +442,7 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, UStati
 	uint32 Cnt = 0;
 	for (uint32 i = 0; i < VertexCount; i++)
 	{
-		FVector v = SourcePositions.VertexPosition(i);
+		FVector v = FVector(SourcePositions.VertexPosition(i));
 		bool found = false;
 		for (uint32 k = 0; k < Cnt; k++)
 		{
@@ -459,7 +459,7 @@ void FFurComponentCustomization::GenerateSplines(UFurSplines* FurSplines, UStati
 			for (int32 j = 0; j < ControlPointCount; j++)
 			{
 				float t = j / (float)(ControlPointCount - 1);
-				FurSplines->Vertices[Cnt++] = v + FVector3f(SourceVertices.VertexTangentZ(i)) * t * Length;
+				FurSplines->Vertices[Cnt++] = v + FVector(SourceVertices.VertexTangentZ(i)) * t * Length;
 			}
 		}
 	}
@@ -678,8 +678,8 @@ ExportInfo FFurComponentCustomization::ExportHairSplines(const FString& Filename
 void FFurComponentCustomization::GenerateInterpolatedSplines(TArray<FVector3f>& Points, TArray<FVector2f>& DestUVs, FVector3f* Vertices, FVector2f* SrcUVs,
 	int32* SplineIndices, int32 ControlPointCount, float& CountRemainder, float CountFactor)
 {
-	FVector u = Vertices[1] - Vertices[0];
-	FVector v = Vertices[2] - Vertices[0];
+	FVector u = FVector(Vertices[1] - Vertices[0]);
+	FVector v = FVector(Vertices[2] - Vertices[0]);
 	FVector n = FVector::CrossProduct(u, v);
 
 	float fCount = n.Size() * CountFactor + CountRemainder;
@@ -690,13 +690,13 @@ void FFurComponentCustomization::GenerateInterpolatedSplines(TArray<FVector3f>& 
 	n.Normalize();
 	if (!n.IsNormalized())
 		return;
-	FMatrix matHelper(u, FVector::CrossProduct(u, n), n, Vertices[0]);
+	FMatrix matHelper(u, FVector::CrossProduct(u, n), n, FVector(Vertices[0]));
 	FMatrix mat = matHelper.InverseFast();
 
 	FVector4 p[3];
-	p[0] = mat.TransformPosition(Vertices[0]);
-	p[1] = mat.TransformPosition(Vertices[1]);
-	p[2] = mat.TransformPosition(Vertices[2]);
+	p[0] = mat.TransformPosition(FVector(Vertices[0]));
+	p[1] = mat.TransformPosition(FVector(Vertices[1]));
+	p[2] = mat.TransformPosition(FVector(Vertices[2]));
 
 	FVector2D min, max;
 	min.X = FMath::Min3(p[0].X, p[1].X, p[2].X);
@@ -714,7 +714,7 @@ void FFurComponentCustomization::GenerateInterpolatedSplines(TArray<FVector3f>& 
 		FVector b = FMath::GetBaryCentric2D(q, p[0], p[1], p[2]);
 		if (b.X >= 0.0f && b.Y >= 0.0f && b.Z >= 0.0f)
 		{
-			GenerateInterpolatedSpline(Points, b, SplineIndices, ControlPointCount);
+			GenerateInterpolatedSpline(Points, FVector3f(b), SplineIndices, ControlPointCount);
 			DestUVs.Add(SrcUVs[0] * b.X + SrcUVs[1] * b.Y + SrcUVs[2] * b.Z);
 			Count--;
 		}
@@ -728,30 +728,30 @@ void FFurComponentCustomization::GenerateInterpolatedSpline(TArray<FVector3f>& P
 
 	int32 Indices[3] = { SplineIndices[0] * ControlPointCount, SplineIndices[1] * ControlPointCount, SplineIndices[2] * ControlPointCount };
 
-	FVector PrevPoint;
+	FVector3f PrevPoint;
 	{
-		FVector v0 = Points[Indices[0]];
-		FVector v1 = Points[Indices[1]];
-		FVector v2 = Points[Indices[2]];
+		FVector3f v0 = Points[Indices[0]];
+		FVector3f v1 = Points[Indices[1]];
+		FVector3f v2 = Points[Indices[2]];
 		p[0] = PrevPoint = v0 * BarycentricCoords.X + v1 * BarycentricCoords.Y + v2 * BarycentricCoords.Z;
 	}
 
 	for (int32 ControlPointIndex = 1; ControlPointIndex < ControlPointCount; ControlPointIndex++)
 	{
 		int32 PrevControlPointIndex = ControlPointIndex - 1;
-		FVector u0 = Points[Indices[0] + PrevControlPointIndex];
-		FVector u1 = Points[Indices[1] + PrevControlPointIndex];
-		FVector u2 = Points[Indices[2] + PrevControlPointIndex];
-		FVector v0 = Points[Indices[0] + ControlPointIndex];
-		FVector v1 = Points[Indices[1] + ControlPointIndex];
-		FVector v2 = Points[Indices[2] + ControlPointIndex];
+		FVector3f u0 = Points[Indices[0] + PrevControlPointIndex];
+		FVector3f u1 = Points[Indices[1] + PrevControlPointIndex];
+		FVector3f u2 = Points[Indices[2] + PrevControlPointIndex];
+		FVector3f v0 = Points[Indices[0] + ControlPointIndex];
+		FVector3f v1 = Points[Indices[1] + ControlPointIndex];
+		FVector3f v2 = Points[Indices[2] + ControlPointIndex];
 		float d0 = (v0 - u0).Size();
 		float d1 = (v1 - u1).Size();
 		float d2 = (v2 - u2).Size();
 		float d = d0 * BarycentricCoords.X + d1 * BarycentricCoords.Y + d2 * BarycentricCoords.Z;
 
-		FVector NewPoint = v0 * BarycentricCoords.X + v1 * BarycentricCoords.Y + v2 * BarycentricCoords.Z;
-		FVector dir = NewPoint - PrevPoint;
+		FVector3f NewPoint = v0 * BarycentricCoords.X + v1 * BarycentricCoords.Y + v2 * BarycentricCoords.Z;
+		FVector3f dir = NewPoint - PrevPoint;
 		dir.Normalize();
 		p[ControlPointIndex] = p[PrevControlPointIndex] + dir * d;
 
@@ -826,7 +826,7 @@ void FFurComponentCustomization::GenerateSplineMap(TArray<int32>& SplineMap, UFu
 	{
 		const float Epsilon = 0.1f;
 		const float EpsilonSquared = Epsilon * Epsilon;
-		FVector p = InPositions.VertexPosition(i);
+		FVector p = FVector(InPositions.VertexPosition(i));
 		int32 BeginX = FMath::Max(FMath::FloorToInt((p.X - Epsilon - MinX) * FactorWidth), 0);
 		int32 BeginY = FMath::Max(FMath::FloorToInt((p.Y - Epsilon - MinY) * FactorHeight), 0);
 		int32 EndX = FMath::Min(FMath::FloorToInt((p.X + Epsilon - MinX) * FactorWidth), Size - 1);

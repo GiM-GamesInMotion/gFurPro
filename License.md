@@ -1,7 +1,9 @@
 # gFur License
 
 > Version 1.0, January 2023
+> 
 > Copyright (C) 2023 GiM s.r.o.
+> 
 > TERMS AND CONDITIONS
 
 1. gFur code is provided with no warranty and support. Use at your own risk. Currently the code should compile for UE5.0 and should run in UE5.0 but is not usable due to bugs. 

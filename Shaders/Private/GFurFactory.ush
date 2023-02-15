@@ -221,8 +221,9 @@ FMaterialVertexParameters GetMaterialVertexParameters(FVertexFactoryInput Input,
 {
 	FMaterialVertexParameters Result = (FMaterialVertexParameters)0;
 	Result.WorldPosition = WorldPosition;
+	Result.SceneData = Intermediates.SceneData;
 	Result.VertexColor = Intermediates.Color;
-	Result.TangentToWorld = mul(TangentToLocal, GetLocalToWorld3x3());
+	Result.TangentToWorld = mul(TangentToLocal, LWCToFloat3x3(Intermediates.LocalToWorld));
 	Result.PreSkinnedPosition = Intermediates.UnpackedPosition.xyz;
 	Result.PreSkinnedNormal = Input.TangentZ.xyz;
 
@@ -406,47 +407,28 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 	FBoneMatrix BlendMatrix = CalcPreviousBoneMatrix( Input );
 	Position = mul( BlendMatrix, float4(Position, 1) );
 
-	float4x4 PreviousLocalToWorldTranslated = LWCMultiplyTranslation(Intermediates.PrevLocalToWorld, ResolvedView.PrevPreViewTranslation);
-	Position = mul(float4(Position,1), PreviousLocalToWorldTranslated).xyz;
-
-#if GPUSKIN_APEX_CLOTH
-	if( IsSimulatedVertex(Input) )
-	{
-		Position = lerp(Position, Intermediates.PreviousSimulatedPosition.xyz, ClothBlendWeight);
-	}
-#endif // GPUSKIN_APEX_CLOTH
-
-
 #if NUM_MATERIAL_TEXCOORDS_VERTEX >= 2
 
-	float3x3 LocalToWorld = LWCToFloat(Intermediates.PrevLocalToWorld);
-
 	float3 FurOffset = Input.FurOffset;
-	FurOffset = mul(BlendMatrix, float4(FurOffset.xyz, 0)).xyz;
-	FurOffset = mul(FurOffset, LocalToWorld);
-
-	// Remove scaling.
-	half3 InvScale = Intermediates.InvNonUniformScale;
-	LocalToWorld[0] *= InvScale.x;
-	LocalToWorld[1] *= InvScale.y;
-	LocalToWorld[2] *= InvScale.z;
-	float3 NormalVec = mul(Intermediates.TangentToLocal[2], LocalToWorld);
+	FurOffset = mul(BlendMatrix, float4(FurOffset.xyz, 0));
 
 #if GFUR_PHYSICS
 
+	float3 WorldPosition = LWCToFloat(TransformLocalToWorld(Input.Position, Intermediates.LocalToWorld));
 	float FurLength = length(FurOffset);
 
-	float3 PhysicsOffset = Input.BlendWeights.x * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.x, Position);
-	PhysicsOffset += Input.BlendWeights.y * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.y, Position);
-	PhysicsOffset += Input.BlendWeights.z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.z, Position);
-	PhysicsOffset += Input.BlendWeights.w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.w, Position);
+	float3 PhysicsOffset = Input.BlendWeights.x * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.x, WorldPosition);
+	PhysicsOffset += Input.BlendWeights.y * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.y, WorldPosition);
+	PhysicsOffset += Input.BlendWeights.z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.z, WorldPosition);
+	PhysicsOffset += Input.BlendWeights.w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.w, WorldPosition);
 #if GPUSKIN_USE_EXTRA_INFLUENCES
-	PhysicsOffset += Input.BlendWeightsExtra.x * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.x, Position);
-	PhysicsOffset += Input.BlendWeightsExtra.y * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.y, Position);
-	PhysicsOffset += Input.BlendWeightsExtra.z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.z, Position);
-	PhysicsOffset += Input.BlendWeightsExtra.w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.w, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.x * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.x, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra.y * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.y, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra.z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.z, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra.w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.w, WorldPosition);
 #endif // GPUSKIN_USE_EXTRA_INFLUENCES
 
+	float3 NormalVec = Intermediates.TangentToLocal[2];
 	PhysicsOffset -= dot(PhysicsOffset, NormalVec) * NormalVec;
 	PhysicsOffset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 
@@ -455,6 +437,7 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 	if (PhysicOffsetLength > MaxPhysicsOffset)
 		PhysicsOffset *= MaxPhysicsOffset / PhysicOffsetLength;
 
+	PhysicsOffset = LWCMultiplyVector(PhysicsOffset, Intermediates.WorldToLocal);
 	Position += normalize(FurOffset + PhysicsOffset) * FurLength;
 
 #else // GFUR_PHYSICS
@@ -589,61 +572,50 @@ FVertexFactoryIntermediates GetVertexFactoryIntermediates(FVertexFactoryInput In
 
 float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
-	float3 Position;
+	float3 Position = SkinPosition(Input, Intermediates);
 #if GPUSKIN_APEX_CLOTH
 	if( IsSimulatedVertex(Input) )
 	{
 		// skinned positions
-		float4 SkinnedPosition = float4(SkinPosition(Input, Intermediates), 1);
+		float4 SkinnedPosition = float4(Position, 1);
 
 		// Intermediates.SimulatedPosition is a clothing position in world coord
 		float3 BlendedPos = lerp(SkinnedPosition.xyz, Intermediates.SimulatedPosition, ClothBlendWeight);
 		Position = BlendedPos;
 	}
-	else
 #endif
-	{
-		Position = LWCToFloat(TransformLocalToWorld(Input.Position, Intermediates.LocalToWorld));
-	}
 
 #if NUM_MATERIAL_TEXCOORDS_VERTEX >= 2
 
-	float3x3 LocalToWorld = GetLocalToWorld3x3();
-
 	float3 FurOffset = Input.FurOffset;
-	FurOffset = mul(Intermediates.BlendMatrix, float4(FurOffset.xyz, 0)).xyz;
-	FurOffset = mul(FurOffset, LocalToWorld);
-
-	// Remove scaling.
-	half3 InvScale = Intermediates.InvNonUniformScale;
-	LocalToWorld[0] *= InvScale.x;
-	LocalToWorld[1] *= InvScale.y;
-	LocalToWorld[2] *= InvScale.z;
-	float3 NormalVec = mul(Intermediates.TangentToLocal[2], LocalToWorld);
+	FurOffset = mul(Intermediates.BlendMatrix, float4(FurOffset.xyz, 0));
 
 #if GFUR_PHYSICS
 
+	float3 WorldPosition = LWCToFloat(TransformLocalToWorld(Input.Position, Intermediates.LocalToWorld));
 	float FurLength = length(FurOffset);
 
-	float3 PhysicsOffset = Input.BlendWeights.x * CalcBoneFurPhysicsOffset(Input.BlendIndices.x, Position);
-	PhysicsOffset += Input.BlendWeights.y * CalcBoneFurPhysicsOffset(Input.BlendIndices.y, Position);
-	PhysicsOffset += Input.BlendWeights.z * CalcBoneFurPhysicsOffset(Input.BlendIndices.z, Position);
-	PhysicsOffset += Input.BlendWeights.w * CalcBoneFurPhysicsOffset(Input.BlendIndices.w, Position);
+	float3 PhysicsOffset = Input.BlendWeights.x * CalcBoneFurPhysicsOffset(Input.BlendIndices.x, WorldPosition);
+	PhysicsOffset += Input.BlendWeights.y * CalcBoneFurPhysicsOffset(Input.BlendIndices.y, WorldPosition);
+	PhysicsOffset += Input.BlendWeights.z * CalcBoneFurPhysicsOffset(Input.BlendIndices.z, WorldPosition);
+	PhysicsOffset += Input.BlendWeights.w * CalcBoneFurPhysicsOffset(Input.BlendIndices.w, WorldPosition);
 #if GPUSKIN_USE_EXTRA_INFLUENCES
-	PhysicsOffset += Input.BlendWeightsExtra.x * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.x, Position);
-	PhysicsOffset += Input.BlendWeightsExtra.y * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.y, Position);
-	PhysicsOffset += Input.BlendWeightsExtra.z * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.z, Position);
-	PhysicsOffset += Input.BlendWeightsExtra.w * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.w, Position);
+	PhysicsOffset += Input.BlendWeightsExtra.x * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.x, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra.y * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.y, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra.z * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.z, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra.w * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.w, WorldPosition);
 #endif // GPUSKIN_USE_EXTRA_INFLUENCES
 
+	float3 NormalVec = Intermediates.TangentToLocal[2];
 	PhysicsOffset -= dot(PhysicsOffset, NormalVec) * NormalVec;
-	PhysicsOffset *= pow(abs(Input.TexCoords[1].x), FurOffsetPower);
+	PhysicsOffset *= pow(Input.TexCoords[1].x, FurOffsetPower);
 
 	float PhysicOffsetLength = length(PhysicsOffset);
 	float MaxPhysicsOffset = MaxPhysicsOffsetLength * FurLength;
 	if (PhysicOffsetLength > MaxPhysicsOffset)
 		PhysicsOffset *= MaxPhysicsOffset / PhysicOffsetLength;
 
+	PhysicsOffset = LWCMultiplyVector(PhysicsOffset, Intermediates.WorldToLocal);
 	Position += normalize(FurOffset + PhysicsOffset) * FurLength;
 	
 #else // GFUR_PHYSICS
@@ -685,7 +657,7 @@ float3 VertexFactoryGetPositionForVertexLighting(FVertexFactoryInput Input, FVer
 
 void CalcTangentToWorld(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates, out float3 TangentToWorld0, out float4 TangentToWorld2)
 {
-	float3x3 LocalToWorld = GetLocalToWorld3x3();
+	float3x3 LocalToWorld = LWCToFloat3x3(Intermediates.LocalToWorld);
 
 	// Remove scaling.
 	half3 InvScale = Intermediates.InvNonUniformScale;
@@ -741,15 +713,35 @@ FVertexFactoryInterpolantsVSToPS VertexFactoryGetInterpolantsVSToPS(FVertexFacto
 	return Interpolants;
 }
 
+float4 TransformPreviousLocalPositionToTranslatedWorld(float3 PrevLocalPosition, FLWCMatrix PrevLocalToWorld)
+{
+	// Multiply local position with PrevLocalToWorld 3x3 first for high precision rotation and scale, then move the world position part to translated world before adding it  
+	float3 RotatedScaledPosition = (PrevLocalPosition.xxx * PrevLocalToWorld.M[0].xyz + PrevLocalPosition.yyy * PrevLocalToWorld.M[1].xyz + PrevLocalPosition.zzz * PrevLocalToWorld.M[2].xyz);
+	FLWCVector3 TranslatedPreviousWorldPositionOrigin = LWCAdd(LWCGetOrigin(PrevLocalToWorld), ResolvedView.PrevPreViewTranslation);
+	return float4(RotatedScaledPosition + LWCToFloat(TranslatedPreviousWorldPositionOrigin), 1.0f);
+}
+
 // @return previous translated world position
 float4 VertexFactoryGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
-	return float4(SkinPreviousPosition(Input, Intermediates), 1);
+	float3 PrevSkinnedPosition = SkinPreviousPosition(Input, Intermediates);
+#if GPUSKIN_APEX_CLOTH
+#if GPUSKIN_APEX_CLOTH_PREVIOUS
+	if (IsSimulatedVertex(Intermediates.ClothVertexInfluences[0]))
+	{
+		// Transform simulated position from cloth space into local space and blend with skinned position
+		float4 PrevTransformedSimulatedPos = mul(float4(Intermediates.PreviousSimulatedPosition.xyz, 1), PreviousClothToLocal);
+		PrevSkinnedPosition = lerp(PrevSkinnedPosition, PrevTransformedSimulatedPos.xyz, ClothBlendWeight * Intermediates.PreviousSimulatedPosition.w);
+	}
+#endif // GPUSKIN_APEX_CLOTH_PREVIOUS
+#endif // GPUSKIN_APEX_CLOTH
+
+	return TransformPreviousLocalPositionToTranslatedWorld(PrevSkinnedPosition, Intermediates.PrevLocalToWorld);
 }
 
 
-#if USING_TESSELLATION
-float2 VertexFactoryGetTextureCoordinateDS( FVertexFactoryInterpolantsVSToDS Interpolants )
+#if NEEDS_VERTEX_FACTORY_INTERPOLATION
+float2 VertexFactoryGetRayTracingTextureCoordinate( FVertexFactoryRayTracingInterpolants Interpolants )
 {
 #if NUM_MATERIAL_TEXCOORDS
 	return Interpolants.InterpolantsVSToPS.TexCoords[0].xy;
@@ -758,84 +750,49 @@ float2 VertexFactoryGetTextureCoordinateDS( FVertexFactoryInterpolantsVSToDS Int
 #endif // #if NUM_MATERIAL_TEXCOORDS
 }
 
-FVertexFactoryInterpolantsVSToPS VertexFactoryAssignInterpolants(FVertexFactoryInterpolantsVSToDS Input)
+FVertexFactoryInterpolantsVSToPS VertexFactoryAssignInterpolants(FVertexFactoryRayTracingInterpolants Input)
 {
 	return Input.InterpolantsVSToPS;
 }
 
-FVertexFactoryInterpolantsVSToDS VertexFactoryGetInterpolantsVSToDS(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates, FMaterialVertexParameters VertexParameters)
+FVertexFactoryRayTracingInterpolants VertexFactoryGetRayTracingInterpolants(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates, FMaterialVertexParameters VertexParameters)
 {
-	FVertexFactoryInterpolantsVSToDS Interpolants;
+	FVertexFactoryRayTracingInterpolants Interpolants;
 	
 	Interpolants.InterpolantsVSToPS = VertexFactoryGetInterpolantsVSToPS(Input, Intermediates, VertexParameters);
 	
 	return Interpolants;
 }
 
-/** Converts from vertex factory specific interpolants to a FMaterialTessellationParameters, which is used by material inputs. */
-FMaterialTessellationParameters GetMaterialTessellationParameters(FVertexFactoryInterpolantsVSToDS Interpolants, float3 CameraLocalWorldPosition)
+FVertexFactoryRayTracingInterpolants VertexFactoryInterpolate(FVertexFactoryRayTracingInterpolants a, float aInterp, FVertexFactoryRayTracingInterpolants b, float bInterp)
 {
-	FMaterialTessellationParameters	Result;
-#if NUM_TEX_COORD_INTERPOLATORS
-	UNROLL
-	for (int CoordinateIndex = 0;CoordinateIndex < NUM_TEX_COORD_INTERPOLATORS;CoordinateIndex++)
-	{
-		Result.TexCoords[CoordinateIndex] = Interpolants.InterpolantsVSToPS.TexCoords[CoordinateIndex];
-	}
-#endif
+	// Default initialize. Otherwise, some graphics pipelines that
+	// couple tessellation with geometry shaders won't write to all TEXCOORD semantics,
+	// but read from them when <FVertexFactoryRayTracingInterpolants> is being copied as a whole.
+	FVertexFactoryRayTracingInterpolants O = (FVertexFactoryRayTracingInterpolants)0;
 
-	half3 TangentToWorld0 = Interpolants.InterpolantsVSToPS.TangentToWorld0.xyz;
-	half4 TangentToWorld2 = Interpolants.InterpolantsVSToPS.TangentToWorld2;
-
+	INTERPOLATE_MEMBER(InterpolantsVSToPS.TangentToWorld0.xyz);
+	INTERPOLATE_MEMBER(InterpolantsVSToPS.TangentToWorld2);
 #if INTERPOLATE_VERTEX_COLOR
-	Result.VertexColor = Interpolants.InterpolantsVSToPS.Color;
-#endif
-
-	Result.TangentToWorld = AssembleTangentToWorld( TangentToWorld0, TangentToWorld2 );
-
-	Result.TangentToWorldPreScale = 1;
-
-
-	Result.WorldPosition = CameraLocalWorldPosition + ResolvedView.WorldCameraOrigin;
-
-	return Result;
-}
-
-FVertexFactoryInterpolantsVSToDS VertexFactoryInterpolate(FVertexFactoryInterpolantsVSToDS a, float aInterp, FVertexFactoryInterpolantsVSToDS b, float bInterp)
-{
-	FVertexFactoryInterpolantsVSToDS O;
-
-	TESSELLATION_INTERPOLATE_MEMBER(InterpolantsVSToPS.TangentToWorld0.xyz);
-	TESSELLATION_INTERPOLATE_MEMBER(InterpolantsVSToPS.TangentToWorld2);
-#if INTERPOLATE_VERTEX_COLOR
-	TESSELLATION_INTERPOLATE_MEMBER(InterpolantsVSToPS.Color);
+	INTERPOLATE_MEMBER(InterpolantsVSToPS.Color);
 #endif
 
 #if NUM_TEX_COORD_INTERPOLATORS
 	UNROLL
-	for(int tc = 0; tc < NUM_TEX_COORD_INTERPOLATORS; ++tc)
+	// TexCoords in VSToPS are a float4 array with 2 coords packed together
+	for(int tc = 0; tc < (NUM_TEX_COORD_INTERPOLATORS+1)/2; ++tc)
 	{
-		TESSELLATION_INTERPOLATE_MEMBER(InterpolantsVSToPS.TexCoords[tc]);
+		INTERPOLATE_MEMBER(InterpolantsVSToPS.TexCoords[tc]);
 	}
+#endif
+
+#if VF_USE_PRIMITIVE_SCENE_DATA
+	O.InterpolantsVSToPS.PrimitiveId = a.InterpolantsVSToPS.PrimitiveId;
 #endif
 
 	return O;
 }
-
-float3x3 VertexFactoryGetTangentToLocalDS(FVertexFactoryInterpolantsVSToDS Interpolants)
-{
-	// This duplicates stuff already going on in GetMaterialTessellationParameters(), so
-	// maybe the hull shader could leverage that instead?
-
-	half3 TangentToWorld0 = Interpolants.InterpolantsVSToPS.TangentToWorld0.xyz;
-	half4 TangentToWorld2 = Interpolants.InterpolantsVSToPS.TangentToWorld2;
-
-	float3x3 TangentToWorld = AssembleTangentToWorld( TangentToWorld0, TangentToWorld2 );
-	
-	return TangentToWorld;
-}
-
-#endif // #if USING_TESSELLATION
+#endif // #if NEEDS_VERTEX_FACTORY_INTERPOLATION
 
 #if INSTANCED_STEREO
 uint VertexFactoryGetEyeIndex(uint InstanceId)

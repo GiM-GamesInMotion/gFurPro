@@ -48,8 +48,138 @@ FFurMorphObject::~FFurMorphObject()
 		VertexBuffer.ReleaseResource();
 }
 
-void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTables, int InMeshLod)
+void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, FMorphTargetWeightMap& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTables, int InMeshLod)
 {
+	int32 NumFurVertices = FurData->GetNumVertices_RenderThread();
+	int32 NumVertices = NumFurVertices / FurData->GetFurLayerCount();
+	if (NumVertices > 0)
+	{
+		int32 NumLayers = FurData->GetFurLayerCount();
+
+		uint32 Size = NumVertices * sizeof(FMorphGPUSkinVertex);
+
+		TArray<float> MorphAccumulatedWeightArray;
+		FMorphGPUSkinVertex* Buffer = (FMorphGPUSkinVertex*)FMemory::Malloc(Size);
+
+		MorphAccumulatedWeightArray.AddUninitialized(NumVertices);
+		FMemory::Memzero(MorphAccumulatedWeightArray.GetData(), sizeof(float) * NumVertices);
+
+		FMemory::Memzero(&Buffer[0], sizeof(FMorphGPUSkinVertex) * NumVertices);
+
+		const auto& MorphRemapTable = InMorphRemapTables[InMeshLod];
+		
+		
+		TArray<const UMorphTarget*> ActiveMorphTargetList;
+		ActiveMorphTargets.GenerateKeyArray(ActiveMorphTargetList);
+
+		// iterate over all active morph targets and accumulate their vertex deltas
+		for (int32 morphId = 0; morphId < ActiveMorphTargets.Num(); morphId++)
+		{
+			const UMorphTarget* ActiveMorphTarget = ActiveMorphTargetList[morphId];
+			const int32 WeightIndex = ActiveMorphTargetList.Find(ActiveMorphTarget);
+
+			checkSlow(ActiveMorphTarget != NULL);
+			checkSlow(ActiveMorphTarget->HasDataForLOD(LODIndex));
+
+			const float MorphTargetWeight = MorphTargetWeights[WeightIndex];
+			const float MorphAbsWeight = FMath::Abs(MorphTargetWeight);
+
+			checkSlow(MorphAbsWeight >= MinMorphTargetBlendWeight && MorphAbsWeight <= MaxMorphTargetBlendWeight);
+
+			// Get deltas
+			int32 NumDeltas;
+			const FMorphTargetDelta* Deltas = ActiveMorphTarget->GetMorphTargetDelta(InMeshLod, NumDeltas);
+
+			// iterate over the vertices that this lod model has changed
+			for (int32 MorphVertIdx = 0; MorphVertIdx < NumDeltas; MorphVertIdx++)
+			{
+				const FMorphTargetDelta& MorphVertex = Deltas[MorphVertIdx];
+
+				// @TODO FIXMELH : temp hack until we fix importing issue
+				if (MorphVertex.SourceIdx < (uint32)MorphRemapTable.Num())
+				{
+					int RemappedIndex = MorphRemapTable[MorphVertex.SourceIdx];
+					if (RemappedIndex == -1)
+						continue;
+					FMorphGPUSkinVertex& DestVertex = Buffer[RemappedIndex];
+
+					DestVertex.DeltaPosition += MorphVertex.PositionDelta * MorphTargetWeight;
+
+					// todo: could be moved out of the inner loop to be more efficient
+//						if (bBlendTangentsOnCPU)
+					{
+						DestVertex.DeltaTangentZ += MorphVertex.TangentZDelta * MorphTargetWeight;
+						// accumulate the weight so we can normalized it later
+						MorphAccumulatedWeightArray[RemappedIndex] += MorphAbsWeight;
+					}
+				}
+			} // for all vertices
+		} // for all morph targets
+
+//		if (bBlendTangentsOnCPU)
+		{
+			// copy back all the tangent values (can't use Memcpy, since we have to pack the normals)
+			for (int32 iVertex = 0; iVertex < NumVertices; ++iVertex)
+			{
+				FMorphGPUSkinVertex& DestVertex = Buffer[iVertex];
+				float AccumulatedWeight = MorphAccumulatedWeightArray[iVertex];
+
+				// if accumulated weight is >1.f
+				// previous code was applying the weight again in GPU if less than 1, but it doesn't make sense to do so
+				// so instead, we just divide by AccumulatedWeight if it's more than 1.
+				// now DeltaTangentZ isn't FPackedNormal, so you can apply any value to it. 
+				if (AccumulatedWeight > 1.f)
+				{
+					DestVertex.DeltaTangentZ /= AccumulatedWeight;
+				}
+			}
+		}
+
+		// Lock the real buffer.
+		{
+			if (!VertexBuffer.IsInitialized())
+			{
+				VertexBuffer.NumVertices = NumFurVertices;
+				VertexBuffer.InitResource();
+			}
+			else if (VertexBuffer.NumVertices != NumFurVertices)
+			{
+				VertexBuffer.NumVertices = NumFurVertices;
+				VertexBuffer.ReleaseDynamicRHI();
+				VertexBuffer.InitDynamicRHI();
+			}
+
+			FMorphGPUSkinVertex* ActualBuffer = (FMorphGPUSkinVertex*)RHILockBuffer(VertexBuffer.VertexBufferRHI, 0, Size * NumLayers, RLM_WriteOnly);
+			for (const auto& Section : FurData->GetSections_RenderThread())
+			{
+				uint32 NumSectionVertices = Section.MaxVertexIndex - Section.MinVertexIndex + 1;
+				check(NumSectionVertices % NumLayers == 0);
+				FMorphGPUSkinVertex* SectionBuffer = ActualBuffer + Section.MinVertexIndex;
+				uint32 NumLayerVertices = NumSectionVertices / NumLayers;
+
+				const auto* SourceBuffer = Buffer + (Section.MinVertexIndex / NumLayers);
+
+				uint32 LayerSize = NumLayerVertices * sizeof(FMorphGPUSkinVertex);
+
+				for (int i = 0; i < NumLayers; i++)
+					FMemory::Memcpy(SectionBuffer + NumLayerVertices * i, SourceBuffer, LayerSize);
+			}
+			FMemory::Free(Buffer);
+		}
+
+		{
+			// Unlock the buffer.
+			RHIUnlockBuffer(VertexBuffer.VertexBufferRHI);
+			// set update flag
+//			MorphVertexBuffer.bHasBeenUpdated = true;
+		}
+	}
+}
+
+
+
+
+/*{
 	int32 NumFurVertices = FurData->GetNumVertices_RenderThread();
 	int32 NumVertices = NumFurVertices / FurData->GetFurLayerCount();
 	if (NumVertices > 0)
@@ -168,3 +298,4 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 		}
 	}
 }
+*/

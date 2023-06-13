@@ -118,7 +118,7 @@ public:
 		if (FurComponent->LODFromParent)
 		{
 			const USkinnedMeshComponent* const MasterComp = FurComponent->GetMasterPoseComponent().Get();
-			if (MasterComp && MasterComp->SkeletalMesh && MasterComp->MeshObject)
+			if (MasterComp && MasterComp->GetSkinnedAsset() && MasterComp->MeshObject)
 			{
 #if WITH_EDITOR
 				const int32 LODBias = MasterComp->GetLODBias();
@@ -651,7 +651,10 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 		{
 			if (Comp->IsA(USkeletalMeshComponent::StaticClass()))
 			{
-				MasterPoseComponent = (USkeletalMeshComponent*)Comp;
+				MasterPoseComponent = (USkinnedMeshComponent*)Comp;//5.1
+
+				//Deprecated for SkinnedMeshComponent;
+				//MasterPoseComponent = (USkeletalMeshComponent*)Comp; //5.0
 				break;
 			}
 		}
@@ -666,8 +669,12 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 
 			auto NumLods = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData.Num();
 			MorphRemapTables.SetNum(NumLods);
+			
+			//5.1
+			bool UseMorphTargets = !DisableMorphTargets && MasterPoseComponent.IsValid() && MasterPoseComponent->GetSkinnedAsset()->GetMorphTargets().Num() > 0;
 
-			bool UseMorphTargets = !DisableMorphTargets && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->GetMorphTargets().Num() > 0;
+			//Deprecated 5.0
+			//bool UseMorphTargets = !DisableMorphTargets && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->GetMorphTargets().Num() > 0;
 
 			{
 				auto Data = FFurSkinData::CreateFurData(FMath::Max(LayerCount, 1), 0, this);
@@ -867,7 +874,7 @@ void UGFurComponent::updateFur()
 	{
 		const USkeletalMesh* const ThisMesh = SkeletalGrowMesh;
 		const USkinnedMeshComponent* const MasterComp = MasterPoseComponent.Get();
-		const USkeletalMesh* const MasterCompMesh = MasterComp ? MasterComp->SkeletalMesh : nullptr;
+		const USkinnedAsset* const MasterCompMesh = MasterComp ? MasterComp->GetSkinnedAsset() : nullptr;
 		const auto& LOD = SkeletalGrowMesh->GetResourceForRendering()->LODRenderData[Scene->GetCurrentMeshLodLevel()];
 
 		TArray<FMatrix, TInlineAllocator<256>> TempMatrices;
@@ -896,7 +903,7 @@ void UGFurComponent::updateFur()
 		TempMatrices.AddUninitialized(ReferenceToLocal.Num());
 
 		int32 SyncLODLevel = 0;
-		if (MasterComp && MasterComp->SkeletalMesh && MasterComp->MeshObject)
+		if (MasterComp && MasterComp->GetSkinnedAsset() && MasterComp->MeshObject)
 		{
 #if WITH_EDITOR
 			const int32 LODBias = MasterComp->GetLODBias();
@@ -1084,7 +1091,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			if (!DisableMorphTargets && MasterPoseComponent.IsValid() && FurProxy->GetMorphObject(true))
 			{
 				int32 FurLodLevel = FurProxy->GetCurrentFurLodLevel();
-				if (FurLodLevel == 0 || !LODs[FurLodLevel - 1].DisableMorphTargets)
+				if (FurLodLevel == 0 || !LODs[FurLodLevel - 1].DisableMorphTargets){}
 					FurProxy->GetMorphObject(true)->Update_RenderThread(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables, FurProxy->GetCurrentMeshLodLevel());
 			}
 		}
@@ -1107,9 +1114,9 @@ void UGFurComponent::UpdateMasterBoneMap()
 	MasterBoneMap.Empty();
 	MasterBoneMap.AddDefaulted();
 
-	if (SkeletalGrowMesh && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh)
+	if (SkeletalGrowMesh && MasterPoseComponent.IsValid() && MasterPoseComponent->GetSkinnedAsset())
 	{
-		USkeletalMesh* ParentMesh = MasterPoseComponent->SkeletalMesh;
+		USkinnedAsset* ParentMesh = MasterPoseComponent->GetSkinnedAsset();
 		TArray<int32>& CurrentMasterBoneMap = MasterBoneMap[0];
 
 		const auto& GrowMeshRefSkeleton = SkeletalGrowMesh->GetRefSkeleton();
@@ -1158,7 +1165,7 @@ void UGFurComponent::CreateMorphRemapTable(int32 InLod)
 	if (MorphRemapTable.Num() > 0)
 		return;
 
-	auto* MasterMesh = MasterPoseComponent->SkeletalMesh->GetResourceForRendering();
+	auto* MasterMesh = MasterPoseComponent->GetSkinnedAsset()->GetResourceForRendering();
 	check(MasterMesh);
 
 	const auto& MasterLodModel = MasterMesh->LODRenderData[FMath::Min(InLod, MasterMesh->LODRenderData.Num() - 1)];

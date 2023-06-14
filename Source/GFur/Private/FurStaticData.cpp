@@ -4,6 +4,7 @@
 #include "ShaderParameterUtils.h"
 #include "FurComponent.h"
 #include "Runtime/Renderer/Public/MeshMaterialShader.h"
+#include "Runtime\Renderer\Public\MeshDrawShaderBindings.h"
 #include "Runtime/RHI/Public/RHICommandList.h"
 
 static TArray< FFurStaticData* > FurStaticData;

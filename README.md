@@ -6,6 +6,6 @@
 > 
 > INFORMATION
 
-1. gFur is free for non-commercial use
+1. gFur is free for commercial use
 
-2. If you are interested in a commercial license, write us at gfur@gim.studio
+2. You can get the binaries here - https://gim.studio/animalia/gfur/

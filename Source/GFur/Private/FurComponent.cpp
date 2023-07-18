@@ -1,4 +1,4 @@
-// Copyright 2018 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "FurComponent.h"
 #include "GFur.h"

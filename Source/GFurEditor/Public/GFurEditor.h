@@ -3,7 +3,12 @@
 #pragma once
 
 #include "Modules/ModuleManager.h"
-#include "UnrealEd.h"
+//#include "UObject/Class.h"
+
+#include "Styling/SlateStyle.h"
+
+
+
 
 DECLARE_LOG_CATEGORY_EXTERN(GFurEditor, All, All)
 

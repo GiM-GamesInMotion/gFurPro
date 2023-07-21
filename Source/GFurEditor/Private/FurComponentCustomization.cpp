@@ -28,7 +28,8 @@
 #include "Runtime/Engine/Classes/Engine/StaticMesh.h"
 #include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
 #include "Runtime/Engine/Public/ComponentRecreateRenderStateContext.h"
-#include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
+//#include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 
@@ -56,14 +57,14 @@ void SGFurExportOptions::Construct(const FArguments& InArgs)
 		[
 			SNew(SBorder)
 			.Padding(FMargin(3))
-			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 			[
 				SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				[
 					SNew(STextBlock)
-					.Font(FEditorStyle::GetFontStyle("CurveEd.LabelFont"))
+					.Font(FAppStyle::GetFontStyle("CurveEd.LabelFont"))
 					.Text(LOCTEXT("Export_CurrentFileTitle", "Current File: "))
 				]
 				+ SHorizontalBox::Slot()
@@ -72,7 +73,7 @@ void SGFurExportOptions::Construct(const FArguments& InArgs)
 				.VAlign(VAlign_Center)
 				[
 					SNew(STextBlock)
-					.Font(FEditorStyle::GetFontStyle("CurveEd.InfoFont"))
+					.Font(FAppStyle::GetFontStyle("CurveEd.InfoFont"))
 					.Text(InArgs._FullPath)
 				]
 			]
@@ -215,7 +216,7 @@ void FFurComponentCustomization::CreateFurSplinesAssetWidget(FDetailWidgetRow& O
 	.WholeRowContent()
 	[
 		SNew(SBorder)
-		.BorderImage(FEditorStyle::GetBrush(TEXT("Menu.Background")))
+		.BorderImage(FAppStyle::GetBrush(TEXT("Menu.Background")))
 		.Content()
 		[
 			SNew(SBox)

@@ -8,6 +8,9 @@
 #include "Runtime/Engine/Public/Rendering/ColorVertexBuffer.h"
 #include "VertexFactory.h"
 #include "BoneIndices.h"
+
+#include "Async/AsyncWork.h"
+
 #include "FurSplines.h"
 
 /** Fur Static Vertex */

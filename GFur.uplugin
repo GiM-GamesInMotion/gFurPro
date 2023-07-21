@@ -18,19 +18,15 @@
 			"Name": "GFur",
 			"Type": "Runtime",
 			"LoadingPhase": "PostConfigInit",
-			"WhitelistPlatforms": [
-				"Win64",
-				"Win32",
-				"PS4",
-				"XboxOne",
-				"Android"
+			"PlatformAllowList": [
+				"Win64"
 			]
 		},
 		{
 			"Name": "GFurEditor",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit",
-			"WhitelistPlatforms": [
+			"PlatformAllowList": [
 				"Win64"
 			]
 		}

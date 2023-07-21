@@ -20,6 +20,9 @@
 #include "Runtime\Engine\Classes\Engine\SkinnedAssetCommon.h"
 #include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
 #include "Runtime/Engine/Classes/Components/SkeletalMeshComponent.h"
+
+#include "PrimitiveSceneProxy.h"
+
 #include "Engine/CollisionProfile.h"
 #include "Runtime/Launch/Resources/Version.h"
 #include "ShaderParameterUtils.h"

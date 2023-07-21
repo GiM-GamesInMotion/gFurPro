@@ -8,11 +8,17 @@
 #include "EdMode.h"
 #include "EditorModeManager.h"
 #include "EditorViewportClient.h"
-#include "AssetRegistryModule.h"
+
+#include "AssetRegistry/AssetRegistryModule.h"
+
 #include "EditorReimportHandler.h"
 #include "Editor/UnrealEd/Classes/Editor/EditorEngine.h"
+
 #include "Editor/ViewportInteraction/Public/ViewportWorldInteraction.h"
-#include "Editor/ViewportInteraction/Public/ViewportInteraction.h"
+//#include "Editor/ViewportInteraction/Public/ViewportInteraction.h"
+//#include "ViewportInteraction.h"
+#include "ViewportInteractableInterface.h"
+
 #include "EditorWorldExtension.h"
 #include "Editor/UnrealEd/Public/Toolkits/BaseToolkit.h"
 #include "VREditorMode.h"

@@ -5,6 +5,8 @@
 #include "FurCombEdMode.h"
 #include "FurComponentCustomization.h"
 
+#include "Styling/SlateStyleRegistry.h"
+
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
 #include <Runtime/Projects/Private/PluginManager.h>
 

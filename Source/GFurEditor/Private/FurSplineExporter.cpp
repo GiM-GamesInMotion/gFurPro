@@ -10,7 +10,8 @@
 #include "Modules/ModuleManager.h"
 #include "Misc/PackageName.h"
 #include "Editor.h"
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+
 #include "PackageTools.h"
 #include "FurSplines.h"
 

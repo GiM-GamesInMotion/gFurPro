@@ -1,4 +1,4 @@
-// Copyright 2019 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "SFurCombModeWidget.h"
 
@@ -42,7 +42,7 @@ void SFurCombModeWidget::Construct(const FArguments& InArgs, FFurComb* InComb)
 			.AutoHeight()
 			[
 				SNew(SBorder)
-				.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 				.HAlign(HAlign_Center)
 				[
 					CreateToolBarWidget()->AsShared()

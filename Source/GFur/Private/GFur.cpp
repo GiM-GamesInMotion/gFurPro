@@ -1,4 +1,4 @@
-// Copyright 2018 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "GFur.h"
 #include "Interfaces/IPluginManager.h"

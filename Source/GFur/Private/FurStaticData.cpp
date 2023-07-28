@@ -1,9 +1,10 @@
-// Copyright 2018 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "FurStaticData.h"
 #include "ShaderParameterUtils.h"
 #include "FurComponent.h"
 #include "Runtime/Renderer/Public/MeshMaterialShader.h"
+#include "Runtime\Renderer\Public\MeshDrawShaderBindings.h"
 #include "Runtime/RHI/Public/RHICommandList.h"
 
 static TArray< FFurStaticData* > FurStaticData;

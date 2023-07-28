@@ -1,8 +1,9 @@
-// Copyright 2018 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "/Engine/Public/Platform.ush"
 #include "/Engine/Private/VertexFactoryCommon.ush"
 #include "/Engine/Private/GpuSkinCommon.ush"
+#include "/Engine/Private/LargeWorldCoordinates.ush"
 
 #ifndef GPUSKIN_MORPH_BLEND
 #define GPUSKIN_MORPH_BLEND 0
@@ -713,13 +714,20 @@ FVertexFactoryInterpolantsVSToPS VertexFactoryGetInterpolantsVSToPS(FVertexFacto
 	return Interpolants;
 }
 
-float4 TransformPreviousLocalPositionToTranslatedWorld(float3 PrevLocalPosition, FLWCMatrix PrevLocalToWorld)
+//float4 TransformPreviousLocalPositionToTranslatedWorld(float3 PrevLocalPosition, FLWCMatrix PrevLocalToWorld)
+
+void TransformPreviousLocalPositionToTranslatedWorld(float3 PrevLocalPosition, float3 PrevLocalToWorld)
 {
 	// Multiply local position with PrevLocalToWorld 3x3 first for high precision rotation and scale, then move the world position part to translated world before adding it  
-	float3 RotatedScaledPosition = (PrevLocalPosition.xxx * PrevLocalToWorld.M[0].xyz + PrevLocalPosition.yyy * PrevLocalToWorld.M[1].xyz + PrevLocalPosition.zzz * PrevLocalToWorld.M[2].xyz);
-	FLWCVector3 TranslatedPreviousWorldPositionOrigin = LWCAdd(LWCGetOrigin(PrevLocalToWorld), ResolvedView.PrevPreViewTranslation);
-	return float4(RotatedScaledPosition + LWCToFloat(TranslatedPreviousWorldPositionOrigin), 1.0f);
+	
+	//FLWCMatrix RotatedScaledPosition = (PrevLocalPosition.xxx * PrevLocalToWorld.M[0].xyz + PrevLocalPosition.yyy * PrevLocalToWorld.M[1].xyz + PrevLocalPosition.zzz * PrevLocalToWorld.M[2].xyz);	
+	
+	//FLWCVector3 TranslatedPreviousWorldPositionOrigin = LWCAdd(LWCGetOrigin(PrevLocalToWorld), ResolvedView.PrevPreViewTranslation);
+	
+	//return float4(RotatedScaledPosition + LWCToFloat(TranslatedPreviousWorldPositionOrigin), 1.0f);
+	
 }
+
 
 // @return previous translated world position
 float4 VertexFactoryGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)

@@ -1,4 +1,4 @@
-// Copyright 2018 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #pragma once
 
@@ -38,7 +38,7 @@ public:
 	FFurMorphObject(FFurSkinData* InFurData);
 	~FFurMorphObject();
 
-	void Update_RenderThread(FRHICommandListImmediate& RHICmdList, const TArray<FActiveMorphTarget>& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTable, int InMeshLod);
+	void Update_RenderThread(FRHICommandListImmediate& RHICmdList, FMorphTargetWeightMap& ActiveMorphTargets, const TArray<float>& MorphTargetWeights, const TArray<TArray<int32>>& InMorphRemapTable, int InMeshLod);
 
 	FVertexBuffer* GetVertexBuffer() { return &VertexBuffer; }
 

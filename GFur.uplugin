@@ -1,14 +1,14 @@
 {
 	"FileVersion": 3,
 	"Version": 3,
-	"VersionName": "3.8.5",
+	"VersionName": "5.0.0",
 	"FriendlyName": "GFur PRO",
 	"Description": "Shell based fur plugin.",
 	"Category": "Rendering",
 	"CreatedBy": "GiM, s.r.o.",
 	"CreatedByURL": "www.gim.studio",
-	"DocsURL": "gim.studio/gfur-user-manual",
-	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/9073da3940d4482384d111870ccc9ab7",
+	"DocsURL": "gim.studio/animalia/gfur",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/c657e6d3d6c9467db3e96c828529841b",
 	"SupportURL": "gfur@gim.studio",
 	"EngineVersion": "5.0.0",
 	"CanContainContent": true,
@@ -18,19 +18,15 @@
 			"Name": "GFur",
 			"Type": "Runtime",
 			"LoadingPhase": "PostConfigInit",
-			"WhitelistPlatforms": [
-				"Win64",
-				"Win32",
-				"PS4",
-				"XboxOne",
-				"Android"
+			"PlatformAllowList": [
+				"Win64"
 			]
 		},
 		{
 			"Name": "GFurEditor",
 			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit",
-			"WhitelistPlatforms": [
+			"PlatformAllowList": [
 				"Win64"
 			]
 		}

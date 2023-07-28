@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 3,
-	"VersionName": "5.0.0",
+	"VersionName": "5.1.0",
 	"FriendlyName": "GFur PRO",
 	"Description": "Shell based fur plugin.",
 	"Category": "Rendering",
@@ -10,7 +10,7 @@
 	"DocsURL": "gim.studio/animalia/gfur",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/c657e6d3d6c9467db3e96c828529841b",
 	"SupportURL": "gfur@gim.studio",
-	"EngineVersion": "5.2.0",
+	"EngineVersion": "5.1.0",
 	"CanContainContent": true,
 	"Installed": true,
 	"Modules": [

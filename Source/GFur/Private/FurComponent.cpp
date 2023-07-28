@@ -83,6 +83,8 @@ public:
 					Segment.VertexBufferStride = FurData[0]->GetVertexBuffer().GetVertexSize();
 					Segment.FirstPrimitive = Section.BaseIndex / 3;
 					Segment.NumPrimitives = Section.NumTriangles;
+					//If hardware ray tracing support is enabled in the project Settings, it seems that this must be set to a valid value, so far I have set it as follows:
+					Segment.MaxVertices=Segment.VertexBuffer.GetRefCount()+1;
 					Initializer.Segments.Add(Segment);
 
 				}

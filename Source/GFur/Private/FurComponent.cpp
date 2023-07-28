@@ -1,4 +1,4 @@
-// Copyright 2018 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "FurComponent.h"
 #include "GFur.h"
@@ -13,8 +13,16 @@
 #include "Runtime/Engine/Public/SkeletalRenderPublic.h"
 #include "Runtime/Engine/Classes/Materials/Material.h"
 #include "Runtime/Engine/Classes/Materials/MaterialInstanceDynamic.h"
+#include "Runtime/Engine/Public/Materials/MaterialRenderProxy.h"
+#include "Runtime\Engine\Public\MaterialDomain.h"
+#include "MaterialShared.h"
+#include "Engine/SkeletalMesh.h"
+#include "Runtime\Engine\Classes\Engine\SkinnedAssetCommon.h"
 #include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
 #include "Runtime/Engine/Classes/Components/SkeletalMeshComponent.h"
+
+#include "PrimitiveSceneProxy.h"
+
 #include "Engine/CollisionProfile.h"
 #include "Runtime/Launch/Resources/Version.h"
 #include "ShaderParameterUtils.h"
@@ -108,10 +116,8 @@ public:
 
 		const bool Wireframe = AllowDebugViewmodes() && ViewFamily.EngineShowFlags.Wireframe;
 
-		auto WireframeMaterialInstance = new FColoredMaterialRenderProxy(
-			GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : NULL,
-			FLinearColor(0, 0.5f, 1.f));
-
+		FMaterialRenderProxy* WireframeMaterialInstance = new FColoredMaterialRenderProxy(GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : NULL, FLinearColor(0, 0.5f, 1.f));
+		
 		Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
 
 		int NewLodLevel = 0x7fffffff;
@@ -248,7 +254,7 @@ public:
 
 	virtual void DrawDynamicElements(FPrimitiveDrawInterface* PDI, const FSceneView* View)
 	{
-/*		QUICK_SCOPE_CYCLE_COUNTER(STAT_ProceduralMeshSceneProxy_DrawDynamicElements);
+		/*	QUICK_SCOPE_CYCLE_COUNTER(STAT_ProceduralMeshSceneProxy_DrawDynamicElements);
 
 		const bool bWireframe = AllowDebugViewmodes() && View->Family->EngineShowFlags.Wireframe;
 
@@ -336,7 +342,9 @@ public:
 
 				RayTracingInstance.Materials.Add(MeshBatch);
 			}
-			RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
+			
+			//Deprecated
+			//RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
 			OutRayTracingInstances.Add(RayTracingInstance);
 		}
 	}
@@ -444,7 +452,9 @@ UMaterialInterface* UGFurComponent::GetMaterial(int32 MaterialIndex) const
 	}
 	else if (SkeletalGrowMesh)
 	{
-		const auto& Materials = SkeletalGrowMesh->GetMaterials();
+		//const auto& Materials = SkeletalGrowMesh->GetMaterials();
+		TArray<FSkeletalMaterial> Materials = SkeletalGrowMesh->GetMaterials();
+
 		if (MaterialIndex < Materials.Num() && Materials[MaterialIndex].MaterialInterface)
 			return Materials[MaterialIndex].MaterialInterface;
 	}

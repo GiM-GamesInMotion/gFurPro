@@ -1,4 +1,4 @@
-// Copyright 2018 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #pragma once
 
@@ -8,6 +8,9 @@
 #include "Runtime/Engine/Public/Rendering/ColorVertexBuffer.h"
 #include "VertexFactory.h"
 #include "BoneIndices.h"
+
+#include "Async/AsyncWork.h"
+
 #include "FurSplines.h"
 
 /** Fur Static Vertex */

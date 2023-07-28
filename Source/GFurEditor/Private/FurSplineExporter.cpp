@@ -1,4 +1,4 @@
-// Copyright 2020 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "FurSplineExporter.h"
 #include "GFurEditor.h"
@@ -10,7 +10,8 @@
 #include "Modules/ModuleManager.h"
 #include "Misc/PackageName.h"
 #include "Editor.h"
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+
 #include "PackageTools.h"
 #include "FurSplines.h"
 

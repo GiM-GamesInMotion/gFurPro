@@ -1,4 +1,4 @@
-// Copyright 2018 GiM s.r.o. All Rights Reserved.
+// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 using UnrealBuildTool;
 
@@ -14,7 +14,6 @@ public class GFur : ModuleRules
 
         PrivateIncludePaths.Add(ModuleDirectory + "/Private");
         PrivateIncludePaths.Add(EngineDirectory + "/Shaders/Shared");
-
 
         PublicDependencyModuleNames.AddRange(
 			new string[]

@@ -8,4 +8,4 @@
 
 1. gFur is free for commercial use
 
-2. You can get the binaries here - https://unrealengine.com/marketplace/en-US/product/gfur-5
+2. You can get the binaries here - https://gim.studio/animalia/gfur/

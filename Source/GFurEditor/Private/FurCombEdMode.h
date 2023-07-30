@@ -1,10 +1,9 @@
-// Copyright 2023 GiM s.r.o. All Rights Reserved.
+// Copyright 2019 GiM s.r.o. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "InputCoreTypes.h"
-
 #include "EdMode.h"
 
 class FEditorViewportClient;

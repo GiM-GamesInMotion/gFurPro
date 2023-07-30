@@ -1,11 +1,9 @@
-// Copyright 2023 GiM s.r.o. All Rights Reserved.
+// Copyright 2018 GiM s.r.o. All Rights Reserved.
 
 #include "GFurEditor.h"
 #include "FurSplinesTypeActions.h"
 #include "FurCombEdMode.h"
 #include "FurComponentCustomization.h"
-
-#include "Styling/SlateStyleRegistry.h"
 
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
 #include <Runtime/Projects/Private/PluginManager.h>

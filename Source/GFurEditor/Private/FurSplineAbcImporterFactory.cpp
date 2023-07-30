@@ -1,4 +1,4 @@
-// Copyright 2023 GiM s.r.o. All Rights Reserved.
+// Copyright 2020 GiM s.r.o. All Rights Reserved.
 
 #include "FurSplineAbcImporterFactory.h"
 #include "GFurEditor.h"
@@ -10,7 +10,7 @@
 #include "Modules/ModuleManager.h"
 #include "Misc/PackageName.h"
 #include "Editor.h"
-#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetRegistryModule.h"
 #include "PackageTools.h"
 #include "FurSplines.h"
 #include "Widgets/Input/SComboBox.h"
@@ -249,14 +249,14 @@ void SGFurImportOptions::Construct(const FArguments& InArgs)
 		[
 			SNew(SBorder)
 			.Padding(FMargin(3))
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
 			[
 				SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				[
 					SNew(STextBlock)
-					.Font(FAppStyle::GetFontStyle("CurveEd.LabelFont"))
+					.Font(FEditorStyle::GetFontStyle("CurveEd.LabelFont"))
 					.Text(LOCTEXT("Import_CurrentFileTitle", "Current File: "))
 				]
 				+ SHorizontalBox::Slot()
@@ -265,7 +265,7 @@ void SGFurImportOptions::Construct(const FArguments& InArgs)
 				.VAlign(VAlign_Center)
 				[
 					SNew(STextBlock)
-					.Font(FAppStyle::GetFontStyle("CurveEd.InfoFont"))
+					.Font(FEditorStyle::GetFontStyle("CurveEd.InfoFont"))
 					.Text(InArgs._FullPath)
 				]
 			]

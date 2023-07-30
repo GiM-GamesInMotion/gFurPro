@@ -1,4 +1,4 @@
-// Copyright 2023 GiM s.r.o. All Rights Reserved.
+// Copyright 2019 GiM s.r.o. All Rights Reserved.
 
 #include "FurCombEdMode.h"
 #include "FurComb.h"
@@ -8,17 +8,11 @@
 #include "EdMode.h"
 #include "EditorModeManager.h"
 #include "EditorViewportClient.h"
-
-#include "AssetRegistry/AssetRegistryModule.h"
-
+#include "AssetRegistryModule.h"
 #include "EditorReimportHandler.h"
 #include "Editor/UnrealEd/Classes/Editor/EditorEngine.h"
-
 #include "Editor/ViewportInteraction/Public/ViewportWorldInteraction.h"
-//#include "Editor/ViewportInteraction/Public/ViewportInteraction.h"
-//#include "ViewportInteraction.h"
-#include "ViewportInteractableInterface.h"
-
+#include "Editor/ViewportInteraction/Public/ViewportInteraction.h"
 #include "EditorWorldExtension.h"
 #include "Editor/UnrealEd/Public/Toolkits/BaseToolkit.h"
 #include "VREditorMode.h"

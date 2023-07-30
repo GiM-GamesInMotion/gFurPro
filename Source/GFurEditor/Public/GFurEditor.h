@@ -1,14 +1,9 @@
-// Copyright 2023 GiM s.r.o. All Rights Reserved.
+// Copyright 2018 GiM s.r.o. All Rights Reserved.
 
 #pragma once
 
 #include "Modules/ModuleManager.h"
-//#include "UObject/Class.h"
-
-#include "Styling/SlateStyle.h"
-
-
-
+#include "UnrealEd.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(GFurEditor, All, All)
 

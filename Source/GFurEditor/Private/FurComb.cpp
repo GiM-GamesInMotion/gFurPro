@@ -1,4 +1,4 @@
-// Copyright 2023 GiM s.r.o. All Rights Reserved.
+// Copyright 2019 GiM s.r.o. All Rights Reserved.
 
 #include "FurComb.h"
 #include "FurCombCommands.h"

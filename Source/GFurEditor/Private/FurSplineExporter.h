@@ -1,4 +1,3 @@
-// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #pragma once
 

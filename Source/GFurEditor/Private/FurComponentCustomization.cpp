@@ -1,4 +1,3 @@
-// Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "FurComponentCustomization.h"
 
@@ -28,8 +27,7 @@
 #include "Runtime/Engine/Classes/Engine/StaticMesh.h"
 #include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
 #include "Runtime/Engine/Public/ComponentRecreateRenderStateContext.h"
-//#include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
-#include "AssetRegistry/AssetRegistryModule.h"
+#include "Runtime/AssetRegistry/Public/AssetRegistryModule.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 
@@ -57,14 +55,14 @@ void SGFurExportOptions::Construct(const FArguments& InArgs)
 		[
 			SNew(SBorder)
 			.Padding(FMargin(3))
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
 			[
 				SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
 				[
 					SNew(STextBlock)
-					.Font(FAppStyle::GetFontStyle("CurveEd.LabelFont"))
+					.Font(FEditorStyle::GetFontStyle("CurveEd.LabelFont"))
 					.Text(LOCTEXT("Export_CurrentFileTitle", "Current File: "))
 				]
 				+ SHorizontalBox::Slot()
@@ -73,7 +71,7 @@ void SGFurExportOptions::Construct(const FArguments& InArgs)
 				.VAlign(VAlign_Center)
 				[
 					SNew(STextBlock)
-					.Font(FAppStyle::GetFontStyle("CurveEd.InfoFont"))
+					.Font(FEditorStyle::GetFontStyle("CurveEd.InfoFont"))
 					.Text(InArgs._FullPath)
 				]
 			]
@@ -216,7 +214,7 @@ void FFurComponentCustomization::CreateFurSplinesAssetWidget(FDetailWidgetRow& O
 	.WholeRowContent()
 	[
 		SNew(SBorder)
-		.BorderImage(FAppStyle::GetBrush(TEXT("Menu.Background")))
+		.BorderImage(FEditorStyle::GetBrush(TEXT("Menu.Background")))
 		.Content()
 		[
 			SNew(SBox)

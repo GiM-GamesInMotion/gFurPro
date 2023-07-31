@@ -1,10 +1,15 @@
 // Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "FurStaticData.h"
+
 #include "ShaderParameterUtils.h"
 #include "FurComponent.h"
 #include "Runtime/Renderer/Public/MeshMaterialShader.h"
 #include "Runtime\Renderer\Public\MeshDrawShaderBindings.h"
+#include "Engine/SkeletalMesh.h"
+#include "StaticMeshResources.h"
+#include "RHICommandList.h"
+
 #include "Runtime/RHI/Public/RHICommandList.h"
 
 static TArray< FFurStaticData* > FurStaticData;
@@ -180,8 +185,10 @@ public:
 
 	void SetData(const FDataType& InData)
 	{
+		FRHICommandListBase& RHICmdList = FRHICommandListExecutor::GetImmediateCommandList();
+
 		Data = InData;
-		FVertexFactory::UpdateRHI();
+		FVertexFactory::UpdateRHI(RHICmdList);
 	}
 
 	void AddVertexElements(FDataType& InData, FVertexDeclarationElementList& OutElements)
@@ -220,7 +227,7 @@ public:
 		OutElements.Add(AccessStreamComponent(InData.FurOffset, 12));
 	}
 
-	void InitRHI() override
+	void InitRHI(FRHICommandListBase& RHICmdList) override
 	{
 		// list of declaration items
 		FVertexDeclarationElementList Elements;
@@ -475,7 +482,7 @@ void FFurStaticData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponen
 #if WITH_EDITORONLY_DATA
 	if (StaticMesh)
 		StaticMesh->AddToRoot();
-	for (auto* Mesh : InFurComponent->SkeletalGuideMeshes)
+	for (USkeletalMesh* Mesh : InFurComponent->SkeletalGuideMeshes)
 		Mesh->AddToRoot();
 #endif // WITH_EDITORONLY_DATA
 

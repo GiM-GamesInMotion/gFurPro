@@ -1,6 +1,8 @@
 // Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "FurData.h"
+
+
 #include "FurComponent.h"
 
 /** Fur Vertex Buffer */
@@ -9,15 +11,22 @@ FFurVertexBuffer::~FFurVertexBuffer()
 	delete[]VertexData;
 }
 
-void FFurVertexBuffer::InitRHI()
+void FFurVertexBuffer::InitRHI(FRHICommandListBase& RHICmdList)
 {
 	FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
-	VertexBufferRHI = RHICreateVertexBuffer(Size, BUF_Static, CreateInfo);
+
+
+	//VertexBufferRHI = RHICreateVertexBuffer(Size, BUF_Static, CreateInfo); DEPRECATED
+	VertexBufferRHI = RHICmdList.CreateVertexBuffer(Size, BUF_Static, CreateInfo);
 
 	// Copy the vertex data into the vertex buffer.
-	void* VertexBufferData = RHILockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
+	//void* VertexBufferData = RHILockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly); DEPRECATED 
+	void* VertexBufferData = RHICmdList.LockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
+
 	FMemory::Memcpy(VertexBufferData, VertexData, Size);
-	RHIUnlockBuffer(VertexBufferRHI);
+
+	//RHIUnlockBuffer(VertexBufferRHI); DEPRECATED
+	RHICmdList.UnlockBuffer(VertexBufferRHI);
 
 #if !WITH_EDITORONLY_DATA
 	delete[]VertexData;
@@ -30,17 +39,23 @@ void FFurVertexBuffer::Unlock()
 	if (IsInitialized())
 	{
 		ENQUEUE_RENDER_COMMAND(UpdateDataCommand)([this](FRHICommandListImmediate& RHICmdList) {
+			
 			check(VertexBufferRHI.IsValid());
+
 			if (Size != VertexBufferRHI->GetSize() || VertexBufferRHI->GetUsage() == BUF_Static)
 			{
 				FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
-				VertexBufferRHI = RHICreateVertexBuffer(Size, BUF_Dynamic, CreateInfo);
+				//VertexBufferRHI = RHICreateVertexBuffer(Size, BUF_Dynamic, CreateInfo); DEPRECATED
+				VertexBufferRHI = RHICmdList.CreateVertexBuffer(Size, BUF_Dynamic, CreateInfo);
+
 			}
 
 			// Copy the vertex data into the vertex buffer.
-			void* VertexBufferData = RHILockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
+			//void* VertexBufferData = RHILockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
+			void* VertexBufferData = RHICmdList.LockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
+
 			FMemory::Memcpy(VertexBufferData, VertexData, Size);
-			RHIUnlockBuffer(VertexBufferRHI);
+			RHICmdList.UnlockBuffer(VertexBufferRHI);
 		});
 	}
 	else
@@ -50,17 +65,17 @@ void FFurVertexBuffer::Unlock()
 }
 
 /** Index Buffer */
-void FFurIndexBuffer::InitRHI()
+void FFurIndexBuffer::InitRHI(FRHICommandListBase& RHICmdList)
 {
 	if (Indices.Num() == 0)
 		Indices.Add(0);
 
 	FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
-	IndexBufferRHI = RHICreateIndexBuffer(sizeof(int32), Indices.Num() * sizeof(int32), BUF_Static, CreateInfo);
+	IndexBufferRHI = RHICmdList.CreateIndexBuffer(sizeof(int32), Indices.Num() * sizeof(int32), BUF_Static, CreateInfo);
 	// Write the indices to the index buffer.
-	void* Buffer = RHILockBuffer(IndexBufferRHI, 0, Indices.Num() * sizeof(int32), RLM_WriteOnly);
+	void* Buffer = RHICmdList.LockBuffer(IndexBufferRHI, 0, Indices.Num() * sizeof(int32), RLM_WriteOnly);
 	FMemory::Memcpy(Buffer, Indices.GetData(), Indices.Num() * sizeof(int32));
-	RHIUnlockBuffer(IndexBufferRHI);
+	RHICmdList.UnlockBuffer(IndexBufferRHI);
 
 #if !WITH_EDITORONLY_DATA
 	Indices.SetNum(0, true);
@@ -84,12 +99,12 @@ void FFurIndexBuffer::Unlock()
 			if (Size != IndexBufferRHI->GetSize() || IndexBufferRHI->GetUsage() == BUF_Static)
 			{
 				FRHIResourceCreateInfo CreateInfo(L"FurVertexBuffer");
-				IndexBufferRHI = RHICreateIndexBuffer(sizeof(int32), Size, BUF_Dynamic, CreateInfo);
+				IndexBufferRHI = RHICmdList.CreateIndexBuffer(sizeof(int32), Size, BUF_Dynamic, CreateInfo);
 			}
 
-			void* Buffer = RHILockBuffer(IndexBufferRHI, 0, Indices.Num() * sizeof(int32), RLM_WriteOnly);
+			void* Buffer = RHICmdList.LockBuffer(IndexBufferRHI, 0, Indices.Num() * sizeof(int32), RLM_WriteOnly);
 			FMemory::Memcpy(Buffer, Indices.GetData(), Indices.Num() * sizeof(int32));
-			RHIUnlockBuffer(IndexBufferRHI);
+			RHICmdList.UnlockBuffer(IndexBufferRHI);
 		});
 	}
 	else

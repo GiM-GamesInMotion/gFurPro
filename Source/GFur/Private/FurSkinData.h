@@ -5,6 +5,7 @@
 #include "Runtime/Engine/Classes/Engine/SkeletalMesh.h"
 #include "FurData.h"
 
+
 /** Soft Skin Vertex */
 template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT, bool bExtraBoneInfluencesT>
 struct FFurSkinVertex : FFurStaticVertex<TangentBasisTypeT, UVTypeT>
@@ -26,6 +27,7 @@ public:
 	static void DestroyFurData(const TArray<FFurData*>& InFurDataArray);
 
 	virtual void CreateVertexFactories(TArray<FFurVertexFactory*>& VertexFactories, FVertexBuffer* InMorphVertexBuffer, bool InPhysics, ERHIFeatureLevel::Type InFeatureLevel) override;
+
 protected:
 	USkeletalMesh* SkeletalMesh = nullptr;
 	TArray<USkeletalMesh*> GuideMeshes;

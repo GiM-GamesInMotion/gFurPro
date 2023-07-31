@@ -13,14 +13,14 @@ public:
 	/**
 	* Initialize the dynamic RHI for this rendering resource
 	*/
-	virtual void InitDynamicRHI() override;
-
+	//virtual void InitDynamicRHI() override;
+	virtual void InitRHI(FRHICommandListBase& RHICmdList);
 	/**
 	* Release the dynamic RHI for this rendering resource
 	*/
-	virtual void ReleaseDynamicRHI() override;
-
-	/**
+	//virtual void ReleaseDynamicRHI() override;
+	virtual void ReleaseRHI();
+		/**
 	* Morph target vertex name
 	*/
 	virtual FString GetFriendlyName() const { return TEXT("gFur Morph target mesh vertices"); }

@@ -6,6 +6,9 @@
 #include "Runtime/Engine/Public/Rendering/StaticMeshVertexBuffer.h"
 #include "Runtime/Engine/Public/Rendering/PositionVertexBuffer.h"
 #include "Runtime/Engine/Public/Rendering/ColorVertexBuffer.h"
+
+#include "RHICommandList.h"
+
 #include "VertexFactory.h"
 #include "BoneIndices.h"
 
@@ -48,7 +51,8 @@ class FFurVertexBuffer : public FVertexBuffer
 {
 public:
 	virtual ~FFurVertexBuffer() override;
-	virtual void InitRHI() override;
+
+	virtual void InitRHI(FRHICommandListBase& RHICmdList) override;
 
 	template<typename VertexType>
 	VertexType* Lock(uint32 VertexCount);
@@ -84,7 +88,7 @@ VertexType* FFurVertexBuffer::Lock(uint32 InVertexCount)
 class FFurIndexBuffer : public FIndexBuffer
 {
 public:
-	virtual void InitRHI() override;
+	virtual void InitRHI(FRHICommandListBase& RHICmdList) override;
 
 	TArray<int32>& Lock();
 	void Unlock();

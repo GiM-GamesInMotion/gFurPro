@@ -87,7 +87,9 @@ public:
 
 				}
 				RayTracingGeometry.SetInitializer(Initializer);
-				RayTracingGeometry.InitResource();
+				RayTracingGeometry.InitResource(RHICmdList);
+				
+
 			});
 		}
 #endif
@@ -704,7 +706,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 
 			FurData = FurArray;
 
-			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, OverrideMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
+			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, OverrideMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->GetFeatureLevel());
 		}
 		else if (StaticGrowMesh && StaticGrowMesh->GetRenderData())
 		{
@@ -717,7 +719,7 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			}
 
 			FurData = FurArray;
-			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, OverrideMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->FeatureLevel);
+			return new FFurSceneProxy(this, FurData, LODs, FurMaterials, OverrideMaterials, MorphObjects, CastShadow, PhysicsEnabled, GetWorld()->GetFeatureLevel());
 		}
 	}
 	return nullptr;
@@ -1086,7 +1088,7 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 
 	if (FurProxy)
 	{
-		ERHIFeatureLevel::Type SceneFeatureLevel = GetWorld()->FeatureLevel;
+		ERHIFeatureLevel::Type SceneFeatureLevel = GetWorld()->GetFeatureLevel();
 
 		int32 CurrentLOD = FurProxy->GetCurrentFurLodLevel();
 		if (SkeletalGrowMesh)

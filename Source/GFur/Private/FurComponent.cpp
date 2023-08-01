@@ -17,6 +17,7 @@
 #include "Runtime\Engine\Public\MaterialDomain.h"
 #include "MaterialShared.h"
 #include "Engine/SkeletalMesh.h"
+#include "SceneInterface.h"
 #include "Runtime\Engine\Classes\Engine\SkinnedAssetCommon.h"
 #include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
 #include "Runtime/Engine/Classes/Components/SkeletalMeshComponent.h"
@@ -65,7 +66,7 @@ public:
 #if RHI_RAYTRACING
 		if (IsRayTracingEnabled())
 		{
-			ENQUEUE_RENDER_COMMAND(UpdateDataCommand)([this](FRHICommandListImmediate& RHICmdList) {
+			ENQUEUE_RENDER_COMMAND(UpdateDataCommand)([&, this](FRHICommandListImmediate& RHICmdList) {
 				const auto& Sections = FurData[0]->GetSections();
 				FRayTracingGeometryInitializer Initializer;
 				Initializer.IndexBuffer = FurData[0]->GetIndexBuffer().IndexBufferRHI;
@@ -83,13 +84,18 @@ public:
 					Segment.VertexBufferStride = FurData[0]->GetVertexBuffer().GetVertexSize();
 					Segment.FirstPrimitive = Section.BaseIndex / 3;
 					Segment.NumPrimitives = Section.NumTriangles;
+					if (Section.MaxVertexIndex < 0) {
+						Segment.MaxVertices = 0;
+					}
+					else {
+						Segment.MaxVertices = Section.MaxVertexIndex;
+					}	
 					Initializer.Segments.Add(Segment);
-
 				}
-				RayTracingGeometry.SetInitializer(Initializer);
-				RayTracingGeometry.InitResource(RHICmdList);
-				
 
+				RayTracingGeometry.InitResource(RHICmdList);
+				RayTracingGeometry.InitRHI(RHICmdList);				
+				RayTracingGeometry.SetInitializer(Initializer);
 			});
 		}
 #endif
@@ -196,7 +202,7 @@ public:
 			for (int i = 0; i < NewLodLevel; i++)
 				SectionOffset += FurData[i]->GetSections_RenderThread().Num();
 		}
-/*		if (FirstFrame)
+		/*	if (FirstFrame)
 		{
 			LastFurLodLevel = CurrentFurLodLevel;
 			LastMeshLodLevel = CurrentMeshLodLevel;
@@ -301,7 +307,7 @@ public:
 		Result.bDynamicRelevance = true;
 		Result.bRenderInMainPass = ShouldRenderInMainPass();
 		//Material->GetRelevance(GetScene().GetFeatureLevel()).SetPrimitiveViewRelevance(Result);
-		Result.bVelocityRelevance = IsMovable() && Result.bOpaque && Result.bRenderInMainPass;
+		Result.bVelocityRelevance = IsMovable() & Result.bOpaque & Result.bRenderInMainPass;
 		Result.bRenderCustomDepth = ShouldRenderCustomDepth();
 		return Result;
 	}
@@ -346,6 +352,7 @@ public:
 			}
 			
 			//Deprecated
+
 			//RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
 			OutRayTracingInstances.Add(RayTracingInstance);
 		}

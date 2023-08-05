@@ -75,7 +75,15 @@ public:
 					Segment.VertexBufferStride = FurData[0]->GetVertexBuffer().GetVertexSize();
 					Segment.FirstPrimitive = Section.BaseIndex / 3;
 					Segment.NumPrimitives = Section.NumTriangles;
+					if (Section.MaxVertexIndex < 0) {
+						Segment.MaxVertices = 0;
+					}
+					else {
+						Segment.MaxVertices = Section.MaxVertexIndex;
+					}
+					
 					Initializer.Segments.Add(Segment);
+
 
 				}
 				RayTracingGeometry.SetInitializer(Initializer);

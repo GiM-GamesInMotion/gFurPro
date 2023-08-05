@@ -83,6 +83,7 @@ public:
 					Segment.VertexBufferStride = FurData[0]->GetVertexBuffer().GetVertexSize();
 					Segment.FirstPrimitive = Section.BaseIndex / 3;
 					Segment.NumPrimitives = Section.NumTriangles;
+					 
 					Initializer.Segments.Add(Segment);
 
 				}

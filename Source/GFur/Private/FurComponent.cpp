@@ -83,7 +83,13 @@ public:
 					Segment.VertexBufferStride = FurData[0]->GetVertexBuffer().GetVertexSize();
 					Segment.FirstPrimitive = Section.BaseIndex / 3;
 					Segment.NumPrimitives = Section.NumTriangles;
-					 
+					if (Section.MaxVertexIndex < 0) {
+						Segment.MaxVertices = 0;
+					}
+					else {
+						Segment.MaxVertices = Section.MaxVertexIndex;
+					}
+
 					Initializer.Segments.Add(Segment);
 
 				}
@@ -300,7 +306,7 @@ public:
 		Result.bDynamicRelevance = true;
 		Result.bRenderInMainPass = ShouldRenderInMainPass();
 		//Material->GetRelevance(GetScene().GetFeatureLevel()).SetPrimitiveViewRelevance(Result);
-		Result.bVelocityRelevance = IsMovable() && Result.bOpaque && Result.bRenderInMainPass;
+		Result.bVelocityRelevance = IsMovable() & Result.bOpaque & Result.bRenderInMainPass;
 		Result.bRenderCustomDepth = ShouldRenderCustomDepth();
 		return Result;
 	}

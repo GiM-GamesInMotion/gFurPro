@@ -10,7 +10,7 @@
 	"DocsURL": "gim.studio/animalia/gfur",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/c657e6d3d6c9467db3e96c828529841b",
 	"SupportURL": "gfur@gim.studio",
-	"EngineVersion": "5.2.0",
+	"EngineVersion": "5.2.1",
 	"CanContainContent": true,
 	"Installed": true,
 	"Modules": [

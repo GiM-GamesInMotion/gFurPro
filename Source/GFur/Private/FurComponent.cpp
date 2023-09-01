@@ -691,7 +691,8 @@ FPrimitiveSceneProxy* UGFurComponent::CreateSceneProxy()
 			bool UseMorphTargets = !DisableMorphTargets && MasterPoseComponent.IsValid() && MasterPoseComponent->GetSkinnedAsset()->GetMorphTargets().Num() > 0;
 
 			//Deprecated 5.0
-			//bool UseMorphTargets = !DisableMorphTargets && MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->GetMorphTargets().Num() > 0;
+			//bool UseMorphTargets = !DisableMorphTargets 
+			MasterPoseComponent.IsValid() && MasterPoseComponent->SkeletalMesh->GetMorphTargets().Num() > 0;
 
 			{
 				auto Data = FFurSkinData::CreateFurData(FMath::Max(LayerCount, 1), 0, this);
@@ -1108,8 +1109,9 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			if (!DisableMorphTargets && MasterPoseComponent.IsValid() && FurProxy->GetMorphObject(true))
 			{
 				int32 FurLodLevel = FurProxy->GetCurrentFurLodLevel();
-				if (FurLodLevel == 0 || !LODs[FurLodLevel - 1].DisableMorphTargets){}
+				if (FurLodLevel == 0 || !LODs[FurLodLevel - 1].DisableMorphTargets){
 					FurProxy->GetMorphObject(true)->Update_RenderThread(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables, FurProxy->GetCurrentMeshLodLevel());
+				}
 			}
 		}
 		else if (StaticGrowMesh)

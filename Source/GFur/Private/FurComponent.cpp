@@ -301,7 +301,7 @@ public:
 		Result.bDynamicRelevance = true;
 		Result.bRenderInMainPass = ShouldRenderInMainPass();
 		//Material->GetRelevance(GetScene().GetFeatureLevel()).SetPrimitiveViewRelevance(Result);
-		Result.bVelocityRelevance = IsMovable() && Result.bOpaque && Result.bRenderInMainPass;
+		Result.bVelocityRelevance = IsMovable() & Result.bOpaque & Result.bRenderInMainPass;
 		Result.bRenderCustomDepth = ShouldRenderCustomDepth();
 		return Result;
 	}
@@ -416,7 +416,7 @@ UGFurComponent::UGFurComponent(const FObjectInitializer& ObjectInitializer)
 	CastShadow = false;
 	PrimaryComponentTick.bCanEverTick = true;
 	DisableMorphTargets = false;
-
+	
 	StreamingDistanceMultiplier = 1.0f;
 
 	LastDeltaTime = 1.0f;
@@ -1099,8 +1099,9 @@ void UGFurComponent::UpdateFur_RenderThread(FRHICommandListImmediate& RHICmdList
 			if (!DisableMorphTargets && MasterPoseComponent.IsValid() && FurProxy->GetMorphObject(true))
 			{
 				int32 FurLodLevel = FurProxy->GetCurrentFurLodLevel();
-				if (FurLodLevel == 0 || !LODs[FurLodLevel - 1].DisableMorphTargets){}
+				if (FurLodLevel == 0 || !LODs[FurLodLevel - 1].DisableMorphTargets){
 					FurProxy->GetMorphObject(true)->Update_RenderThread(RHICmdList, MasterPoseComponent->ActiveMorphTargets, MasterPoseComponent->MorphTargetWeights, MorphRemapTables, FurProxy->GetCurrentMeshLodLevel());
+				}
 			}
 		}
 		else if (StaticGrowMesh)

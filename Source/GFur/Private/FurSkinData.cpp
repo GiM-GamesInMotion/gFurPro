@@ -12,8 +12,9 @@
 static TArray< FFurSkinData* > FurSkinData;
 static FCriticalSection FurSkinDataCS;
 
-
-static unsigned int MaxGPUSkinBones = 256;
+// bone limit 512 (from previous 256)
+static unsigned int MaxGPUSkinBones = 512;
+//static uint32 MaxGPUSkinBones = FGPUBaseSkinVertexFactory::GetMaxGPUSkinBones();
 
 /** Fur Skin Vertex Blitter */
 template<EStaticMeshVertexTangentBasisType TangentBasisTypeT, EStaticMeshVertexUVType UVTypeT, bool bExtraBoneInfluencesT>
@@ -32,6 +33,14 @@ public:
 		const int32 NumInfluences = FFurSkinVertex<TangentBasisTypeT, UVTypeT, bExtraBoneInfluencesT>::NumInfluences;
 		for (int32 ib = 0; ib < NumInfluences; ib++)
 		{
+		/* // debug code
+			uint32 x = SkinWeights.GetBoneIndex(InVertexIndex, ib);
+			if (x >= 256 && x != 65535)
+				x = x;
+			uint32 y = SkinWeights.GetBoneWeight(InVertexIndex, ib);
+			if (y >= 256 && y != 65535)
+				y = y;
+		//*/
 			OutVertex.InfluenceBones[ib] = SkinWeights.GetBoneIndex(InVertexIndex, ib);
 			OutVertex.InfluenceWeights[ib] = SkinWeights.GetBoneWeight(InVertexIndex, ib);
 		}
@@ -284,9 +293,9 @@ public:
 		TArray<FVertexStreamComponent, TFixedAllocator<MAX_TEXCOORDS>> TextureCoordinates;
 		FVertexStreamComponent ColorComponent;
 		FVertexStreamComponent BoneIndices;
-		FVertexStreamComponent BoneIndicesExtra;
+		FVertexStreamComponent BoneIndicesExtra[2];
 		FVertexStreamComponent BoneWeights;
-		FVertexStreamComponent BoneWeightsExtra;
+		FVertexStreamComponent BoneWeightsExtra[2];
 		FVertexStreamComponent FurOffset;
 
 		FVertexStreamComponent DeltaPosition;
@@ -312,12 +321,22 @@ public:
 				NewData.TangentBasisComponents[0] = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, TangentX, TangentElementType);
 				NewData.TangentBasisComponents[1] = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, TangentZ, TangentElementType);
 				NewData.ColorComponent = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, Color, VET_Color);
-				NewData.BoneIndices = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceBones), sizeof(VertexType), VET_UByte4);
+				NewData.BoneIndices = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceBones), sizeof(VertexType), VET_UShort4);
 				if (bExtraInfluencesT)
-					NewData.BoneIndicesExtra = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceBones) + 4, sizeof(VertexType), VET_UByte4);
-				NewData.BoneWeights = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceWeights), sizeof(VertexType), VET_UByte4N);
+				{
+					// offset = 8 == sizeof(VertexType::InfluenceBones[0])*4,       stride = sizeof(VertexType), length == sizeof(VET_UShort4)
+					// offset = 16 == sizeof(VertexType::InfluenceBones[0])*(4+4),  stride = sizeof(VertexType), length == sizeof(VET_UShort4)
+					NewData.BoneIndicesExtra[0] = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceBones) + 8, sizeof(VertexType), VET_UShort4);
+					NewData.BoneIndicesExtra[1] = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceBones) + 16, sizeof(VertexType), VET_UShort4);
+				}
+				NewData.BoneWeights = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceWeights), sizeof(VertexType), VET_UShort4N);
 				if (bExtraInfluencesT)
-					NewData.BoneWeightsExtra = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceWeights) + 4, sizeof(VertexType), VET_UByte4N);
+				{
+					// offset = 8 == sizeof(VertexType::InfluenceWeights[0])*4,       stride = sizeof(VertexType), length == sizeof(VET_UShort4)
+					// offset = 16 == sizeof(VertexType::InfluenceWeights[0])*(4+4),  stride = sizeof(VertexType), length == sizeof(VET_UShort4)
+					NewData.BoneWeightsExtra[0] = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceWeights) + 8, sizeof(VertexType), VET_UShort4N);
+					NewData.BoneWeightsExtra[1] = FVertexStreamComponent(VertexBuffer, STRUCT_OFFSET(VertexType, InfluenceWeights) + 16, sizeof(VertexType), VET_UShort4N);
+				}
 				NewData.FurOffset = STRUCTMEMBER_VERTEXSTREAMCOMPONENT(VertexBuffer, VertexType, FurOffset, VET_Float3);
 
 				if (MorphTargets)
@@ -414,8 +433,10 @@ public:
 
 		if (bExtraInfluencesT)
 		{
-			OutElements.Add(AccessStreamComponent(InData.BoneIndicesExtra, 14));
-			OutElements.Add(AccessStreamComponent(InData.BoneWeightsExtra, 15));
+			OutElements.Add(AccessStreamComponent(InData.BoneIndicesExtra[0], 14));
+			OutElements.Add(AccessStreamComponent(InData.BoneIndicesExtra[1], 15));
+			OutElements.Add(AccessStreamComponent(InData.BoneWeightsExtra[0], 16));
+			OutElements.Add(AccessStreamComponent(InData.BoneWeightsExtra[1], 17));
 		}
 	}
 

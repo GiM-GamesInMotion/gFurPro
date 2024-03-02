@@ -49,18 +49,18 @@ struct FVertexFactoryInput
 #if FEATURE_LEVEL >= FEATURE_LEVEL_ES3_1 || COMPILER_METAL || COMPILER_VULKAN
 	uint4	BlendIndices	: ATTRIBUTE3;
 	#if GPUSKIN_USE_EXTRA_INFLUENCES
-	uint4	BlendIndicesExtra	: ATTRIBUTE14;
+	uint4	BlendIndicesExtra[2]	: ATTRIBUTE14;
 	#endif
 #else
 	// Continue using int for SM3, compatibility of uint is unknown across SM3 platforms
 	int4	BlendIndices	: ATTRIBUTE3;
 	#if GPUSKIN_USE_EXTRA_INFLUENCES
-	int4	BlendIndicesExtra	: ATTRIBUTE14;
+	int4	BlendIndicesExtra[2]	: ATTRIBUTE14;
 	#endif
 #endif
 	float4	BlendWeights	: ATTRIBUTE4;	
 #if GPUSKIN_USE_EXTRA_INFLUENCES
-	float4	BlendWeightsExtra	: ATTRIBUTE15;
+	float4	BlendWeightsExtra[2]	: ATTRIBUTE16;
 #endif
 
 	float3	FurOffset		: ATTRIBUTE12;
@@ -332,10 +332,14 @@ FBoneMatrix CalcBoneMatrix( FVertexFactoryInput Input )
 	BoneMatrix += Input.BlendWeights.w * GetBoneMatrix(Input.BlendIndices.w);
 
 #if GPUSKIN_USE_EXTRA_INFLUENCES
-	BoneMatrix += Input.BlendWeightsExtra.x * GetBoneMatrix(Input.BlendIndicesExtra.x);
-	BoneMatrix += Input.BlendWeightsExtra.y * GetBoneMatrix(Input.BlendIndicesExtra.y);
-	BoneMatrix += Input.BlendWeightsExtra.z * GetBoneMatrix(Input.BlendIndicesExtra.z);
-	BoneMatrix += Input.BlendWeightsExtra.w * GetBoneMatrix(Input.BlendIndicesExtra.w);
+	BoneMatrix += Input.BlendWeightsExtra[0].x * GetBoneMatrix(Input.BlendIndicesExtra[0].x);
+	BoneMatrix += Input.BlendWeightsExtra[0].y * GetBoneMatrix(Input.BlendIndicesExtra[0].y);
+	BoneMatrix += Input.BlendWeightsExtra[0].z * GetBoneMatrix(Input.BlendIndicesExtra[0].z);
+	BoneMatrix += Input.BlendWeightsExtra[0].w * GetBoneMatrix(Input.BlendIndicesExtra[0].w);
+	BoneMatrix += Input.BlendWeightsExtra[1].x * GetBoneMatrix(Input.BlendIndicesExtra[1].x);
+	BoneMatrix += Input.BlendWeightsExtra[1].y * GetBoneMatrix(Input.BlendIndicesExtra[1].y);
+	BoneMatrix += Input.BlendWeightsExtra[1].z * GetBoneMatrix(Input.BlendIndicesExtra[1].z);
+	BoneMatrix += Input.BlendWeightsExtra[1].w * GetBoneMatrix(Input.BlendIndicesExtra[1].w);
 #endif
 
 	return BoneMatrix;
@@ -360,10 +364,14 @@ FBoneMatrix CalcPreviousBoneMatrix( FVertexFactoryInput Input )
 	BoneMatrix += Input.BlendWeights.z * GetPreviousBoneMatrix(Input.BlendIndices.z);
 	BoneMatrix += Input.BlendWeights.w * GetPreviousBoneMatrix(Input.BlendIndices.w);
 #if GPUSKIN_USE_EXTRA_INFLUENCES
-	BoneMatrix += Input.BlendWeightsExtra.x * GetPreviousBoneMatrix(Input.BlendIndicesExtra.x);
-	BoneMatrix += Input.BlendWeightsExtra.y * GetPreviousBoneMatrix(Input.BlendIndicesExtra.y);
-	BoneMatrix += Input.BlendWeightsExtra.z * GetPreviousBoneMatrix(Input.BlendIndicesExtra.z);
-	BoneMatrix += Input.BlendWeightsExtra.w * GetPreviousBoneMatrix(Input.BlendIndicesExtra.w);
+	BoneMatrix += Input.BlendWeightsExtra[0].x * GetPreviousBoneMatrix(Input.BlendIndicesExtra[0].x);
+	BoneMatrix += Input.BlendWeightsExtra[0].y * GetPreviousBoneMatrix(Input.BlendIndicesExtra[0].y);
+	BoneMatrix += Input.BlendWeightsExtra[0].z * GetPreviousBoneMatrix(Input.BlendIndicesExtra[0].z);
+	BoneMatrix += Input.BlendWeightsExtra[0].w * GetPreviousBoneMatrix(Input.BlendIndicesExtra[0].w);
+	BoneMatrix += Input.BlendWeightsExtra[1].x * GetPreviousBoneMatrix(Input.BlendIndicesExtra[1].x);
+	BoneMatrix += Input.BlendWeightsExtra[1].y * GetPreviousBoneMatrix(Input.BlendIndicesExtra[1].y);
+	BoneMatrix += Input.BlendWeightsExtra[1].z * GetPreviousBoneMatrix(Input.BlendIndicesExtra[1].z);
+	BoneMatrix += Input.BlendWeightsExtra[1].w * GetPreviousBoneMatrix(Input.BlendIndicesExtra[1].w);
 #endif
 	return BoneMatrix;
 }
@@ -423,10 +431,14 @@ float3 SkinPreviousPosition( FVertexFactoryInput Input, FVertexFactoryIntermedia
 	PhysicsOffset += Input.BlendWeights.z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.z, WorldPosition);
 	PhysicsOffset += Input.BlendWeights.w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndices.w, WorldPosition);
 #if GPUSKIN_USE_EXTRA_INFLUENCES
-	PhysicsOffset += Input.BlendWeightsExtra.x * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.x, WorldPosition);
-	PhysicsOffset += Input.BlendWeightsExtra.y * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.y, WorldPosition);
-	PhysicsOffset += Input.BlendWeightsExtra.z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.z, WorldPosition);
-	PhysicsOffset += Input.BlendWeightsExtra.w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra.w, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[0].x * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra[0].x, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[0].y * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra[0].y, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[0].z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra[0].z, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[0].w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra[0].w, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[1].x * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra[1].x, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[1].y * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra[1].y, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[1].z * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra[1].z, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[1].w * CalcPrevBoneFurPhysicsOffset(Input.BlendIndicesExtra[1].w, WorldPosition);
 #endif // GPUSKIN_USE_EXTRA_INFLUENCES
 
 	float3 NormalVec = Intermediates.TangentToLocal[2];
@@ -601,10 +613,14 @@ float4 CalcWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates 
 	PhysicsOffset += Input.BlendWeights.z * CalcBoneFurPhysicsOffset(Input.BlendIndices.z, WorldPosition);
 	PhysicsOffset += Input.BlendWeights.w * CalcBoneFurPhysicsOffset(Input.BlendIndices.w, WorldPosition);
 #if GPUSKIN_USE_EXTRA_INFLUENCES
-	PhysicsOffset += Input.BlendWeightsExtra.x * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.x, WorldPosition);
-	PhysicsOffset += Input.BlendWeightsExtra.y * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.y, WorldPosition);
-	PhysicsOffset += Input.BlendWeightsExtra.z * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.z, WorldPosition);
-	PhysicsOffset += Input.BlendWeightsExtra.w * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra.w, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[0].x * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra[0].x, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[0].y * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra[0].y, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[0].z * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra[0].z, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[0].w * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra[0].w, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[1].x * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra[1].x, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[1].y * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra[1].y, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[1].z * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra[1].z, WorldPosition);
+	PhysicsOffset += Input.BlendWeightsExtra[1].w * CalcBoneFurPhysicsOffset(Input.BlendIndicesExtra[1].w, WorldPosition);
 #endif // GPUSKIN_USE_EXTRA_INFLUENCES
 
 	float3 NormalVec = Intermediates.TangentToLocal[2];

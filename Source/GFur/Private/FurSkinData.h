@@ -15,8 +15,8 @@ struct FFurSkinVertex : FFurStaticVertex<TangentBasisTypeT, UVTypeT>
 		NumInfluences = bExtraBoneInfluencesT ? MAX_TOTAL_INFLUENCES : MAX_INFLUENCES_PER_STREAM,
 	};
 
-	uint8			InfluenceBones[NumInfluences];
-	uint8			InfluenceWeights[NumInfluences];
+	uint16			InfluenceBones[NumInfluences];
+	uint16			InfluenceWeights[NumInfluences];
 };
 
 /** Fur Skin Data */

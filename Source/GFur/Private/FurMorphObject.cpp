@@ -69,14 +69,11 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 		const auto& MorphRemapTable = InMorphRemapTables[InMeshLod];
 		
 		
-		TArray<const UMorphTarget*> ActiveMorphTargetList;
-		ActiveMorphTargets.GenerateKeyArray(ActiveMorphTargetList);
-
 		// iterate over all active morph targets and accumulate their vertex deltas
-		for (int32 morphId = 0; morphId < ActiveMorphTargets.Num(); morphId++)
+		for (const auto& pair : ActiveMorphTargets)
 		{
-			const UMorphTarget* ActiveMorphTarget = ActiveMorphTargetList[morphId];
-			const int32 WeightIndex = ActiveMorphTargetList.Find(ActiveMorphTarget);
+			const UMorphTarget* ActiveMorphTarget = pair.Key;
+			const int32 WeightIndex = pair.Value;
 
 			checkSlow(ActiveMorphTarget != NULL);
 			checkSlow(ActiveMorphTarget->HasDataForLOD(LODIndex));

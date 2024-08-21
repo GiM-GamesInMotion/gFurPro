@@ -220,7 +220,7 @@ struct FVertexFactoryIntermediates
 /** Converts from vertex factory specific input to a FMaterialVertexParameters, which is used by vertex shader material inputs. */
 FMaterialVertexParameters GetMaterialVertexParameters(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates, float3 WorldPosition, float3x3 TangentToLocal)
 {
-	FMaterialVertexParameters Result = (FMaterialVertexParameters)0;
+	FMaterialVertexParameters Result = MakeInitializedMaterialVertexParameters();
 	Result.WorldPosition = WorldPosition;
 	Result.SceneData = Intermediates.SceneData;
 	Result.VertexColor = Intermediates.Color;

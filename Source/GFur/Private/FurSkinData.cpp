@@ -1057,7 +1057,8 @@ FFurSkinData::~FFurSkinData()
 	if (SkeletalMesh)
 		SkeletalMesh->RemoveFromRoot();
 	for (USkeletalMesh* Mesh : GuideMeshes)
-		Mesh->RemoveFromRoot();
+		if (Mesh)
+			Mesh->RemoveFromRoot();
 #endif // WITH_EDITORONLY_DATA
 }
 
@@ -1098,7 +1099,8 @@ void FFurSkinData::Set(int32 InFurLayerCount, int32 InLod, class UGFurComponent*
 	if (SkeletalMesh)
 		SkeletalMesh->RemoveFromRoot();
 	for (USkeletalMesh* Mesh : GuideMeshes)
-		Mesh->RemoveFromRoot();
+		if (Mesh)
+			Mesh->RemoveFromRoot();
 #endif // WITH_EDITORONLY_DATA
 
 

@@ -745,7 +745,6 @@ void UGFurComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Con
 				tmp_material = UMaterial::GetDefaultMaterial(MD_Surface);
 			}
 			UMaterialInstanceDynamic* Material = UMaterialInstanceDynamic::Create(tmp_material, this);
-			Material->AddToRoot();
 			Material->SetScalarParameterValue(FName(TEXT("FurLength")), FMath::Max(FurLength, 0.001f));
 			FurMaterials.Add(Material);
 		}
@@ -800,21 +799,20 @@ FBoxSphereBounds UGFurComponent::CalcBounds(const FTransform& LocalToWorld) cons
 		if (MasterPoseComponent.IsValid())
 		{
 			FBoxSphereBounds MasterBounds = MasterPoseComponent->CalcBounds(LocalToWorld);
-			MasterBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
-			return MasterBounds;
+			return MasterBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 		}
 		FBoxSphereBounds DummyBounds = SkeletalGrowMesh->GetBounds();
-		DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
+		DummyBounds = DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 		return DummyBounds.TransformBy(LocalToWorld);
 	}
 	else if (StaticGrowMesh)
 	{
 		FBoxSphereBounds MeshBounds = StaticGrowMesh->GetBounds();
-		MeshBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
+		MeshBounds = MeshBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 		return MeshBounds.TransformBy(LocalToWorld);
 	}
 	FBoxSphereBounds DummyBounds = FBoxSphereBounds(FVector(0, 0, 0), FVector(0, 0, 0), 0);
-	DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
+	DummyBounds = DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 	return DummyBounds.TransformBy(LocalToWorld);
 }
 

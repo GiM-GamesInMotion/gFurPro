@@ -137,7 +137,7 @@ public:
 #else
 				const int32 LODBias = 0;
 #endif
-				NewLodLevel = MasterComp->MeshObject->MinDesiredLODLevel + LODBias;
+				NewLodLevel = FMath::Max(MasterComp->MeshObject->MinDesiredLODLevel + LODBias, 0);
 			}
 		}
 		else

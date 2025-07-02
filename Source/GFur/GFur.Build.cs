@@ -1,10 +1,15 @@
 // Copyright 2023 GiM s.r.o. All Rights Reserved.
 
+using System.IO;
 using UnrealBuildTool;
 
 public class GFur : ModuleRules
 {
-	public GFur(ReadOnlyTargetRules Target) : base(Target)
+    string EnginePath
+    {
+        get { return Path.GetFullPath(Target.RelativeEnginePath); }
+    }
+    public GFur(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		MinFilesUsingPrecompiledHeaderOverride = 1;
@@ -14,6 +19,8 @@ public class GFur : ModuleRules
 
         PrivateIncludePaths.Add(ModuleDirectory + "/Private");
         PrivateIncludePaths.Add(EngineDirectory + "/Shaders/Shared");
+		PrivateIncludePaths.Add(EnginePath + "Source/Runtime/Engine/Private");
+        PrivateIncludePaths.Add(EnginePath + "Source/Runtime/Engine/Internal");        
 
         PublicDependencyModuleNames.AddRange(
 			new string[]

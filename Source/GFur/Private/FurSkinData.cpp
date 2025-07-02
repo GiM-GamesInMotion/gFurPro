@@ -1,9 +1,9 @@
 // Copyright 2023 GiM s.r.o. All Rights Reserved.
 
 #include "FurSkinData.h"
-#include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
-#include "Runtime/Engine/Private/SkeletalRenderGPUSkin.h"
-#include "Runtime/Renderer/Public/MeshMaterialShader.h"
+#include "Rendering/SkeletalMeshRenderData.h"
+#include "SkeletalRenderGPUSkin.h"
+#include "MeshMaterialShader.h"
 #include "RHICommandList.h"
 #include "MeshDrawShaderBindings.h"
 #include "ShaderParameterUtils.h"

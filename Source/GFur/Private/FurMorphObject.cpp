@@ -2,16 +2,21 @@
 
 #include "FurMorphObject.h"
 #include "FurSkinData.h"
-#include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
+#include "Rendering/SkeletalMeshRenderData.h"
 #include "Runtime/Engine/Private/SkeletalRenderGPUSkin.h"
-#include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
-#include "Runtime/Engine/Classes/Animation/MorphTarget.h"
+#include "Components/SkinnedMeshComponent.h"
+#include "Animation/MorphTarget.h"
 #include "ShaderParameterUtils.h"
 
 void FFurMorphVertexBuffer::InitRHI(FRHICommandListBase& RHICmdList)
 {
 	// Create the buffer rendering resource
 	uint32 Size = NumVertices * sizeof(FMorphGPUSkinVertex);
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	FRHIBufferCreateDesc CreateDesc = FRHIBufferCreateDesc::CreateVertex(TEXT("FurMorphVertexBuffer"), Size).AddUsage(BUF_Dynamic | BUF_ShaderResource).DetermineInitialState();
+
+	VertexBufferRHI = RHICmdList.CreateBuffer(CreateDesc);
+#else
 	FRHIResourceCreateInfo CreateInfo(L"FurMorphVertexBuffer");
 
 	EBufferUsageFlags Flags = BUF_Dynamic;
@@ -20,6 +25,7 @@ void FFurMorphVertexBuffer::InitRHI(FRHICommandListBase& RHICmdList)
 	Flags = (EBufferUsageFlags)(Flags | BUF_ShaderResource);
 
 	VertexBufferRHI = RHICmdList.CreateVertexBuffer(Size, Flags, CreateInfo);
+#endif
 
 	// Lock the buffer.
 	void* BufferData = RHICmdList.LockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);

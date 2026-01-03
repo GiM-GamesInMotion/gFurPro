@@ -90,8 +90,14 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 			//checkSlow(MorphAbsWeight >= MinMorphTargetBlendWeight && MorphAbsWeight <= MaxMorphTargetBlendWeight);
 
 			// Get deltas
-			int32 NumDeltas;
-			const FMorphTargetDelta* Deltas = ActiveMorphTarget->GetMorphTargetDelta(InMeshLod, NumDeltas);
+			const TArray<FMorphTargetLODModel>& LODModels = ActiveMorphTarget->GetMorphLODModels();
+			if (!LODModels.IsValidIndex(InMeshLod))
+			{
+				continue;
+			}
+			const FMorphTargetLODModel& MorphModel = LODModels[InMeshLod];
+			int32 NumDeltas = MorphModel.Vertices.Num();
+			const FMorphTargetDelta* Deltas = MorphModel.Vertices.GetData();
 
 			// iterate over the vertices that this lod model has changed
 			for (int32 MorphVertIdx = 0; MorphVertIdx < NumDeltas; MorphVertIdx++)

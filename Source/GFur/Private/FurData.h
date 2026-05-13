@@ -378,7 +378,7 @@ protected:
 
 	void DoWork()
 	{
-		FPlatformProcess::Sleep(1.0f);
+		FPlatformProcess::Sleep(0.01f);
 		Lambda();
 	}
 

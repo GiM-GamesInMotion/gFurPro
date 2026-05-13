@@ -6,18 +6,18 @@
 #include "FurData.h"
 #include "FurMorphObject.h"
 #include "Engine/Engine.h"
-#include "Runtime/Engine/Classes/PhysicsEngine/BodySetup.h"
-#include "Runtime/Engine/Public/DynamicMeshBuilder.h"
-#include "Runtime/Engine/Public/GPUSkinVertexFactory.h"
-#include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
-#include "Runtime/Engine/Public/Materials/MaterialRenderProxy.h"
-#include "Runtime\Engine\Public\MaterialDomain.h"
+#include "PhysicsEngine/BodySetup.h"
+#include "DynamicMeshBuilder.h"
+#include "GPUSkinVertexFactory.h"
+#include "Rendering/SkeletalMeshRenderData.h"
+#include "Materials/MaterialRenderProxy.h"
+#include "MaterialDomain.h"
 #include "MaterialShared.h"
 #include "Engine/SkeletalMesh.h"
 #include "SceneInterface.h"
-#include "Runtime\Engine\Classes\Engine\SkinnedAssetCommon.h"
-#include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
-#include "Runtime/Engine/Classes/Components/SkeletalMeshComponent.h"
+#include "Engine/SkinnedAssetCommon.h"
+#include "Components/SkinnedMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 
 #include "PrimitiveSceneProxy.h"
 
@@ -137,7 +137,7 @@ public:
 #else
 				const int32 LODBias = 0;
 #endif
-				NewLodLevel = MasterComp->MeshObject->MinDesiredLODLevel + LODBias;
+				NewLodLevel = FMath::Max(MasterComp->MeshObject->MinDesiredLODLevel + LODBias, 0);
 			}
 		}
 		else
@@ -314,6 +314,9 @@ public:
 	virtual bool IsRayTracingRelevant() const override { return true; }
 	virtual void GetDynamicRayTracingInstances(FRayTracingInstanceCollector& Collector) override
 	{
+		TConstArrayView<const FSceneView*> Views = Collector.GetViews();
+		const uint32 VisibilityMap = Collector.GetVisibilityMap();
+
 		const auto& Sections = FurData[0]->GetSections_RenderThread();
 		auto* RHI = RayTracingGeometry.GetRHI();
 		if (RHI != nullptr && RHI->IsValid())
@@ -325,7 +328,7 @@ public:
 			for (int sectionIdx = 0; sectionIdx < Sections.Num(); sectionIdx++)
 			{
 				const FFurData::FSection& Section = Sections[sectionIdx];
-				check(RayTracingGeometry.Initializer.IndexBuffer.IsValid());
+				check(RayTracingGeometry.GetInitializer().IndexBuffer.IsValid());
 
 				UMaterialInstanceDynamic* material = FurMaterials[Section.MaterialIndex];
 				auto MaterialProxy = material->GetRenderProxy();
@@ -353,7 +356,15 @@ public:
 			//Deprecated
 
 			//RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
-			Collector.AddRayTracingInstance(RayTracingInstance);
+			for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
+			{
+				if ((VisibilityMap & (1 << ViewIndex)) == 0)
+				{
+					continue;
+				}
+
+				Collector.AddRayTracingInstance(ViewIndex, RayTracingInstance);
+			}
 		}
 	}
 #endif
@@ -745,7 +756,6 @@ void UGFurComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Con
 				tmp_material = UMaterial::GetDefaultMaterial(MD_Surface);
 			}
 			UMaterialInstanceDynamic* Material = UMaterialInstanceDynamic::Create(tmp_material, this);
-			Material->AddToRoot();
 			Material->SetScalarParameterValue(FName(TEXT("FurLength")), FMath::Max(FurLength, 0.001f));
 			FurMaterials.Add(Material);
 		}
@@ -800,21 +810,20 @@ FBoxSphereBounds UGFurComponent::CalcBounds(const FTransform& LocalToWorld) cons
 		if (MasterPoseComponent.IsValid())
 		{
 			FBoxSphereBounds MasterBounds = MasterPoseComponent->CalcBounds(LocalToWorld);
-			MasterBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
-			return MasterBounds;
+			return MasterBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 		}
 		FBoxSphereBounds DummyBounds = SkeletalGrowMesh->GetBounds();
-		DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
+		DummyBounds = DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 		return DummyBounds.TransformBy(LocalToWorld);
 	}
 	else if (StaticGrowMesh)
 	{
 		FBoxSphereBounds MeshBounds = StaticGrowMesh->GetBounds();
-		MeshBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
+		MeshBounds = MeshBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 		return MeshBounds.TransformBy(LocalToWorld);
 	}
 	FBoxSphereBounds DummyBounds = FBoxSphereBounds(FVector(0, 0, 0), FVector(0, 0, 0), 0);
-	DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
+	DummyBounds = DummyBounds.ExpandBy(FMath::Max(FurLength, 0.001f));
 	return DummyBounds.TransformBy(LocalToWorld);
 }
 

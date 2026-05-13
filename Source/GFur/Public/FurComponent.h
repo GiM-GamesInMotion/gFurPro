@@ -245,6 +245,7 @@ private:
 	TArray<FVector> AngularVelocities;
 	TArray<FVector> LinearOffsets;
 	TArray<FVector> AngularOffsets;
+	UPROPERTY(Transient)
 	TArray< class UMaterialInstanceDynamic* > FurMaterials;
 	TArray< class FFurData* > FurData;
 	TArray< TArray< int32 > > MorphRemapTables;

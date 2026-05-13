@@ -2,16 +2,21 @@
 
 #include "FurMorphObject.h"
 #include "FurSkinData.h"
-#include "Runtime/Engine/Public/Rendering/SkeletalMeshRenderData.h"
+#include "Rendering/SkeletalMeshRenderData.h"
 #include "Runtime/Engine/Private/SkeletalRenderGPUSkin.h"
-#include "Runtime/Engine/Classes/Components/SkinnedMeshComponent.h"
-#include "Runtime/Engine/Classes/Animation/MorphTarget.h"
+#include "Components/SkinnedMeshComponent.h"
+#include "Animation/MorphTarget.h"
 #include "ShaderParameterUtils.h"
 
 void FFurMorphVertexBuffer::InitRHI(FRHICommandListBase& RHICmdList)
 {
 	// Create the buffer rendering resource
 	uint32 Size = NumVertices * sizeof(FMorphGPUSkinVertex);
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	FRHIBufferCreateDesc CreateDesc = FRHIBufferCreateDesc::CreateVertex(TEXT("FurMorphVertexBuffer"), Size).AddUsage(BUF_Dynamic | BUF_ShaderResource).DetermineInitialState();
+
+	VertexBufferRHI = RHICmdList.CreateBuffer(CreateDesc);
+#else
 	FRHIResourceCreateInfo CreateInfo(L"FurMorphVertexBuffer");
 
 	EBufferUsageFlags Flags = BUF_Dynamic;
@@ -20,6 +25,7 @@ void FFurMorphVertexBuffer::InitRHI(FRHICommandListBase& RHICmdList)
 	Flags = (EBufferUsageFlags)(Flags | BUF_ShaderResource);
 
 	VertexBufferRHI = RHICmdList.CreateVertexBuffer(Size, Flags, CreateInfo);
+#endif
 
 	// Lock the buffer.
 	void* BufferData = RHICmdList.LockBuffer(VertexBufferRHI, 0, Size, RLM_WriteOnly);
@@ -84,8 +90,14 @@ void FFurMorphObject::Update_RenderThread(FRHICommandListImmediate& RHICmdList, 
 			//checkSlow(MorphAbsWeight >= MinMorphTargetBlendWeight && MorphAbsWeight <= MaxMorphTargetBlendWeight);
 
 			// Get deltas
-			int32 NumDeltas;
-			const FMorphTargetDelta* Deltas = ActiveMorphTarget->GetMorphTargetDelta(InMeshLod, NumDeltas);
+			const TArray<FMorphTargetLODModel>& LODModels = ActiveMorphTarget->GetMorphLODModels();
+			if (!LODModels.IsValidIndex(InMeshLod))
+			{
+				continue;
+			}
+			const FMorphTargetLODModel& MorphModel = LODModels[InMeshLod];
+			int32 NumDeltas = MorphModel.Vertices.Num();
+			const FMorphTargetDelta* Deltas = MorphModel.Vertices.GetData();
 
 			// iterate over the vertices that this lod model has changed
 			for (int32 MorphVertIdx = 0; MorphVertIdx < NumDeltas; MorphVertIdx++)

@@ -142,6 +142,7 @@ bool FFurComb::Comb(FViewport* Viewport, const FVector& InCameraOrigin, const FV
 	return CombInternal(InCameraOrigin, InRayOrigin, InRayDirection, CombAction, Strength * LastDeltaTime);
 }
 
+#if 0
 bool FFurComb::CombVR(FViewport* Viewport, const FVector& InCameraOrigin, const FVector& InRayOrigin, const FVector& InRayDirection, UVREditorInteractor* VRInteractor)
 {
 	bool bCombApplied = false;
@@ -166,6 +167,7 @@ bool FFurComb::CombVR(FViewport* Viewport, const FVector& InCameraOrigin, const 
 
 	return bCombApplied;
 }
+#endif
 
 bool FFurComb::InputKey(FEditorViewportClient* InViewportClient, FViewport* InViewport, FKey InKey, EInputEvent InEvent)
 {
@@ -487,6 +489,7 @@ void FFurComb::RenderInteractors(const FSceneView* View, FViewport* Viewport, FP
 	TArray<MeshPaintHelpers::FPaintRay> PaintRays;
 	MeshPaintHelpers::RetrieveViewportPaintRays(View, Viewport, PDI, PaintRays);
 
+#if 0
 	// Apply paint pressure and start painting (or if not currently painting, draw a preview of where paint will be applied)
 	for (const MeshPaintHelpers::FPaintRay& PaintRay : PaintRays)
 	{
@@ -496,6 +499,7 @@ void FFurComb::RenderInteractors(const FSceneView* View, FViewport* Viewport, FP
 
 		RenderInteractorWidget(PaintRay.RayStart, PaintRay.RayDirection, PDI, DepthGroup);
 	}
+#endif
 }
 
 void FFurComb::RenderInteractorWidget(const FVector& InRayOrigin, const FVector& InRayDirection, FPrimitiveDrawInterface* PDI, ESceneDepthPriorityGroup DepthGroup /*= SDPG_World*/)

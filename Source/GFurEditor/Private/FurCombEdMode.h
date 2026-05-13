@@ -73,9 +73,11 @@ private:
 	/** Called when an asset is deleted */
 	void OnAssetRemoved(const FAssetData& AssetData);
 
+#if 0
 	/** Called when the user presses a button on their motion controller device */
 	void OnVRAction( FEditorViewportClient& ViewportClient, class UViewportInteractor* Interactor,
 		const struct FViewportActionKeyInput& Action, bool& bOutIsInputCaptured, bool& bWasHandled );
+#endif
 
 	/** Called when rerunning a construction script causes objects to be replaced */
 	void OnObjectsReplaced(const TMap<UObject*, UObject*>& OldToNewInstanceMap);

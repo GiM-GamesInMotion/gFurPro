@@ -314,6 +314,9 @@ public:
 	virtual bool IsRayTracingRelevant() const override { return true; }
 	virtual void GetDynamicRayTracingInstances(FRayTracingInstanceCollector& Collector) override
 	{
+		TConstArrayView<const FSceneView*> Views = Collector.GetViews();
+		const uint32 VisibilityMap = Collector.GetVisibilityMap();
+
 		const auto& Sections = FurData[0]->GetSections_RenderThread();
 		auto* RHI = RayTracingGeometry.GetRHI();
 		if (RHI != nullptr && RHI->IsValid())
@@ -325,7 +328,7 @@ public:
 			for (int sectionIdx = 0; sectionIdx < Sections.Num(); sectionIdx++)
 			{
 				const FFurData::FSection& Section = Sections[sectionIdx];
-				check(RayTracingGeometry.Initializer.IndexBuffer.IsValid());
+				check(RayTracingGeometry.GetInitializer().IndexBuffer.IsValid());
 
 				UMaterialInstanceDynamic* material = FurMaterials[Section.MaterialIndex];
 				auto MaterialProxy = material->GetRenderProxy();
@@ -353,7 +356,15 @@ public:
 			//Deprecated
 
 			//RayTracingInstance.BuildInstanceMaskAndFlags(GetScene().GetFeatureLevel());
-			Collector.AddRayTracingInstance(RayTracingInstance);
+			for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
+			{
+				if ((VisibilityMap & (1 << ViewIndex)) == 0)
+				{
+					continue;
+				}
+
+				Collector.AddRayTracingInstance(ViewIndex, RayTracingInstance);
+			}
 		}
 	}
 #endif

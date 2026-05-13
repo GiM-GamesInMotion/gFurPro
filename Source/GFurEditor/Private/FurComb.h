@@ -74,8 +74,10 @@ public:
 	/** 'Normal' painting functionality, called when the user tries to paint on a mesh using the mouse */
 	bool Comb(FViewport* Viewport, const FVector& InCameraOrigin, const FVector& InRayOrigin, const FVector& InRayDirection);
 
+#if 0
 	/** VR painting functionality, called when the user tries to paint on a mesh using a VR controller */
 	bool CombVR(FViewport* Viewport, const FVector& InCameraOrigin, const FVector& InRayOrigin, const FVector& InRayDirection, UVREditorInteractor* VRInteractor);
+#endif
 
 	/** Allows painter to act on specific key actions */
 	bool InputKey(FEditorViewportClient* InViewportClient, FViewport* InViewport, FKey InKey, EInputEvent InEvent);

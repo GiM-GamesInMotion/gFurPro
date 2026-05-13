@@ -95,6 +95,7 @@ void FEdModeFurComb::Enter()
 	// highlight effect distorting the appearance.
 	GEngine->OverrideSelectedMaterialColor(FLinearColor::Black);
 
+#if 0
 	UEditorWorldExtensionCollection* ExtensionCollection = GEditor->GetEditorWorldExtensionsManager()->GetEditorWorldExtensions(GetWorld());
 	if (ExtensionCollection != nullptr)
 	{
@@ -109,6 +110,7 @@ void FEdModeFurComb::Enter()
 			ViewportWorldInteraction->SetTransformGizmoVisible(false);
 		}
 	}
+#endif
 
 	if (UsesToolkits())
 	{
@@ -136,6 +138,7 @@ void FEdModeFurComb::Exit()
 		FurComb->UnregisterCommands(Toolkit->GetToolkitCommands());
 	}
 
+#if 0
 	UEditorWorldExtensionCollection* ExtensionCollection = GEditor->GetEditorWorldExtensionsManager()->GetEditorWorldExtensions(GetWorld());
 	if (ExtensionCollection != nullptr)
 	{
@@ -149,6 +152,7 @@ void FEdModeFurComb::Exit()
 			ViewportWorldInteraction->OnViewportInteractionInputAction().RemoveAll(this);
 		}
 	}
+#endif
 
 	// The user can manipulate the editor selection lock flag in paint mode so we make sure to restore it here
 	GEdSelectionLock = bWasSelectionLockedOnStart;
@@ -365,6 +369,7 @@ void FEdModeFurComb::Render(const FSceneView* View, FViewport* Viewport, FPrimit
 	// Flow painting
 	if (FurComb->IsCombing())
 	{
+#if 0
 		/** If we are currently painting with a VR interactor, apply paint for the current vr interactor state/position */
 		if (PaintingWithInteractorInVR != nullptr)
 		{
@@ -377,7 +382,9 @@ void FEdModeFurComb::Render(const FSceneView* View, FViewport* Viewport, FPrimit
 				FurComb->CombVR(Viewport, VREditorMode->GetHeadTransform().GetLocation(), LaserPointerStart, LaserPointerDirection, VRInteractor);
 			}
 		}
-		else if (FurComb->GetCurrentFurCombSettings()->bEnableFlow)
+		else 
+#endif
+		if (FurComb->GetCurrentFurCombSettings()->bEnableFlow)
 		{
 			// Make sure the cursor is visible OR we're flood filling.  No point drawing a paint cue when there's no cursor.
 			if (Viewport->IsCursorVisible())
@@ -436,6 +443,7 @@ bool FEdModeFurComb::ProcessEditDelete()
 	return false;
 }
 
+#if 0
 void FEdModeFurComb::OnVRAction(class FEditorViewportClient& ViewportClient, UViewportInteractor* Interactor,
 	const FViewportActionKeyInput& Action, bool& bOutIsInputCaptured, bool& bWasHandled)
 {
@@ -516,5 +524,6 @@ void FEdModeFurComb::OnVRAction(class FEditorViewportClient& ViewportClient, UVi
 		}
 	}
 }
+#endif
 
 #undef LOCTEXT_NAMESPACE // "FurCombEdMode"

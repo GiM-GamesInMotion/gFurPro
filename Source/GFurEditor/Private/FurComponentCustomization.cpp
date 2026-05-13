@@ -327,7 +327,7 @@ void FFurComponentCustomization::GenerateNewFurSplines(IDetailLayoutBuilder* Det
 
 		UPackage *Package = CreatePackage(*PackageName);
 
-		UFurSplines* FurSplines = FindObject<UFurSplines>(Package, *ObjectName, true);
+		UFurSplines* FurSplines = FindObject<UFurSplines>(Package, *ObjectName, EFindObjectFlags::ExactClass);
 		bool IsNew;
 		if (FurSplines == NULL)
 		{
